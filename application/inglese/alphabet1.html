@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impara l'Alfabeto Inglese</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .phase-indicator {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .timer-display {
+            text-align: center;
+            font-size: 1.3em;
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .keyboard-hint {
+            text-align: center;
+            color: #999;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        #phase1 {
+            display: block;
+        }
+
+        .letters-pool {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            min-height: 150px;
+        }
+
+        .letter-tile {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            cursor: grab;
+            user-select: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .letter-tile:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        .letter-tile.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .letter-tile.keyboard-highlight {
+            animation: pulse 0.5s;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .answer-zone {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            min-height: 150px;
+            padding: 20px;
+            background: #fff;
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .answer-zone.drag-over {
+            background: #e8eaf6;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: block;
+            margin: 20px auto;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+
+        .btn-certificate {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .message {
+            text-align: center;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #28a745;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #dc3545;
+        }
+
+        #phase2 {
+            display: none;
+        }
+
+        .audio-section {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .play-btn {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 3em;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            margin: 0 auto;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+        }
+
+        .keyboard-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            max-width: 600px;
+            margin: 30px auto;
+        }
+
+        .key-btn {
+            aspect-ratio: 1;
+            font-size: 1.5em;
+            font-weight: bold;
+            background: #f0f0f0;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .key-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: scale(1.05);
+        }
+
+        .key-btn:active {
+            transform: scale(0.95);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .certificate-panel {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+        }
+
+        .certificate-panel h3 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .cert-link {
+            background: white;
+            color: #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 0.9em;
+            margin: 15px 0;
+        }
+
+        .cert-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .cert-stat {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .cert-stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .letter-tile {
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
+            }
+
+            .keyboard-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+
+            .cert-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 Alfabeto Inglese</h1>
+        <p class="subtitle">Impara l'alfabeto in modo interattivo!</p>
+
+        <div class="timer-display" id="timerDisplay">⏱️ Tempo: 00:00</div>
+
+        <div id="phase1">
+            <div class="phase-indicator">📝 Fase 1: Ordina le lettere dalla A alla Z</div>
+            <div class="keyboard-hint">💡 Puoi anche premere i tasti A-Z sulla tastiera!</div>
+            
+            <div class="message" id="message1"></div>
+
+            <div class="letters-pool" id="lettersPool"></div>
+            
+            <div class="answer-zone" id="answerZone">
+                <p style="color: #999; width: 100%; text-align: center; margin: auto;">
+                    Trascina qui le lettere in ordine alfabetico
+                </p>
+            </div>
+
+            <button class="btn btn-primary" id="checkBtn">Verifica Ordine</button>
+            <button class="btn btn-success" id="helpBtn">💡 Aiuto</button>
+        </div>
+
+        <div id="phase2">
+            <div class="phase-indicator">🎧 Fase 2: Ascolta e indovina la lettera</div>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="correctCount">0</div>
+                    <div class="stat-label">Corrette</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="wrongCount">0</div>
+                    <div class="stat-label">Sbagliate</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalCount">0</div>
+                    <div class="stat-label">Totale</div>
+                </div>
+            </div>
+
+            <div class="message" id="message2"></div>
+
+            <div class="audio-section">
+                <button class="play-btn" id="playAudioBtn">▶️</button>
+                <p style="margin-top: 20px; color: #666;">Clicca per ascoltare</p>
+            </div>
+
+            <div class="keyboard-grid" id="keyboardGrid"></div>
+
+            <button class="btn btn-primary" id="backToPhase1">Torna alla Fase 1</button>
+        </div>
+
+        <div class="certificate-panel">
+            <h3>📜 Certificato di Studio</h3>
+            <div class="cert-stats" id="certStatsContainer"></div>
+            <button class="btn btn-certificate" id="generateCertBtn">📋 Genera Link</button>
+            <button class="btn btn-danger" id="resetBtn" style="margin-top: 10px;">🔄 Azzera Statistiche</button>
+            <div id="certLinkContainer" style="display: none;">
+                <p style="margin-top: 15px;">Copia e invia al docente:</p>
+                <div class="cert-link" id="certLink"></div>
+                <button class="btn btn-success" id="copyCertBtn">📋 Copia</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Importa il sistema di certificazione -->
+    <script src="https://certificationsystem.netlify.app/certification-system.js"></script>
+
+    <script>
+        //#region Configurazione Sistema Certificazione
+        const certSystem = new CertificationSystem({
+            appName: 'Alfabeto Inglese',
+            storageKey: 'alphabet_cert_data',
+            certUrl: 'https://certificationsystem.netlify.app/',
+            trackFocus: false, // Cambia in true per tracciare focus
+            fields: [
+                { key: 'p1', label: 'Fase 1 Completata', showZero: false },
+                { key: 'e1', label: 'Errori Fase 1', showZero: false },
+                { key: 'p2', label: 'Risposte Fase 2', showZero: false },
+                { key: 'c2', label: 'Corrette Fase 2', showZero: false }
+            ],
+            onTimerUpdate: (time) => {
+                const minutes = Math.floor(time / 60);
+                const seconds = time % 60;
+                const timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                document.getElementById('timerDisplay').textContent = `⏱️ Tempo: ${timeStr}`;
+            },
+            onFieldUpdate: () => {
+                certSystem.renderStatsPanel('certStatsContainer');
+            },
+            onReset: () => {
+                location.reload();
+            }
+        });
+
+        // Setup bottoni
+        certSystem.setupButtons('generateCertBtn', 'copyCertBtn', 'resetBtn', 'certLinkContainer');
+        certSystem.renderStatsPanel('certStatsContainer');
+        //#endregion
+
+        //#region Variabili App
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+        let currentPhase = 1;
+        let currentLetter = null;
+        let stats = { correct: 0, wrong: 0, total: 0 };
+        let errorCount = 0;
+        //#endregion
+
+        //#region Utilità
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        function showMessage(elementId, text, type) {
+            const message = document.getElementById(elementId);
+            message.textContent = text;
+            message.className = `message ${type}`;
+            message.style.display = 'block';
+        }
+
+        function speakLetter(letter) {
+            if (typeof speechSynthesis === 'undefined') return;
+            speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(letter);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.7;
+            speechSynthesis.speak(utterance);
+        }
+
+        function playErrorSound() {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = 200;
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.5);
+        }
+
+        function playSuccessSound() {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = 523.25;
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.3);
+        }
+        //#endregion
+
+        //#region Fase 1
+        function initPhase1() {
+            const pool = document.getElementById('lettersPool');
+            const answerZone = document.getElementById('answerZone');
+            
+            pool.innerHTML = '';
+            shuffleArray(alphabet).forEach(letter => {
+                const tile = createLetterTile(letter);
+                pool.appendChild(tile);
+            });
+
+            answerZone.innerHTML = '<p style="color: #999; width: 100%; text-align: center; margin: auto;">Trascina qui le lettere</p>';
+            setupDragAndDrop();
+            setupKeyboardInput();
+        }
+
+        function createLetterTile(letter) {
+            const tile = document.createElement('div');
+            tile.className = 'letter-tile';
+            tile.textContent = letter;
+            tile.draggable = true;
+            tile.dataset.letter = letter;
+            tile.addEventListener('mousedown', () => speakLetter(letter));
+            return tile;
+        }
+
+        function setupKeyboardInput() {
+            document.addEventListener('keydown', (e) => {
+                if (currentPhase !== 1) return;
+                const key = e.key.toUpperCase();
+                if (!alphabet.includes(key)) return;
+                e.preventDefault();
+                
+                const pool = document.getElementById('lettersPool');
+                const tile = Array.from(pool.querySelectorAll('.letter-tile')).find(t => t.dataset.letter === key);
+                
+                if (tile) {
+                    tile.classList.add('keyboard-highlight');
+                    setTimeout(() => tile.classList.remove('keyboard-highlight'), 500);
+                    
+                    const answerZone = document.getElementById('answerZone');
+                    const placeholder = answerZone.querySelector('p');
+                    if (placeholder) placeholder.remove();
+                    
+                    if (checkLetterPosition(tile, answerZone)) {
+                        answerZone.appendChild(tile);
+                        if (answerZone.querySelectorAll('.letter-tile').length === 26) {
+                            showMessage('message1', '✅ Completo!', 'success');
+                        }
+                    }
+                }
+            });
+        }
+
+        function setupDragAndDrop() {
+            let draggedElement = null;
+
+            document.addEventListener('dragstart', (e) => {
+                if (e.target.classList.contains('letter-tile')) {
+                    draggedElement = e.target;
+                    e.target.classList.add('dragging');
+                }
+            });
+
+            document.addEventListener('dragend', (e) => {
+                if (e.target.classList.contains('letter-tile')) {
+                    e.target.classList.remove('dragging');
+                }
+            });
+
+            const answerZone = document.getElementById('answerZone');
+            const pool = document.getElementById('lettersPool');
+
+            [answerZone, pool].forEach(zone => {
+                zone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    zone.classList.add('drag-over');
+                });
+
+                zone.addEventListener('dragleave', () => {
+                    zone.classList.remove('drag-over');
+                });
+
+                zone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    zone.classList.remove('drag-over');
+                    
+                    if (draggedElement && zone === answerZone) {
+                        const placeholder = zone.querySelector('p');
+                        if (placeholder) placeholder.remove();
+                        
+                        if (checkLetterPosition(draggedElement, zone)) {
+                            zone.appendChild(draggedElement);
+                            if (zone.querySelectorAll('.letter-tile').length === 26) {
+                                showMessage('message1', '✅ Completo!', 'success');
+                            }
+                        }
+                        draggedElement = null;
+                    } else if (draggedElement && zone === pool) {
+                        zone.appendChild(draggedElement);
+                        draggedElement = null;
+                    }
+                });
+            });
+        }
+
+        function checkLetterPosition(tile, zone) {
+            const tiles = zone.querySelectorAll('.letter-tile');
+            const position = tiles.length;
+            const letter = tile.dataset.letter;
+            const expectedLetter = alphabet[position];
+
+            if (letter !== expectedLetter) {
+                errorCount++;
+                certSystem.incrementField('e1');
+                playErrorSound();
+                showMessage('message1', `❌ Errore ${errorCount}/3: "${letter}" → "${expectedLetter}"`, 'error');
+                setTimeout(() => speakLetter(expectedLetter), 500);
+
+                if (errorCount >= 3) {
+                    setTimeout(() => {
+                        showMessage('message1', '💥 Ricomincia!', 'error');
+                        setTimeout(() => {
+                            errorCount = 0;
+                            document.getElementById('message1').style.display = 'none';
+                            initPhase1();
+                        }, 2000);
+                    }, 2000);
+                } else {
+                    setTimeout(() => {
+                        document.getElementById('message1').style.display = 'none';
+                    }, 3000);
+                }
+                return false;
+            }
+            
+            playSuccessSound();
+            return true;
+        }
+
+        document.getElementById('checkBtn').addEventListener('click', () => {
+            const answerZone = document.getElementById('answerZone');
+            const tiles = answerZone.querySelectorAll('.letter-tile');
+            
+            if (tiles.length !== 26) {
+                showMessage('message1', 'Completa l\'alfabeto!', 'error');
+                return;
+            }
+
+            certSystem.incrementField('p1');
+            showMessage('message1', '🎉 Fase 1 Completata!', 'success');
+            
+            setTimeout(() => {
+                document.getElementById('phase1').style.display = 'none';
+                document.getElementById('phase2').style.display = 'block';
+                currentPhase = 2;
+                initPhase2();
+            }, 2000);
+        });
+
+        document.getElementById('helpBtn').addEventListener('click', () => {
+            const answerZone = document.getElementById('answerZone');
+            const tiles = answerZone.querySelectorAll('.letter-tile');
+            if (tiles.length < 26) {
+                speakLetter(alphabet[tiles.length]);
+            }
+        });
+        //#endregion
+
+        //#region Fase 2
+        function initPhase2() {
+            const grid = document.getElementById('keyboardGrid');
+            grid.innerHTML = '';
+            
+            alphabet.forEach(letter => {
+                const btn = document.createElement('button');
+                btn.className = 'key-btn';
+                btn.textContent = letter;
+                btn.addEventListener('click', () => checkAnswer(letter));
+                grid.appendChild(btn);
+            });
+
+            pickRandomLetter();
+        }
+
+        function pickRandomLetter() {
+            currentLetter = alphabet[Math.floor(Math.random() * alphabet.length)];
+        }
+
+        document.getElementById('playAudioBtn').addEventListener('click', () => {
+            if (currentLetter) speakLetter(currentLetter);
+        });
+
+        function checkAnswer(selectedLetter) {
+            if (!currentLetter) return;
+
+            stats.total++;
+            certSystem.incrementField('p2');
+            document.getElementById('totalCount').textContent = stats.total;
+
+            if (selectedLetter === currentLetter) {
+                stats.correct++;
+                certSystem.incrementField('c2');
+                document.getElementById('correctCount').textContent = stats.correct;
+                showMessage('message2', `✅ Corretto!`, 'success');
+                setTimeout(() => {
+                    document.getElementById('message2').style.display = 'none';
+                    pickRandomLetter();
+                }, 1500);
+            } else {
+                stats.wrong++;
+                document.getElementById('wrongCount').textContent = stats.wrong;
+                showMessage('message2', `❌ Era ${currentLetter}`, 'error');
+                setTimeout(() => speakLetter(currentLetter), 1000);
+                setTimeout(() => {
+                    document.getElementById('message2').style.display = 'none';
+                    pickRandomLetter();
+                }, 3000);
+            }
+        }
+
+        document.getElementById('backToPhase1').addEventListener('click', () => {
+            document.getElementById('phase2').style.display = 'none';
+            document.getElementById('phase1').style.display = 'block';
+            currentPhase = 1;
+            stats = { correct: 0, wrong: 0, total: 0 };
+            initPhase1();
+        });
+        //#endregion
+
+        // Inizializza
+        initPhase1();
+    </script>
+</body>
+</html>
