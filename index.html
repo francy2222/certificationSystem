@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificato di Studio - Alfabeto Inglese</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 20px;
+        }
+
+        .cert-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .cert-icon {
+            font-size: 4em;
+            margin-bottom: 10px;
+        }
+
+        .cert-date {
+            color: #666;
+            font-size: 1.1em;
+            margin-top: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin: 40px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .stat-value {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #555;
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+
+        .summary-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+
+        .summary-title {
+            font-size: 1.5em;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            margin: 10px 0;
+            background: white;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .summary-item strong {
+            color: #333;
+        }
+
+        .summary-item span {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .evaluation {
+            text-align: center;
+            padding: 25px;
+            margin-top: 30px;
+            border-radius: 15px;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .evaluation.excellent {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+            border: 3px solid #28a745;
+        }
+
+        .evaluation.good {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            color: #0c5460;
+            border: 3px solid #17a2b8;
+        }
+
+        .evaluation.needs-improvement {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            color: #856404;
+            border: 3px solid #ffc107;
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 40px;
+            color: #721c24;
+            background: #f8d7da;
+            border: 3px solid #dc3545;
+            border-radius: 15px;
+        }
+
+        .error-message h2 {
+            margin-bottom: 15px;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            
+            .container {
+                box-shadow: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 25px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-value {
+                font-size: 2.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="certContainer">
+        <div class="error-message" id="errorMessage" style="display: none;">
+            <h2>❌ Errore</h2>
+            <p>Impossibile leggere il certificato. Verifica che il link sia corretto.</p>
+        </div>
+    </div>
+
+    <script>
+        function loadCertificate() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const certData = urlParams.get('cert');
+            
+            if (!certData) {
+                showError();
+                return;
+            }
+            
+            try {
+                const data = JSON.parse(atob(certData));
+                displayCertificate(data);
+            } catch (e) {
+                console.error('Errore decodifica:', e);
+                showError();
+            }
+        }
+
+        function displayCertificate(data) {
+            const container = document.getElementById('certContainer');
+            
+            // Calcoli
+            const minutes = Math.floor(data.t / 60);
+            const seconds = data.t % 60;
+            const timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            
+            const accuracy = data.p2 > 0 ? Math.round((data.c2 / data.p2) * 100) : 0;
+            const phase1Success = data.p1 > 0;
+            const errorRate = data.p1 > 0 ? (data.e1 / data.p1).toFixed(1) : 0;
+            
+            // Valutazione complessiva
+            let evaluation = '';
+            let evalClass = '';
+            
+            if (phase1Success && accuracy >= 80 && data.t >= 300) {
+                evaluation = '🌟 ECCELLENTE - Lo studente ha dimostrato ottima padronanza dell\'alfabeto inglese!';
+                evalClass = 'excellent';
+            } else if (phase1Success && accuracy >= 60) {
+                evaluation = '👍 BUONO - Lo studente ha una buona comprensione, con margini di miglioramento.';
+                evalClass = 'good';
+            } else {
+                evaluation = '📚 DA MIGLIORARE - Lo studente necessita di ulteriore pratica.';
+                evalClass = 'needs-improvement';
+            }
+            
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('it-IT', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            container.innerHTML = `
+                <div class="cert-header">
+                    <div class="cert-icon">📜</div>
+                    <h1>Certificato di Studio</h1>
+                    <h2 style="color: #764ba2; margin-top: 10px;">Alfabeto Inglese Interattivo</h2>
+                    <p class="cert-date">Generato il ${dateStr}</p>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">⏱️ ${timeStr}</div>
+                        <div class="stat-label">Tempo di Studio Effettivo</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">✅ ${data.p1}x</div>
+                        <div class="stat-label">Fase 1 Completata</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">❌ ${data.e1}</div>
+                        <div class="stat-label">Errori Totali Fase 1</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">🎧 ${data.p2}</div>
+                        <div class="stat-label">Risposte Fase 2</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">🎯 ${data.c2}</div>
+                        <div class="stat-label">Risposte Corrette</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">📊 ${accuracy}%</div>
+                        <div class="stat-label">Precisione Fase 2</div>
+                    </div>
+                </div>
+
+                <div class="summary-section">
+                    <div class="summary-title">📋 Riepilogo Dettagliato</div>
+                    
+                    <div class="summary-item">
+                        <strong>Tempo medio per completamento Fase 1:</strong>
+                        <span>${data.p1 > 0 ? Math.round(data.t / data.p1 / 60) : 0} minuti</span>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <strong>Errori medi per tentativo:</strong>
+                        <span>${errorRate} errori</span>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <strong>Risposte sbagliate Fase 2:</strong>
+                        <span>${data.p2 - data.c2}</span>
+                    </div>
+                    
+                    <div class="summary-item">
+                        <strong>Sessione di studio considerata:</strong>
+                        <span>${data.t >= 300 ? 'Adeguata (≥5 min)' : 'Breve (<5 min)'}</span>
+                    </div>
+                </div>
+
+                <div class="evaluation ${evalClass}">
+                    ${evaluation}
+                </div>
+            `;
+        }
+
+        function showError() {
+            document.getElementById('errorMessage').style.display = 'block';
+        }
+
+        // Carica certificato all'avvio
+        loadCertificate();
+    </script>
+</body>
+</html>
