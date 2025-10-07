@@ -8,7 +8,15 @@
 
 ## 📦 Installazione
 
-1. Scarica `certification-system.js`
+### Metodo 1: Importa da CDN (consigliato)
+
+```html
+<script src="https://certificationsystem.netlify.app/certification-system.js"></script>
+```
+
+### Metodo 2: Download locale
+
+1. Scarica `certification-system.js` da GitHub
 2. Includi nel tuo HTML:
 
 ```html
