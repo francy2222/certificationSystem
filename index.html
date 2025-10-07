@@ -39,6 +39,57 @@
             padding-bottom: 20px;
         }
 
+        /* Input Form */
+        .input-section {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .input-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .input-section p {
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .cert-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1em;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-family: monospace;
+        }
+
+        .cert-input:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Certificate Display */
         .cert-header {
             text-align: center;
             margin-bottom: 40px;
@@ -193,42 +244,94 @@
 </head>
 <body>
     <div class="container" id="certContainer">
+        <!-- Input Section (mostrato solo se non ci sono parametri URL) -->
+        <div class="input-section" id="inputSection">
+            <h2>📜 Lettore Certificato</h2>
+            <p>Incolla qui il <strong>link completo</strong> del certificato oppure solo la <strong>stringa dopo ?cert=</strong></p>
+            <textarea class="cert-input" id="certInput" rows="4" placeholder="Esempio: https://certificationsystem.netlify.app/?cert=eyJ0Ijo0...
+oppure: eyJ0Ijo0NCwicDEiOjAsImUxIjowLCJwMiI6MCwiYzIiOjB9"></textarea>
+            <button class="btn" onclick="loadFromInput()">🔍 Visualizza Certificato</button>
+        </div>
+
+        <!-- Error Message -->
         <div class="error-message" id="errorMessage" style="display: none;">
             <h2>❌ Errore</h2>
-            <p>Impossibile leggere il certificato. Verifica che il link sia corretto.</p>
+            <p id="errorText">Impossibile leggere il certificato. Verifica che il link o la stringa siano corretti.</p>
         </div>
+
+        <!-- Certificate Content (riempito dinamicamente) -->
+        <div id="certContent"></div>
     </div>
 
     <script>
-        function loadCertificate() {
+        function loadFromInput() {
+            const input = document.getElementById('certInput').value.trim();
+            
+            if (!input) {
+                showError('Inserisci un link o una stringa di certificazione validi.');
+                return;
+            }
+            
+            let certData = null;
+            
+            // Prova a estrarre da URL completo
+            if (input.includes('?cert=')) {
+                const match = input.match(/\?cert=([^&\s]+)/);
+                if (match) {
+                    certData = match[1];
+                }
+            } else {
+                // Assume sia solo la stringa base64
+                certData = input;
+            }
+            
+            if (certData) {
+                try {
+                    const data = JSON.parse(atob(certData));
+                    document.getElementById('inputSection').style.display = 'none';
+                    document.getElementById('errorMessage').style.display = 'none';
+                    displayCertificate(data);
+                } catch (e) {
+                    showError('Formato non valido. Verifica di aver copiato correttamente il link o la stringa.');
+                }
+            } else {
+                showError('Impossibile trovare dati del certificato nell\'input fornito.');
+            }
+        }
+
+        function loadFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
             const certData = urlParams.get('cert');
             
             if (!certData) {
-                showError();
-                return;
+                // Nessun parametro URL, mostra form di input
+                return false;
             }
             
             try {
                 const data = JSON.parse(atob(certData));
+                document.getElementById('inputSection').style.display = 'none';
                 displayCertificate(data);
+                return true;
             } catch (e) {
                 console.error('Errore decodifica:', e);
-                showError();
+                showError('Certificato non valido nell\'URL.');
+                return false;
             }
         }
 
         function displayCertificate(data) {
-            const container = document.getElementById('certContainer');
+            const container = document.getElementById('certContent');
             
             // Calcoli
             const minutes = Math.floor(data.t / 60);
             const seconds = data.t % 60;
             const timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
             
-            const accuracy = data.p2 > 0 ? Math.round((data.c2 / data.p2) * 100) : 0;
+            // Usa "-" invece di 0 per valori non applicabili
+            const accuracy = data.p2 > 0 ? Math.round((data.c2 / data.p2) * 100) : '-';
             const phase1Success = data.p1 > 0;
-            const errorRate = data.p1 > 0 ? (data.e1 / data.p1).toFixed(1) : 0;
+            const errorRate = data.p1 > 0 ? (data.e1 / data.p1).toFixed(1) : '-';
             
             // Valutazione complessiva
             let evaluation = '';
@@ -325,12 +428,20 @@
             `;
         }
 
-        function showError() {
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
             document.getElementById('errorMessage').style.display = 'block';
+            document.getElementById('inputSection').style.display = 'none';
         }
 
         // Carica certificato all'avvio
-        loadCertificate();
+        window.addEventListener('DOMContentLoaded', () => {
+            const loaded = loadFromURL();
+            if (!loaded) {
+                // Mostra form input
+                document.getElementById('inputSection').style.display = 'block';
+            }
+        });
     </script>
 </body>
 </html>
