@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esercizi Insiemi - Livello 1 (Rappresentazione)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .timer-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .exercise-area {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .venn-diagram {
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 50%;
+            width: 300px;
+            height: 300px;
+            margin: 20px auto;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            position: relative;
+        }
+
+        .venn-label {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: bold;
+            font-size: 1.3em;
+            color: #667eea;
+        }
+
+        .element {
+            display: inline-block;
+            padding: 8px 15px;
+            margin: 5px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .question {
+            text-align: center;
+            font-size: 1.2em;
+            color: #333;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+
+        .input-area {
+            margin: 20px 0;
+        }
+
+        .answer-input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .answer-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .special-chars {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .char-btn {
+            padding: 10px 20px;
+            font-size: 1.1em;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .char-btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: block;
+            margin: 10px auto;
+        }
+
+        .btn-check {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-next {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-certificate {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-check:hover, .btn-next:hover, .btn-certificate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+
+        .feedback {
+            text-align: center;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1.1em;
+            display: none;
+        }
+
+        .feedback.correct {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .feedback.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .hint {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            color: #856404;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 0.95em;
+        }
+
+        .help-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 8px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: bold;
+            display: none;
+            margin: 10px auto;
+            transition: all 0.3s;
+        }
+
+        .help-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+        }
+
+        .help-content {
+            background: #e7f3ff;
+            border: 2px solid #2196F3;
+            color: #0d47a1;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 1em;
+            display: none;
+            line-height: 1.6;
+        }
+
+        .help-content strong {
+            color: #1565c0;
+        }
+
+        .phase-indicator {
+            text-align: center;
+            padding: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            height: 8px;
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            transition: width 0.3s ease;
+        }
+
+        /* Pannello Certificato */
+        .certificate-panel {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+        }
+
+        .certificate-panel h3 {
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.5em;
+        }
+
+        .cert-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .cert-stat {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .cert-stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .cert-stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .cert-link {
+            background: white;
+            color: #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 0.9em;
+            margin: 15px 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .venn-diagram {
+                width: 250px;
+                height: 250px;
+            }
+
+            .cert-stats {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Esercizi sugli Insiemi</h1>
+        <p class="subtitle">Livello 1: Rappresentazione degli Insiemi</p>
+
+        <div class="phase-indicator" id="phaseIndicator">
+            Fase 1/3: Solo Elencazione (0/5)
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+        </div>
+
+        <div class="timer-stats">
+            <div class="stat">
+                <div class="stat-value" id="timer">00:00</div>
+                <div class="stat-label">Tempo</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="completed">0</div>
+                <div class="stat-label">Completati</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="errors">0</div>
+                <div class="stat-label">Errori</div>
+            </div>
+        </div>
+
+        <div class="exercise-area">
+            <!-- Diagramma di Eulero-Venn -->
+            <div class="venn-diagram" id="vennDiagram">
+                <div class="venn-label" id="setLabel">A</div>
+                <div id="elements"></div>
+            </div>
+
+            <!-- Domanda -->
+            <div class="question" id="question"></div>
+
+            <!-- Area input -->
+            <div class="input-area">
+                <div class="special-chars">
+                    <button class="char-btn" onclick="insertChar('{')">{</button>
+                    <button class="char-btn" onclick="insertChar('{x|x')">{ x | x</button>
+                    <button class="char-btn" onclick="insertChar('}')">}</button>
+                </div>
+                <input type="text" class="answer-input" id="answerInput" placeholder="Scrivi qui la tua risposta...">
+                <div class="hint" id="hint" style="display: none;"></div>
+                <button class="help-btn" id="helpBtn" onclick="showHelp()">💡 Aiuto: Cosa sono i numeri pari/dispari?</button>
+                <div class="help-content" id="helpContent"></div>
+            </div>
+
+            <!-- Feedback -->
+            <div class="feedback" id="feedback"></div>
+
+            <!-- Bottoni -->
+            <button class="btn btn-check" id="checkBtn" onclick="checkAnswer()">Verifica Risposta</button>
+            <button class="btn btn-next" id="nextBtn" onclick="nextExercise()" style="display: none;">Prossimo Esercizio</button>
+        </div>
+
+        <!-- Pannello Certificato -->
+        <div class="certificate-panel">
+            <h3>📜 Certificato di Studio</h3>
+            
+            <div class="cert-stats" id="certStatsContainer"></div>
+            
+            <button class="btn btn-certificate" id="generateCertBtn">📋 Genera Link Certificato</button>
+            <button class="btn btn-certificate" id="resetBtn" style="margin-top: 10px; background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);">🔄 Azzera Statistiche</button>
+            
+            <div id="certLinkContainer" style="display: none;">
+                <p style="margin-top: 15px;">Copia questo link e invialo al docente:</p>
+                <div class="cert-link" id="certLink"></div>
+                <button class="btn btn-certificate" id="copyCertBtn" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">📋 Copia Link</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import sistema certificazione -->
+    <script src="https://certificationsystem.netlify.app/certification-system.js"></script>
+
+    <script>
+        //#region Configurazione Sistema Certificazione
+        
+        const certSystem = new CertificationSystem({
+            appName: 'Insiemi Livello 1',
+            storageKey: 'insiemi_l1_cert',
+            certUrl: 'https://certificationsystem.netlify.app/',
+            trackFocus: false,
+            fields: [
+                { key: 'completed', label: 'Esercizi Completati', showZero: false },
+                { key: 'phase1', label: 'Fase 1 Superata', showZero: false },
+                { key: 'phase2', label: 'Fase 2 Superata', showZero: false },
+                { key: 'phase3', label: 'Fase 3 Completata', showZero: false },
+                { key: 'errors', label: 'Errori Totali', showZero: true },
+                { key: 'helps', label: 'Aiuti Utilizzati', showZero: true }
+            ],
+            onTimerUpdate: (time) => {
+                const minutes = Math.floor(time / 60);
+                const seconds = time % 60;
+                document.getElementById('timer').textContent = 
+                    `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            },
+            onFieldUpdate: () => {
+                certSystem.renderStatsPanel('certStatsContainer');
+            },
+            onReset: () => {
+                location.reload();
+            }
+        });
+
+        certSystem.setupButtons('generateCertBtn', 'copyCertBtn', 'resetBtn', 'certLinkContainer');
+        certSystem.renderStatsPanel('certStatsContainer');
+
+        //#endregion
+
+        //#region Dati e Configurazione
+        
+        let currentExercise = null;
+        let phaseCorrectCount = 0;
+        let difficultyPhase = 'elencazione';
+        let exerciseHistory = []; // Previene ripetizioni
+
+        // Tipi di insiemi disponibili (ampliati)
+        const setTypes = [
+            {
+                name: 'lettere_parola',
+                generate: () => {
+                    const words = [
+                        'GATTO', 'CANE', 'SOLE', 'MARE', 'LUNA', 'CASA', 'FIORE', 'ALBERO',
+                        'STELLE', 'NOTTE', 'GIORNO', 'TEMPO', 'CUORE', 'AMICO', 'SCUOLA',
+                        'LIBRO', 'PENNA', 'TAVOLO', 'SEDIA', 'PORTA', 'FINESTRA', 'CIELO',
+                        'TERRA', 'ACQUA', 'FUOCO', 'VENTO', 'MONTE', 'CAMPO', 'BOSCO'
+                    ];
+                    const word = words[Math.floor(Math.random() * words.length)];
+                    const letters = [...new Set(word.toLowerCase().split(''))];
+                    return {
+                        elements: letters,
+                        description: `x è una lettera della parola ${word}`,
+                        word: word
+                    };
+                }
+            },
+            {
+                name: 'numeri_pari',
+                generate: () => {
+                    const min = Math.floor(Math.random() * 5) * 2; // 0, 2, 4, 6, 8
+                    const range = 8 + Math.floor(Math.random() * 8);
+                    const max = min + range;
+                    const elements = [];
+                    for (let i = min || 2; i <= max; i += 2) {
+                        elements.push(i);
+                    }
+                    return {
+                        elements: elements,
+                        description: min > 0 
+                            ? `x è un numero pari compreso tra ${min} e ${max}`
+                            : `x è un numero pari minore o uguale a ${max}`
+                    };
+                }
+            },
+            {
+                name: 'numeri_dispari',
+                generate: () => {
+                    const min = Math.random() < 0.5 ? 1 : (Math.floor(Math.random() * 4) * 2 + 1);
+                    const range = 8 + Math.floor(Math.random() * 8);
+                    const max = min + range;
+                    const elements = [];
+                    for (let i = min; i <= max; i += 2) {
+                        elements.push(i);
+                    }
+                    return {
+                        elements: elements,
+                        description: min > 1
+                            ? `x è un numero dispari compreso tra ${min} e ${max}`
+                            : `x è un numero dispari minore o uguale a ${max}`
+                    };
+                }
+            },
+            {
+                name: 'vocali',
+                generate: () => {
+                    return {
+                        elements: ['a', 'e', 'i', 'o', 'u'],
+                        description: 'x è una vocale'
+                    };
+                }
+            },
+            {
+                name: 'consonanti_inizio',
+                generate: () => {
+                    const lettere = ['b', 'c', 'd', 'f', 'g'];
+                    return {
+                        elements: lettere,
+                        description: 'x è una consonante dall\'inizio dell\'alfabeto'
+                    };
+                }
+            },
+            {
+                name: 'colori_primari',
+                generate: () => {
+                    return {
+                        elements: ['rosso', 'blu', 'giallo'],
+                        description: 'x è un colore primario'
+                    };
+                }
+            },
+            {
+                name: 'colori_secondari',
+                generate: () => {
+                    return {
+                        elements: ['verde', 'arancione', 'viola'],
+                        description: 'x è un colore secondario'
+                    };
+                }
+            },
+            {
+                name: 'giorni_settimana',
+                generate: () => {
+                    const giorni = ['lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì'];
+                    return {
+                        elements: giorni,
+                        description: 'x è un giorno feriale della settimana'
+                    };
+                }
+            },
+            {
+                name: 'weekend',
+                generate: () => {
+                    return {
+                        elements: ['sabato', 'domenica'],
+                        description: 'x è un giorno del weekend'
+                    };
+                }
+            },
+            {
+                name: 'mesi_estate',
+                generate: () => {
+                    return {
+                        elements: ['giugno', 'luglio', 'agosto'],
+                        description: 'x è un mese estivo'
+                    };
+                }
+            },
+            {
+                name: 'multipli',
+                generate: () => {
+                    const base = 3 + Math.floor(Math.random() * 3); // 3, 4, o 5
+                    const count = 3 + Math.floor(Math.random() * 3);
+                    const elements = [];
+                    for (let i = 1; i <= count; i++) {
+                        elements.push(base * i);
+                    }
+                    return {
+                        elements: elements,
+                        description: `x è un multiplo di ${base} minore o uguale a ${base * count}`
+                    };
+                }
+            },
+            {
+                name: 'numeri_minori',
+                generate: () => {
+                    const max = 5 + Math.floor(Math.random() * 8);
+                    const elements = [];
+                    for (let i = 1; i <= max; i++) {
+                        elements.push(i);
+                    }
+                    return {
+                        elements: elements,
+                        description: `x è un numero naturale minore o uguale a ${max}`
+                    };
+                }
+            },
+            {
+                name: 'numeri_quadrati',
+                generate: () => {
+                    const count = 3 + Math.floor(Math.random() * 2);
+                    const elements = [];
+                    for (let i = 1; i <= count; i++) {
+                        elements.push(i * i);
+                    }
+                    return {
+                        elements: elements,
+                        description: `x è un quadrato perfetto minore o uguale a ${count * count}`
+                    };
+                }
+            },
+            {
+                name: 'stagioni',
+                generate: () => {
+                    return {
+                        elements: ['primavera', 'estate', 'autunno', 'inverno'],
+                        description: 'x è una stagione dell\'anno'
+                    };
+                }
+            },
+            {
+                name: 'punti_cardinali',
+                generate: () => {
+                    return {
+                        elements: ['nord', 'sud', 'est', 'ovest'],
+                        description: 'x è un punto cardinale'
+                    };
+                }
+            }
+        ];
+
+        //#endregion
+
+        //#region Funzioni Timer e Progresso
+        
+        function updatePhaseIndicator() {
+            const indicator = document.getElementById('phaseIndicator');
+            const progressFill = document.getElementById('progressFill');
+            
+            let phaseText = '';
+            let progressPercent = 0;
+            
+            if (difficultyPhase === 'elencazione') {
+                phaseText = `Fase 1/3: Solo Elencazione (${phaseCorrectCount}/5)`;
+                progressPercent = (phaseCorrectCount / 5) * 33.33;
+            } else if (difficultyPhase === 'descrizione') {
+                phaseText = `Fase 2/3: Solo Descrizione (${phaseCorrectCount}/5)`;
+                progressPercent = 33.33 + (phaseCorrectCount / 5) * 33.33;
+            } else {
+                phaseText = 'Fase 3/3: Elencazione e Descrizione (Misto)';
+                progressPercent = 100;
+            }
+            
+            indicator.textContent = phaseText;
+            progressFill.style.width = progressPercent + '%';
+        }
+
+        //#endregion
+
+        //#region Generazione Esercizi
+        
+        function generateExercise() {
+            // PRIMA controlla se deve cambiare fase
+            if (difficultyPhase === 'elencazione' && phaseCorrectCount >= 5) {
+                difficultyPhase = 'descrizione';
+                phaseCorrectCount = 0;
+                certSystem.setField('phase1', 1); // Traccia fase completata
+                console.log('Passaggio a Fase 2: Descrizione');
+            } else if (difficultyPhase === 'descrizione' && phaseCorrectCount >= 5) {
+                difficultyPhase = 'misto';
+                phaseCorrectCount = 0;
+                certSystem.setField('phase2', 1);
+                console.log('Passaggio a Fase 3: Misto');
+            }
+            
+            updatePhaseIndicator();
+
+            // Determina modalità
+            let mode;
+            if (difficultyPhase === 'elencazione') {
+                mode = 'elencazione';
+            } else if (difficultyPhase === 'descrizione') {
+                mode = 'descrizione';
+            } else {
+                mode = Math.random() < 0.5 ? 'elencazione' : 'descrizione';
+            }
+
+            // Genera esercizio non ripetuto
+            let attempts = 0;
+            let type, setData, exerciseKey;
+            
+            do {
+                type = setTypes[Math.floor(Math.random() * setTypes.length)];
+                setData = type.generate();
+                exerciseKey = `${type.name}_${mode}_${JSON.stringify(setData.elements)}`;
+                attempts++;
+            } while (exerciseHistory.includes(exerciseKey) && attempts < 10);
+            
+            // Aggiorna history
+            exerciseHistory.push(exerciseKey);
+            if (exerciseHistory.length > 4) {
+                exerciseHistory.shift();
+            }
+            
+            currentExercise = {
+                elements: setData.elements,
+                mode: mode,
+                description: setData.description,
+                correctAnswer: mode === 'elencazione' 
+                    ? `A={${setData.elements.join(',')}}` 
+                    : `A={x|x ${setData.description}}`,
+                needsHelp: type.name === 'numeri_pari' || type.name === 'numeri_dispari' || type.name === 'multipli',
+                helpType: type.name
+            };
+
+            displayExercise();
+        }
+
+        function displayExercise() {
+            // Mostra elementi nel diagramma
+            const elementsDiv = document.getElementById('elements');
+            elementsDiv.innerHTML = currentExercise.elements
+                .map(el => `<span class="element">${el}</span>`)
+                .join('');
+
+            // Mostra domanda
+            const questionDiv = document.getElementById('question');
+            if (currentExercise.mode === 'elencazione') {
+                questionDiv.innerHTML = '<strong>Scrivi l\'insieme A per ELENCAZIONE:</strong>';
+                document.getElementById('hint').textContent = 'Suggerimento: A={elemento1,elemento2,...}';
+            } else {
+                questionDiv.innerHTML = '<strong>Scrivi l\'insieme A per DESCRIZIONE:</strong>';
+                document.getElementById('hint').textContent = 'Suggerimento: A={x|x proprietà degli elementi}';
+            }
+            document.getElementById('hint').style.display = 'block';
+
+            // Mostra/nascondi bottone HELP
+            const helpBtn = document.getElementById('helpBtn');
+            if (currentExercise.mode === 'descrizione' && currentExercise.needsHelp) {
+                helpBtn.style.display = 'block';
+            } else {
+                helpBtn.style.display = 'none';
+            }
+            document.getElementById('helpContent').style.display = 'none';
+
+            // Reset UI
+            document.getElementById('answerInput').value = '';
+            document.getElementById('answerInput').disabled = false;
+            document.getElementById('feedback').style.display = 'none';
+            document.getElementById('checkBtn').style.display = 'block';
+            document.getElementById('nextBtn').style.display = 'none';
+        }
+
+        //#endregion
+
+        //#region Verifica Risposta
+        
+        function normalizeAnswer(answer) {
+            return answer
+                .replace(/\s+/g, '')
+                .toLowerCase()
+                .replace(/è/g, 'e');
+        }
+
+        function checkAnswer() {
+            const userAnswer = document.getElementById('answerInput').value;
+            const feedbackDiv = document.getElementById('feedback');
+            feedbackDiv.style.display = 'block';
+
+            let isCorrect = false;
+            
+            if (currentExercise.mode === 'elencazione') {
+                const userMatch = userAnswer.match(/\{([^}]+)\}/);
+                if (userMatch) {
+                    const userElements = userMatch[1]
+                        .split(',')
+                        .map(e => e.trim().toLowerCase())
+                        .filter(e => e.length > 0);
+                    
+                    const correctElements = currentExercise.elements.map(e => 
+                        e.toString().toLowerCase()
+                    );
+                    
+                    const allPresent = correctElements.every(ce => userElements.includes(ce));
+                    const noExtra = userElements.every(ue => correctElements.includes(ue));
+                    
+                    isCorrect = allPresent && noExtra && userElements.length === correctElements.length;
+                }
+            } else {
+                const normalizedUser = normalizeAnswer(userAnswer);
+                const normalizedCorrect = normalizeAnswer(currentExercise.description);
+                
+                const keywords = normalizedCorrect.split(/\s+/).filter(w => w.length > 2);
+                const hasStructure = /\{x\|x/i.test(userAnswer) && userAnswer.includes('}');
+                
+                const matchedKeywords = keywords.filter(kw => 
+                    normalizedUser.includes(kw)
+                ).length;
+                const keywordScore = matchedKeywords / keywords.length;
+                
+                isCorrect = hasStructure && keywordScore >= 0.7;
+            }
+
+            if (isCorrect) {
+                feedbackDiv.className = 'feedback correct';
+                feedbackDiv.textContent = '✅ Corretto! Ottimo lavoro!';
+                
+                // Aggiorna statistiche
+                certSystem.incrementField('completed');
+                phaseCorrectCount++;
+                document.getElementById('completed').textContent = certSystem.getField('completed');
+                
+                // Se completa fase 3
+                if (difficultyPhase === 'misto' && phaseCorrectCount >= 5) {
+                    certSystem.setField('phase3', 1);
+                }
+                
+                updatePhaseIndicator();
+            } else {
+                feedbackDiv.className = 'feedback incorrect';
+                feedbackDiv.innerHTML = `
+                    ❌ Non corretto.<br>
+                    <small>Risposta attesa: ${currentExercise.correctAnswer}</small>
+                `;
+                certSystem.incrementField('errors');
+                document.getElementById('errors').textContent = certSystem.getField('errors');
+            }
+
+            document.getElementById('answerInput').disabled = true;
+            document.getElementById('checkBtn').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'block';
+        }
+
+        //#endregion
+
+        //#region Utility
+        
+        function showHelp() {
+            const helpContent = document.getElementById('helpContent');
+            certSystem.incrementField('helps');
+            
+            if (currentExercise.helpType === 'numeri_pari') {
+                helpContent.innerHTML = `
+                    <strong>Numeri Pari:</strong> Sono i numeri che si possono dividere per 2 senza resto.<br>
+                    <strong>Esempi:</strong> 2, 4, 6, 8, 10, 12...<br>
+                    <strong>Come riconoscerli?</strong> Terminano con 0, 2, 4, 6 o 8<br>
+                    <strong>Nella descrizione scrivi:</strong> "x è un numero pari..."
+                `;
+            } else if (currentExercise.helpType === 'numeri_dispari') {
+                helpContent.innerHTML = `
+                    <strong>Numeri Dispari:</strong> Sono i numeri che NON si possono dividere per 2 senza resto.<br>
+                    <strong>Esempi:</strong> 1, 3, 5, 7, 9, 11...<br>
+                    <strong>Come riconoscerli?</strong> Terminano con 1, 3, 5, 7 o 9<br>
+                    <strong>Nella descrizione scrivi:</strong> "x è un numero dispari..."
+                `;
+            } else if (currentExercise.helpType === 'multipli') {
+                helpContent.innerHTML = `
+                    <strong>Multipli:</strong> Sono i numeri che si ottengono moltiplicando un numero per 1, 2, 3...<br>
+                    <strong>Esempi multipli di 3:</strong> 3, 6, 9, 12, 15...<br>
+                    <strong>Come riconoscerli?</strong> Sono divisibili per il numero base<br>
+                    <strong>Nella descrizione scrivi:</strong> "x è un multiplo di..."
+                `;
+            }
+            
+            helpContent.style.display = 'block';
+        }
+
+        function insertChar(char) {
+            const input = document.getElementById('answerInput');
+            const cursorPos = input.selectionStart;
+            const currentValue = input.value;
+            
+            input.value = currentValue.slice(0, cursorPos) + char + currentValue.slice(cursorPos);
+            input.focus();
+            input.setSelectionRange(cursorPos + char.length, cursorPos + char.length);
+        }
+
+        function nextExercise() {
+            generateExercise();
+        }
+
+        //#endregion
+
+        //#region Inizializzazione
+        
+        generateExercise();
+
+        // Permetti invio con Enter
+        document.getElementById('answerInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !document.getElementById('answerInput').disabled) {
+                checkAnswer();
+            }
+        });
+
+        console.log('App Insiemi Livello 1 - Versione Completa');
+
+        //#endregion
+    </script>
+</body>
+</html>
