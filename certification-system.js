@@ -1,22 +1,27 @@
 /**
- * SISTEMA DI CERTIFICAZIONE MODULARE
+ * SISTEMA DI CERTIFICAZIONE MODULARE v2.0
  * Autore: Flejta & Claude
  * Licenza: MIT
- * Versione: 1.0.0
+ * Versione: 2.0.0
  * 
- * Sistema flessibile per tracciare e certificare l'attività degli studenti
- * con supporto localStorage, timer intelligente e campi personalizzabili.
+ * Changelog v2.0:
+ * - Aggiunto supporto per metadati nel certificato
+ * - Incluse etichette dei campi nel certificato
+ * - Aggiunto timestamp di generazione
+ * - Supporto per campi testuali personalizzati
+ * - Migliorata compatibilità con lettore universale
  */
 
 class CertificationSystem {
     constructor(config) {
         this.config = {
             appName: config.appName || 'App',
+            appVersion: config.appVersion || '1.0.0',
             storageKey: config.storageKey || 'cert_data',
             certUrl: config.certUrl || 'https://certificationsystem.netlify.app/',
             fields: config.fields || [],
             trackFocus: config.trackFocus || false,
-            inactivityTimeout: config.inactivityTimeout || 120000, // 2 minuti default
+            inactivityTimeout: config.inactivityTimeout || 120000,
             ...config
         };
         
@@ -45,29 +50,73 @@ class CertificationSystem {
         const stored = localStorage.getItem(this.config.storageKey);
         if (stored) {
             try {
-                return JSON.parse(stored);
+                const parsed = JSON.parse(stored);
+                // Migrazione da vecchio formato se necessario
+                if (!parsed._meta) {
+                    return this.migrateOldData(parsed);
+                }
+                return parsed;
             } catch (e) {
                 console.error('Errore caricamento dati:', e);
             }
         }
         
-        // Inizializza dati vuoti
-        const initialData = { t: 0 }; // t = tempo totale
+        // Inizializza dati vuoti con metadati
+        const initialData = { 
+            _meta: {
+                appName: this.config.appName,
+                appVersion: this.config.appVersion,
+                startTime: Date.now(),
+                lastUpdate: Date.now()
+            },
+            _values: {
+                t: 0 // tempo totale in secondi
+            },
+            _textFields: {} // per campi testuali personalizzati
+        };
         
-        // Inizializza campi personalizzati
+        // Inizializza campi numerici personalizzati
         this.config.fields.forEach(field => {
-            initialData[field.key] = 0;
+            if (field.type === 'text') {
+                initialData._textFields[field.key] = field.defaultValue || '';
+            } else {
+                initialData._values[field.key] = field.defaultValue || 0;
+            }
         });
         
         if (this.config.trackFocus) {
-            initialData.fl = 0; // focus lost count
-            initialData.flt = 0; // focus lost time (secondi)
+            initialData._values.fl = 0; // focus lost count
+            initialData._values.flt = 0; // focus lost time (secondi)
         }
         
         return initialData;
     }
 
+    migrateOldData(oldData) {
+        // Migra da vecchio formato piatto a nuovo formato con metadati
+        const newData = {
+            _meta: {
+                appName: this.config.appName,
+                appVersion: this.config.appVersion,
+                startTime: Date.now() - (oldData.t || 0) * 1000,
+                lastUpdate: Date.now()
+            },
+            _values: {},
+            _textFields: {}
+        };
+
+        // Copia tutti i valori numerici
+        Object.keys(oldData).forEach(key => {
+            if (typeof oldData[key] === 'number') {
+                newData._values[key] = oldData[key];
+            }
+        });
+
+        return newData;
+    }
+
     saveData() {
+        this.data._meta.lastUpdate = Date.now();
         localStorage.setItem(this.config.storageKey, JSON.stringify(this.data));
     }
     //#endregion
@@ -81,11 +130,11 @@ class CertificationSystem {
             const inactiveTime = now - this.lastActivity;
             
             if (inactiveTime < this.config.inactivityTimeout && this.isActive) {
-                this.data.t++;
+                this.data._values.t++;
                 this.saveData();
                 
                 if (this.config.onTimerUpdate) {
-                    this.config.onTimerUpdate(this.data.t);
+                    this.config.onTimerUpdate(this.data._values.t);
                 }
             }
         }, 1000);
@@ -106,7 +155,7 @@ class CertificationSystem {
             this.isActive = false;
             this.focusLostCount++;
             this.focusLostStart = Date.now();
-            this.data.fl = this.focusLostCount;
+            this.data._values.fl = this.focusLostCount;
             this.saveData();
         });
 
@@ -117,7 +166,7 @@ class CertificationSystem {
             if (this.focusLostStart) {
                 const lostTime = Math.floor((Date.now() - this.focusLostStart) / 1000);
                 this.totalFocusLostTime += lostTime;
-                this.data.flt = this.totalFocusLostTime;
+                this.data._values.flt = this.totalFocusLostTime;
                 this.saveData();
                 this.focusLostStart = null;
             }
@@ -127,42 +176,63 @@ class CertificationSystem {
 
     //#region Gestione Dati
     incrementField(fieldKey, amount = 1) {
-        if (this.data.hasOwnProperty(fieldKey)) {
-            this.data[fieldKey] += amount;
+        if (this.data._values.hasOwnProperty(fieldKey)) {
+            this.data._values[fieldKey] += amount;
             this.saveData();
             
             if (this.config.onFieldUpdate) {
-                this.config.onFieldUpdate(fieldKey, this.data[fieldKey]);
+                this.config.onFieldUpdate(fieldKey, this.data._values[fieldKey]);
             }
         }
     }
 
     setField(fieldKey, value) {
-        if (this.data.hasOwnProperty(fieldKey)) {
-            this.data[fieldKey] = value;
-            this.saveData();
-            
-            if (this.config.onFieldUpdate) {
-                this.config.onFieldUpdate(fieldKey, this.data[fieldKey]);
-            }
+        // Determina se è un campo testuale o numerico
+        if (this.data._textFields.hasOwnProperty(fieldKey)) {
+            this.data._textFields[fieldKey] = value;
+        } else if (this.data._values.hasOwnProperty(fieldKey)) {
+            this.data._values[fieldKey] = value;
+        }
+        
+        this.saveData();
+        
+        if (this.config.onFieldUpdate) {
+            this.config.onFieldUpdate(fieldKey, value);
         }
     }
 
     getField(fieldKey) {
-        return this.data[fieldKey] || 0;
+        return this.data._values[fieldKey] || this.data._textFields[fieldKey] || 0;
     }
 
     getData() {
-        return { ...this.data };
+        return {
+            ...this.data._values,
+            ...this.data._textFields,
+            _meta: this.data._meta
+        };
     }
 
     resetData() {
         const confirm = window.confirm('Sei sicuro di voler azzerare tutte le statistiche?');
         if (confirm) {
-            this.data = this.loadData(); // Ricarica dati vuoti
-            Object.keys(this.data).forEach(key => {
-                this.data[key] = 0;
+            // Reimposta completamente i dati
+            this.data = this.loadData();
+            
+            // Reimposta tutti i valori a 0
+            Object.keys(this.data._values).forEach(key => {
+                this.data._values[key] = 0;
             });
+            
+            // Reimposta campi testuali
+            Object.keys(this.data._textFields).forEach(key => {
+                this.data._textFields[key] = '';
+            });
+            
+            // Aggiorna metadati
+            this.data._meta.startTime = Date.now();
+            this.data._meta.lastUpdate = Date.now();
+            
             this.saveData();
             
             if (this.config.onReset) {
@@ -173,8 +243,46 @@ class CertificationSystem {
     //#endregion
 
     //#region Certificazione
+    generateCertData() {
+        // Crea oggetto certificato con metadati completi
+        const certData = {
+            meta: {
+                appName: this.config.appName,
+                appVersion: this.config.appVersion,
+                generated: Date.now(),
+                startTime: this.data._meta.startTime,
+                endTime: this.data._meta.lastUpdate
+            },
+            values: this.data._values,
+            textFields: this.data._textFields,
+            fields: [] // Definizioni dei campi con etichette
+        };
+
+        // Aggiungi definizioni dei campi
+        this.config.fields.forEach(field => {
+            certData.fields.push({
+                key: field.key,
+                label: field.label,
+                type: field.type || 'number',
+                unit: field.unit || '',
+                showZero: field.showZero !== false
+            });
+        });
+
+        // Aggiungi campi di sistema
+        if (this.config.trackFocus) {
+            certData.fields.push(
+                { key: 'fl', label: 'Volte Focus Perso', type: 'number' },
+                { key: 'flt', label: 'Tempo Focus Perso', type: 'time' }
+            );
+        }
+
+        return certData;
+    }
+
     generateCertLink() {
-        const encoded = btoa(JSON.stringify(this.data));
+        const certData = this.generateCertData();
+        const encoded = btoa(JSON.stringify(certData));
         return `${this.config.certUrl}?cert=${encoded}`;
     }
 
@@ -188,10 +296,28 @@ class CertificationSystem {
         });
     }
 
+    // Aggiunge testo personalizzato al certificato
+    addTextNote(fieldKey, text) {
+        if (!this.data._textFields.hasOwnProperty(fieldKey)) {
+            // Crea campo testo al volo se non esiste
+            this.data._textFields[fieldKey] = '';
+        }
+        this.data._textFields[fieldKey] = text;
+        this.saveData();
+    }
+
     getFormattedTime(seconds) {
-        const minutes = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        if (seconds < 60) {
+            return `${seconds}s`;
+        } else if (seconds < 3600) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes}m ${secs}s`;
+        } else {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            return `${hours}h ${minutes}m`;
+        }
     }
     //#endregion
 
@@ -202,14 +328,31 @@ class CertificationSystem {
 
         let statsHTML = `
             <div class="cert-stat">
-                <div class="cert-stat-value">${this.getFormattedTime(this.data.t)}</div>
+                <div class="cert-stat-value">${this.getFormattedTime(this.data._values.t)}</div>
                 <div>Tempo Totale</div>
             </div>
         `;
 
         this.config.fields.forEach(field => {
-            const value = this.data[field.key];
-            const displayValue = (field.showZero === false && value === 0) ? '-' : value;
+            if (field.type === 'text') {
+                // Salta campi testuali nel pannello statistiche
+                return;
+            }
+            
+            const value = this.data._values[field.key];
+            let displayValue = value;
+            
+            // Gestione visualizzazione zero
+            if (field.showZero === false && value === 0) {
+                displayValue = '-';
+            }
+            
+            // Formattazione speciale per tipo
+            if (field.type === 'percentage' && value !== 0) {
+                displayValue = value + '%';
+            } else if (field.type === 'time') {
+                displayValue = this.getFormattedTime(value);
+            }
             
             statsHTML += `
                 <div class="cert-stat">
@@ -222,11 +365,11 @@ class CertificationSystem {
         if (this.config.trackFocus) {
             statsHTML += `
                 <div class="cert-stat">
-                    <div class="cert-stat-value">${this.data.fl || 0}</div>
+                    <div class="cert-stat-value">${this.data._values.fl || 0}</div>
                     <div>Volte Focus Perso</div>
                 </div>
                 <div class="cert-stat">
-                    <div class="cert-stat-value">${this.getFormattedTime(this.data.flt || 0)}</div>
+                    <div class="cert-stat-value">${this.getFormattedTime(this.data._values.flt || 0)}</div>
                     <div>Tempo Focus Perso</div>
                 </div>
             `;
