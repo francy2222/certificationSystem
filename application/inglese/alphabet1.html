@@ -539,6 +539,8 @@
 
         // Seleziona una tessera lettera (da tastiera o click)
         function selectLetterTile(tile) {
+            if (!tile) return false;
+            
             const letter = tile.dataset.letter;
             const answerZone = document.getElementById('answerZone');
             const tiles = answerZone.querySelectorAll('.letter-tile');
@@ -995,6 +997,7 @@
             }
 
             if (selectedLetter === currentLetter) {
+                // RISPOSTA CORRETTA
                 stats.correct++;
                 updateStatsDisplay();
                 
@@ -1004,10 +1007,12 @@
                 
                 showMessage('message2', `✅ Corretto! Era la lettera ${currentLetter}`, 'success');
                 
+                // Dopo risposta corretta, passa a nuova lettera
                 setTimeout(() => {
                     document.getElementById('message2').style.display = 'none';
                     pickRandomLetter();
                     
+                    // Pronuncia la NUOVA lettera
                     setTimeout(() => {
                         speakLetter(currentLetter);
                         buttonsLocked = false;
@@ -1015,6 +1020,7 @@
                 }, 1500);
                 
             } else {
+                // RISPOSTA SBAGLIATA
                 stats.wrong++;
                 updateStatsDisplay();
                 
@@ -1022,21 +1028,18 @@
                     certSystem.incrementField('fase2_sbagliate');
                 }
                 
-                showMessage('message2', `❌ Sbagliato! Era la lettera ${currentLetter}, hai scelto ${selectedLetter}`, 'error');
+                showMessage('message2', `❌ Sbagliato! Hai scelto ${selectedLetter}. Riprova!`, 'error');
                 
+                // Ripronuncia la STESSA lettera corretta dopo 1 secondo
                 setTimeout(() => {
                     speakLetter(currentLetter);
                 }, 1000);
                 
+                // NON cambiare lettera! L'utente deve riprovare
                 setTimeout(() => {
                     document.getElementById('message2').style.display = 'none';
-                    pickRandomLetter();
-                    
-                    setTimeout(() => {
-                        speakLetter(currentLetter);
-                        buttonsLocked = false;
-                    }, 300);
-                }, 3000);
+                    buttonsLocked = false; // Sblocca per riprovare
+                }, 2500);
             }
         }
 
