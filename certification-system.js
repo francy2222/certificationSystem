@@ -89,15 +89,15 @@ class CertificationSystem {
             try {
                 const modes = JSON.parse(persistedModes);
                 
-                // Se era in modalità verifica, mantienila
+                // Recupera modalità indipendentemente
                 if (modes.verificationMode) {
                     this.config.verificationMode = true;
-                    this.config.classroomMode = true; // Verifica implica classe
-                    
-                    // Log del recupero modalità
                     console.log('Modalità Verifica recuperata dopo refresh/riapertura');
-                } else if (modes.classroomMode) {
+                }
+                
+                if (modes.classroomMode) {
                     this.config.classroomMode = true;
+                    console.log('Modalità Lavoro in Classe recuperata dopo refresh/riapertura');
                 }
                 
                 // Registra il recupero
@@ -115,6 +115,13 @@ class CertificationSystem {
         }
     }
 
+    getCurrentMode() {
+        // Restituisce la modalità corrente come stringa
+        if (this.config.verificationMode) return 'verification';
+        if (this.config.classroomMode) return 'classroom';
+        return 'normal';
+    }
+
     persistModes() {
         // Salva stato modalità per sopravvivere a refresh
         const modes = {
@@ -128,6 +135,9 @@ class CertificationSystem {
 
     //#region Tracking Avanzato e Rilevamento Attività Sospette
     setupAdvancedTracking() {
+        // SOLO per modalità Verifica - tracking estremo
+        if (!this.config.verificationMode) return;
+        
         // Tracking resize finestra
         let resizeTimer;
         window.addEventListener('resize', () => {
@@ -146,7 +156,7 @@ class CertificationSystem {
                 });
                 
                 // Se resize sospetto in modalità verifica
-                if (this.config.verificationMode && sizeDiff > this.config.suspiciousResizeThreshold) {
+                if (sizeDiff > this.config.suspiciousResizeThreshold) {
                     this.logSuspiciousActivity('suspicious_resize', {
                         from: {...this.windowSize},
                         to: {...newSize},
@@ -176,7 +186,7 @@ class CertificationSystem {
                 timestamp: Date.now()
             });
             
-            if (isHidden && this.config.verificationMode) {
+            if (isHidden) {
                 this.logSuspiciousActivity('tab_hidden', {
                     timestamp: Date.now()
                 });
@@ -193,46 +203,38 @@ class CertificationSystem {
                     timestamp: Date.now()
                 });
                 
-                if (this.config.verificationMode) {
-                    this.logSuspiciousActivity('fullscreen_exit', {
-                        timestamp: Date.now()
-                    });
-                }
+                this.logSuspiciousActivity('fullscreen_exit', {
+                    timestamp: Date.now()
+                });
             }
         });
         
         // Tracking tentativi di navigazione
         window.addEventListener('beforeunload', (e) => {
-            if (this.config.verificationMode) {
-                // Salva stato prima di chiudere
-                this.persistModes();
-                this.saveData();
-                
-                // Mostra avviso
-                e.preventDefault();
-                e.returnValue = 'Sei in modalità verifica. Vuoi davvero uscire?';
-                
-                this.logEvent('exit_attempt', {
-                    timestamp: Date.now()
-                });
-            }
+            // Salva stato prima di chiudere
+            this.persistModes();
+            this.saveData();
+            
+            // Mostra avviso
+            e.preventDefault();
+            e.returnValue = 'Sei in modalità verifica. Vuoi davvero uscire?';
+            
+            this.logEvent('exit_attempt', {
+                timestamp: Date.now()
+            });
         });
         
         // Tracking copia/incolla (possibile imbroglio)
         document.addEventListener('copy', () => {
-            if (this.config.verificationMode) {
-                this.logSuspiciousActivity('copy_attempt', {
-                    timestamp: Date.now()
-                });
-            }
+            this.logSuspiciousActivity('copy_attempt', {
+                timestamp: Date.now()
+            });
         });
         
         document.addEventListener('paste', () => {
-            if (this.config.verificationMode) {
-                this.logSuspiciousActivity('paste_attempt', {
-                    timestamp: Date.now()
-                });
-            }
+            this.logSuspiciousActivity('paste_attempt', {
+                timestamp: Date.now()
+            });
         });
         
         // Tracking apertura console sviluppatore (F12)
@@ -244,11 +246,9 @@ class CertificationSystem {
                 window.outerWidth - window.innerWidth > threshold) {
                 if (!devtools.open) {
                     devtools.open = true;
-                    if (this.config.verificationMode) {
-                        this.logSuspiciousActivity('devtools_open', {
-                            timestamp: Date.now()
-                        });
-                    }
+                    this.logSuspiciousActivity('devtools_open', {
+                        timestamp: Date.now()
+                    });
                 }
             } else {
                 devtools.open = false;
@@ -335,16 +335,77 @@ class CertificationSystem {
     }
     //#endregion
 
-    //#region Modalità Verifica e Classe
+    //#region Modalità Normale, Classe e Verifica
+    toggleClassroomMode(enabled) {
+        const wasEnabled = this.config.classroomMode;
+        
+        // Se attiva modalità classe, disattiva verifica
+        if (enabled && this.config.verificationMode) {
+            if (!confirm('Disattivare modalità Verifica e passare a Lavoro in Classe?')) {
+                return false;
+            }
+            this.toggleVerificationMode(false);
+        }
+        
+        this.config.classroomMode = enabled;
+        
+        if (enabled) {
+            // Reset per nuova sessione classe
+            this.data = this.createEmptyData();
+            this.data._classroomSession = {
+                startTime: Date.now(),
+                endTime: null,
+                mode: 'classroom'
+            };
+            
+            // Setup tracking base (solo focus)
+            this.setupFocusTracking();
+            
+            // Notifica app - modalità classe con aiuti
+            if (this.config.onClassroomModeStart) {
+                this.config.onClassroomModeStart();
+            }
+            
+            this.logEvent('classroom_mode_enabled', {
+                timestamp: Date.now()
+            });
+            
+        } else if (wasEnabled) {
+            // Disattivazione modalità classe
+            if (this.data._classroomSession) {
+                this.data._classroomSession.endTime = Date.now();
+            }
+            
+            this.logEvent('classroom_mode_disabled', {
+                timestamp: Date.now(),
+                duration: Date.now() - (this.data._classroomSession?.startTime || 0)
+            });
+            
+            if (this.config.onClassroomModeEnd) {
+                this.config.onClassroomModeEnd();
+            }
+        }
+        
+        this.persistModes();
+        this.saveData();
+        return true;
+    }
+
     toggleVerificationMode(enabled) {
         const wasEnabled = this.config.verificationMode;
+        
+        // Se attiva modalità verifica, disattiva classe
+        if (enabled && this.config.classroomMode) {
+            if (!confirm('Disattivare modalità Lavoro in Classe e passare a Verifica?')) {
+                return false;
+            }
+            this.toggleClassroomMode(false);
+        }
+        
         this.config.verificationMode = enabled;
         
         if (enabled) {
-            // Attiva anche modalità classe
-            this.config.classroomMode = true;
-            
-            // Reset completo dei dati
+            // Reset completo per verifica
             this.data = this.createEmptyData();
             this.data._verificationSession = {
                 startTime: Date.now(),
@@ -352,14 +413,15 @@ class CertificationSystem {
                 strictMode: true
             };
             
-            // Setup tracking avanzato
-            this.setupAdvancedTracking();
+            // Setup tracking ESTREMO
             this.setupFocusTracking();
+            this.setupAdvancedTracking();
             
-            // Notifica app
-            this.notifyVerificationMode(true);
+            // Notifica app - modalità verifica senza aiuti
+            if (this.config.onVerificationModeStart) {
+                this.config.onVerificationModeStart();
+            }
             
-            // Log attivazione
             this.logEvent('verification_mode_enabled', {
                 timestamp: Date.now()
             });
@@ -370,17 +432,39 @@ class CertificationSystem {
                 this.data._verificationSession.endTime = Date.now();
             }
             
-            // Log disattivazione
             this.logEvent('verification_mode_disabled', {
                 timestamp: Date.now(),
                 duration: Date.now() - (this.data._verificationSession?.startTime || 0)
             });
             
-            // Notifica app
-            this.notifyVerificationMode(false);
+            if (this.config.onVerificationModeEnd) {
+                this.config.onVerificationModeEnd();
+            }
         }
         
-        // Persisti stato
+        this.persistModes();
+        this.saveData();
+        return true;
+    }
+
+    toggleNormalMode() {
+        // Torna a modalità normale
+        if (this.config.classroomMode) {
+            this.toggleClassroomMode(false);
+        }
+        if (this.config.verificationMode) {
+            this.toggleVerificationMode(false);
+        }
+        
+        // Notifica app - modalità normale
+        if (this.config.onNormalMode) {
+            this.config.onNormalMode();
+        }
+        
+        this.logEvent('normal_mode_enabled', {
+            timestamp: Date.now()
+        });
+        
         this.persistModes();
         this.saveData();
     }
@@ -391,38 +475,6 @@ class CertificationSystem {
         } else if (!enabled && this.config.onVerificationModeEnd) {
             this.config.onVerificationModeEnd();
         }
-    }
-
-    toggleClassroomMode(enabled) {
-        this.config.classroomMode = enabled;
-        
-        if (enabled) {
-            this.startClassroomSession();
-            this.setupFocusTracking();
-            
-            // Log attivazione
-            this.logEvent('classroom_mode_enabled', {
-                timestamp: Date.now()
-            });
-        } else {
-            // Se era in modalità verifica, non può disattivare classe
-            if (this.config.verificationMode) {
-                console.warn('Non puoi disattivare modalità classe mentre sei in verifica');
-                this.config.classroomMode = true;
-                return;
-            }
-            
-            this.endClassroomSession();
-            
-            // Log disattivazione
-            this.logEvent('classroom_mode_disabled', {
-                timestamp: Date.now()
-            });
-        }
-        
-        // Persisti stato
-        this.persistModes();
-        this.saveData();
     }
     //#endregion
 
@@ -1171,34 +1223,37 @@ class CertificationSystem {
                 `;
             }
             
-            // Toggle modalità
-            if (config.showClassroomToggle || config.showVerificationToggle) {
-                html += '<div class="cert-mode-toggles">';
-                
-                if (config.showClassroomToggle) {
-                    html += `
-                        <div class="cert-mode-toggle">
-                            <label style="font-weight: bold;">🏫 Classe</label>
-                            <div class="cert-switch ${isClassroom && !isVerification ? 'active' : ''}" 
-                                 onclick="certSystemToggleClassroom('${this.config.storageKey}', this)">
-                            </div>
+        // Toggle modalità
+        if (config.showClassroomToggle || config.showVerificationToggle) {
+            html += '<div class="cert-mode-toggles">';
+            
+            // Toggle Lavoro in Classe
+            if (config.showClassroomToggle) {
+                const isClassroom = this.config.classroomMode && !this.config.verificationMode;
+                html += `
+                    <div class="cert-mode-toggle">
+                        <label style="font-weight: bold;">🏫 Classe</label>
+                        <div class="cert-switch ${isClassroom ? 'active' : ''}" 
+                             onclick="certSystemToggleClassroom('${this.config.storageKey}', this)">
                         </div>
-                    `;
-                }
-                
-                if (config.showVerificationToggle) {
-                    html += `
-                        <div class="cert-mode-toggle">
-                            <label style="font-weight: bold;">🔒 Verifica</label>
-                            <div class="cert-switch ${isVerification ? 'active verification' : ''}" 
-                                 onclick="certSystemToggleVerification('${this.config.storageKey}', this)">
-                            </div>
-                        </div>
-                    `;
-                }
-                
-                html += '</div>';
+                    </div>
+                `;
             }
+            
+            // Toggle Verifica
+            if (config.showVerificationToggle) {
+                html += `
+                    <div class="cert-mode-toggle">
+                        <label style="font-weight: bold;">🔒 Verifica</label>
+                        <div class="cert-switch ${isVerification ? 'active verification' : ''}" 
+                             onclick="certSystemToggleVerification('${this.config.storageKey}', this)">
+                        </div>
+                    </div>
+                `;
+            }
+            
+            html += '</div>';
+        }
             
             html += '</div>';
         }
@@ -1293,16 +1348,13 @@ class CertificationSystem {
                 if (this.config.storageKey === storageKey) {
                     const isActive = element.classList.contains('active');
                     if (!isActive) {
-                        if (confirm('Attivare MODALITÀ CLASSE?\n\nQuesto comporta:\n• Tracking del focus\n• Nuova sessione\n\nContinuare?')) {
-                            this.toggleClassroomMode(true);
-                            this.renderFullPanel(containerId, options);
+                        if (confirm('🏫 ATTIVARE MODALITÀ LAVORO IN CLASSE?\n\nQuesto comporta:\n• Tracking del focus\n• Aiuti e facilitazioni ATTIVI\n• Nuova sessione\n\nContinuare?')) {
+                            if (this.toggleClassroomMode(true)) {
+                                this.renderFullPanel(containerId, options);
+                            }
                         }
                     } else {
-                        if (this.config.verificationMode) {
-                            alert('Non puoi disattivare modalità classe durante una verifica!');
-                            return;
-                        }
-                        if (confirm('Disattivare modalità classe?')) {
+                        if (confirm('Disattivare modalità Lavoro in Classe?')) {
                             this.toggleClassroomMode(false);
                             this.renderFullPanel(containerId, options);
                         }
@@ -1314,9 +1366,10 @@ class CertificationSystem {
                 if (this.config.storageKey === storageKey) {
                     const isActive = element.classList.contains('active');
                     if (!isActive) {
-                        if (confirm('🔒 ATTIVARE MODALITÀ VERIFICA?\n\n⚠️ ATTENZIONE:\n• Reset completo dei dati\n• Tracking ESTREMO di ogni azione\n• Registrazione violazioni\n• NON disattivabile fino al termine\n\nContinuare?')) {
-                            this.toggleVerificationMode(true);
-                            this.renderFullPanel(containerId, options);
+                        if (confirm('🔒 ATTIVARE MODALITÀ VERIFICA?\n\n⚠️ ATTENZIONE:\n• Reset completo dei dati\n• Tracking ESTREMO di ogni azione\n• NO aiuti o facilitazioni\n• Registrazione di tutte le violazioni\n\nContinuare?')) {
+                            if (this.toggleVerificationMode(true)) {
+                                this.renderFullPanel(containerId, options);
+                            }
                         }
                     } else {
                         if (confirm('⚠️ Terminare la modalità verifica?\n\nQuesto genererà il certificato finale.')) {
