@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lettore Certificati v3.0</title>
+    <title>Lettore Certificati - Sistema Didattico</title>
     <style>
         * {
             margin: 0;
@@ -15,158 +15,76 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             padding: 20px;
         }
 
         .container {
+            max-width: 1000px;
+            margin: 0 auto;
             background: white;
             border-radius: 20px;
-            padding: 50px;
+            padding: 40px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 1100px;
-            width: 100%;
         }
 
         h1 {
             text-align: center;
             color: #667eea;
-            margin-bottom: 15px;
-            font-size: 2.5em;
-            border-bottom: 3px solid #667eea;
+            margin-bottom: 30px;
             padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
         }
 
-        .app-name {
-            text-align: center;
-            color: #764ba2;
-            font-size: 1.8em;
-            margin-top: 10px;
-            font-weight: bold;
-        }
-
-        .app-version {
-            text-align: center;
-            color: #999;
-            font-size: 0.9em;
-            margin-bottom: 20px;
-        }
-
-        /* Student Info Section */
-        .student-section {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            margin: 20px 0;
-            text-align: center;
-        }
-
-        .student-section h3 {
-            font-size: 1.5em;
-            margin-bottom: 10px;
-        }
-
-        .student-details {
-            font-size: 1.2em;
-        }
-
-        /* Classroom Mode Indicator */
-        .classroom-indicator {
-            background: #ffc107;
-            color: #000;
-            padding: 20px;
-            border-radius: 15px;
-            margin: 20px 0;
-            text-align: center;
-            font-weight: bold;
-            font-size: 1.2em;
-        }
-
-        .classroom-indicator.strict {
-            background: #f44336;
-            color: white;
-        }
-
-        /* Focus Violations Section */
-        .focus-violations {
-            background: #ffebee;
-            border: 3px solid #f44336;
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
-        }
-
-        .focus-violations h4 {
-            color: #c62828;
-            margin-bottom: 15px;
-            font-size: 1.3em;
-        }
-
-        .focus-event {
-            background: white;
-            padding: 10px;
-            margin: 8px 0;
-            border-radius: 8px;
-            border-left: 4px solid #f44336;
-        }
-
-        .focus-event-time {
-            color: #666;
-            font-size: 0.9em;
-        }
-
-        .focus-event-duration {
-            color: #f44336;
-            font-weight: bold;
-        }
-
-        /* Input Section */
         .input-section {
-            text-align: center;
+            background: #f8f9fa;
             padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
         }
 
         .input-section h2 {
             color: #667eea;
             margin-bottom: 20px;
+            text-align: center;
         }
 
         .input-section p {
             color: #666;
-            margin-bottom: 25px;
-            line-height: 1.6;
+            margin-bottom: 20px;
+            text-align: center;
         }
 
-        .cert-input {
+        textarea {
             width: 100%;
             padding: 15px;
-            font-size: 1em;
             border: 2px solid #667eea;
             border-radius: 10px;
-            margin-bottom: 20px;
             font-family: monospace;
+            font-size: 14px;
             resize: vertical;
+            min-height: 100px;
         }
 
-        .cert-input:focus {
+        textarea:focus {
             outline: none;
             border-color: #764ba2;
             box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
         }
 
         .btn {
-            padding: 15px 40px;
-            font-size: 1.1em;
-            font-weight: bold;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
+            display: block;
+            width: 100%;
+            max-width: 300px;
+            margin: 20px auto;
+            padding: 15px 30px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
         }
 
         .btn:hover {
@@ -174,32 +92,49 @@
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
 
-        .btn-print {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            margin-left: 10px;
+        .cert-display {
+            display: none;
         }
 
-        /* Certificate Display */
         .cert-header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
 
         .cert-icon {
-            font-size: 4em;
+            font-size: 60px;
             margin-bottom: 10px;
         }
 
-        .cert-date {
-            color: #666;
-            font-size: 1.1em;
-            margin-top: 10px;
+        .app-name {
+            font-size: 28px;
+            color: #764ba2;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .app-version {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .student-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .student-info h3 {
+            margin-bottom: 10px;
         }
 
         .cert-meta {
             background: #f8f9fa;
-            border-radius: 10px;
             padding: 20px;
+            border-radius: 10px;
             margin: 20px 0;
         }
 
@@ -208,34 +143,31 @@
             color: #555;
         }
 
-        .cert-meta strong {
-            color: #333;
-        }
-
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 25px;
-            margin: 40px 0;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
         }
 
         .stat-card {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            border: 3px solid #667eea;
+            background: #f8f9fa;
+            border: 2px solid #667eea;
             border-radius: 15px;
-            padding: 30px;
+            padding: 20px;
             text-align: center;
-            transition: transform 0.3s;
+            transition: all 0.3s;
         }
 
         .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
         }
 
         .stat-card.highlight {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            border: none;
         }
 
         .stat-card.warning {
@@ -243,12 +175,8 @@
             border-color: #f44336;
         }
 
-        .stat-card.highlight .stat-label {
-            color: rgba(255, 255, 255, 0.9);
-        }
-
         .stat-value {
-            font-size: 2.5em;
+            font-size: 36px;
             font-weight: bold;
             color: #667eea;
             margin-bottom: 10px;
@@ -263,322 +191,295 @@
         }
 
         .stat-label {
-            color: #555;
-            font-size: 1.1em;
-            font-weight: 500;
+            color: #666;
+            font-size: 14px;
         }
 
-        .text-fields {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 25px;
-            margin: 30px 0;
-        }
-
-        .text-field {
-            margin: 20px 0;
-            padding: 15px;
-            background: white;
-            border-radius: 10px;
-            border-left: 4px solid #667eea;
-        }
-
-        .text-field-label {
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-
-        .text-field-value {
-            color: #333;
-            line-height: 1.6;
-        }
-
-        .evaluation {
-            text-align: center;
-            padding: 25px;
-            margin-top: 30px;
-            border-radius: 15px;
-            font-size: 1.3em;
-            font-weight: bold;
-        }
-
-        .evaluation.excellent {
-            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-            color: #155724;
-            border: 3px solid #28a745;
-        }
-
-        .evaluation.good {
-            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
-            color: #0c5460;
-            border: 3px solid #17a2b8;
-        }
-
-        .evaluation.needs-improvement {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-            color: #856404;
-            border: 3px solid #ffc107;
-        }
-
-        .evaluation.violation {
-            background: linear-gradient(135deg, #ffcdd2 0%, #ef9a9a 100%);
-            color: #c62828;
-            border: 3px solid #f44336;
+        .stat-card.highlight .stat-label {
+            color: rgba(255,255,255,0.9);
         }
 
         .error-message {
-            text-align: center;
-            padding: 40px;
-            color: #721c24;
+            display: none;
             background: #f8d7da;
-            border: 3px solid #dc3545;
-            border-radius: 15px;
-        }
-
-        .error-message h2 {
-            margin-bottom: 15px;
-        }
-
-        .legacy-warning {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
+            border: 2px solid #dc3545;
+            color: #721c24;
+            padding: 20px;
             border-radius: 10px;
-            padding: 15px;
             margin: 20px 0;
-            color: #856404;
             text-align: center;
+        }
+
+        .btn-print {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            margin-top: 30px;
         }
 
         @media print {
             body {
                 background: white;
             }
-            
             .container {
                 box-shadow: none;
             }
-
-            .btn {
+            .btn, .input-section {
                 display: none;
-            }
-
-            .input-section {
-                display: none !important;
             }
         }
 
         @media (max-width: 768px) {
             .container {
-                padding: 25px;
+                padding: 20px;
             }
-
-            h1 {
-                font-size: 1.8em;
-            }
-
             .stats-grid {
                 grid-template-columns: 1fr;
-            }
-
-            .stat-value {
-                font-size: 2em;
             }
         }
     </style>
 </head>
 <body>
-    <div class="container" id="certContainer">
-        <!-- Input Section -->
+    <div class="container">
+        <h1>📜 Lettore Certificati Didattici</h1>
+        
+        <!-- Sezione Input -->
         <div class="input-section" id="inputSection">
-            <h2>📜 Lettore Certificati v3.0</h2>
-            <p>Sistema avanzato con supporto modalità classe e tracking studente</p>
-            <p>Incolla qui il <strong>link completo</strong> del certificato oppure solo la <strong>stringa dopo ?cert=</strong></p>
-            <textarea class="cert-input" id="certInput" rows="4" placeholder="Esempio: https://certificationsystem.netlify.app/?cert=eyJ0Ijo0...
-oppure: eyJ0Ijo0NCwicDEiOjAsImUxIjowLCJwMiI6MCwiYzIiOjB9"></textarea>
-            <button class="btn" onclick="loadFromInput()">🔍 Visualizza Certificato</button>
+            <h2>Visualizza Certificato</h2>
+            <p>Incolla il link completo o la stringa del certificato</p>
+            <textarea id="certInput" placeholder="Esempio: https://certificationsystem.netlify.app/?cert=eyJ...
+oppure solo: eyJ..."></textarea>
+            <button class="btn" onclick="decodeCertificate()">🔍 Visualizza Certificato</button>
         </div>
 
-        <!-- Error Message -->
-        <div class="error-message" id="errorMessage" style="display: none;">
-            <h2>❌ Errore</h2>
-            <p id="errorText">Impossibile leggere il certificato. Verifica che il link o la stringa siano corretti.</p>
+        <!-- Messaggio Errore -->
+        <div class="error-message" id="errorMessage">
+            <strong>❌ Errore</strong>
+            <p id="errorText">Certificato non valido</p>
         </div>
 
-        <!-- Certificate Content -->
-        <div id="certContent"></div>
+        <!-- Display Certificato -->
+        <div class="cert-display" id="certDisplay"></div>
     </div>
 
     <script>
+        // Funzione per formattare il tempo
         function formatTime(seconds) {
             if (!seconds || seconds === 0) return '0s';
             
-            if (seconds < 60) {
-                return `${seconds}s`;
-            } else if (seconds < 3600) {
-                const minutes = Math.floor(seconds / 60);
-                const secs = seconds % 60;
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            
+            if (hours > 0) {
+                return `${hours}h ${minutes}m ${secs}s`;
+            } else if (minutes > 0) {
                 return `${minutes}m ${secs}s`;
             } else {
-                const hours = Math.floor(seconds / 3600);
-                const minutes = Math.floor((seconds % 3600) / 60);
-                const secs = seconds % 60;
-                return `${hours}h ${minutes}m ${secs}s`;
+                return `${secs}s`;
             }
         }
 
+        // Funzione per formattare date
         function formatDate(timestamp) {
+            if (!timestamp) return 'N/D';
+            
             const date = new Date(timestamp);
-            return date.toLocaleDateString('it-IT', {
-                weekday: 'long',
+            return date.toLocaleString('it-IT', {
+                day: '2-digit',
+                month: '2-digit',
                 year: 'numeric',
-                month: 'long',
-                day: 'numeric',
                 hour: '2-digit',
                 minute: '2-digit'
             });
         }
 
-        function formatTimeOnly(timestamp) {
-            const date = new Date(timestamp);
-            return date.toLocaleTimeString('it-IT', {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-        }
-
-        function loadFromInput() {
+        // Funzione principale di decodifica
+        function decodeCertificate() {
             const input = document.getElementById('certInput').value.trim();
             
             if (!input) {
-                showError('Inserisci un link o una stringa di certificazione validi.');
+                showError('Inserisci un link o una stringa di certificazione');
                 return;
             }
-            
-            let certData = null;
-            
+
+            // Nascondi errori precedenti
+            hideError();
+
+            // Estrai la stringa base64
+            let certString = input;
             if (input.includes('?cert=')) {
-                const match = input.match(/\?cert=([^&\s]+)/);
+                const match = input.match(/cert=([^&\s]+)/);
                 if (match) {
-                    certData = match[1];
+                    certString = match[1];
+                } else {
+                    showError('Link non valido');
+                    return;
                 }
-            } else {
-                certData = input;
             }
-            
-            if (certData) {
-                try {
-                    const data = JSON.parse(atob(certData));
-                    document.getElementById('inputSection').style.display = 'none';
-                    document.getElementById('errorMessage').style.display = 'none';
-                    displayCertificate(data);
-                } catch (e) {
-                    showError('Formato non valido. Verifica di aver copiato correttamente il link o la stringa.');
-                }
-            } else {
-                showError('Impossibile trovare dati del certificato nell\'input fornito.');
+
+            // Decodifica
+            try {
+                const decoded = JSON.parse(atob(certString));
+                console.log('Certificato decodificato:', decoded);
+                displayCertificate(decoded);
+            } catch (error) {
+                console.error('Errore decodifica:', error);
+                showError('Impossibile decodificare il certificato');
             }
         }
 
+        // Funzione per mostrare il certificato
         function displayCertificate(data) {
-            const container = document.getElementById('certContent');
+            const display = document.getElementById('certDisplay');
             
-            // Controlla formato
-            const isLegacy = !data.meta;
+            // Determina il formato (nuovo o legacy)
+            const isNewFormat = data.meta !== undefined;
             
-            if (isLegacy) {
-                displayLegacyCertificate(data);
-                return;
-            }
+            let html = '';
             
-            // Formato v3.0 con modalità classe
-            const meta = data.meta;
-            const values = data.values;
-            const fields = data.fields || [];
-            const textFields = data.textFields || {};
-            const studentInfo = data.studentInfo;
-            const session = data.session;
-            
-            // Calcola durata sessione
-            const sessionDuration = meta.endTime && meta.startTime ? 
-                Math.floor((meta.endTime - meta.startTime) / 1000) : values.t;
-            
-            // HTML per info studente
-            let studentHTML = '';
-            if (studentInfo && studentInfo.nome) {
-                studentHTML = `
-                    <div class="student-section">
-                        <h3>👤 Dati Studente</h3>
-                        <div class="student-details">
-                            <strong>${studentInfo.nome} ${studentInfo.cognome}</strong><br>
-                            Classe: ${studentInfo.classe || 'Non specificata'}
-                        </div>
+            if (isNewFormat) {
+                // Formato v3.0 con metadati
+                const meta = data.meta || {};
+                const values = data.values || {};
+                const fields = data.fields || [];
+                const studentInfo = data.studentInfo;
+                
+                html = `
+                    <div class="cert-header">
+                        <div class="cert-icon">📜</div>
+                        <h1>Certificato di Studio</h1>
+                        <div class="app-name">${meta.appName || 'App Didattica'}</div>
+                        <div class="app-version">Versione ${meta.appVersion || '1.0'}</div>
                     </div>
                 `;
-            }
-            
-            // HTML per modalità classe
-            let classroomHTML = '';
-            let focusEventsHTML = '';
-            
-            if (meta.classroomMode && session) {
-                classroomHTML = `
-                    <div class="classroom-indicator ${session.strictMode ? 'strict' : ''}">
-                        🏫 CERTIFICATO MODALITÀ CLASSE<br>
-                        <small>Sessione: ${session.id}</small>
+
+                // Info studente se presente
+                if (studentInfo && studentInfo.nome) {
+                    html += `
+                        <div class="student-info">
+                            <h3>👤 Studente</h3>
+                            <p><strong>${studentInfo.nome} ${studentInfo.cognome}</strong></p>
+                            <p>Classe: ${studentInfo.classe || 'N/D'}</p>
+                        </div>
+                    `;
+                }
+
+                // Metadati sessione
+                html += `
+                    <div class="cert-meta">
+                        <p><strong>📅 Generato:</strong> ${formatDate(meta.generated)}</p>
+                        <p><strong>⏰ Inizio:</strong> ${formatDate(meta.startTime)}</p>
+                        <p><strong>⏹️ Fine:</strong> ${formatDate(meta.endTime)}</p>
+                        <p><strong>⏱️ Durata totale:</strong> ${formatTime(values.t || 0)}</p>
                     </div>
+                `;
+
+                // Statistiche
+                html += '<div class="stats-grid">';
+                
+                // Tempo sempre per primo
+                html += `
+                    <div class="stat-card highlight">
+                        <div class="stat-value">${formatTime(values.t || 0)}</div>
+                        <div class="stat-label">Tempo Studio</div>
+                    </div>
+                `;
+
+                // Altri campi definiti
+                fields.forEach(field => {
+                    if (field.key === 't' || field.type === 'text') return;
+                    
+                    const value = values[field.key] || 0;
+                    let displayValue = value;
+                    
+                    if (field.type === 'time') {
+                        displayValue = formatTime(value);
+                    } else if (field.showZero === false && value === 0) {
+                        displayValue = '-';
+                    }
+                    
+                    html += `
+                        <div class="stat-card">
+                            <div class="stat-value">${displayValue}</div>
+                            <div class="stat-label">${field.label}</div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                
+            } else {
+                // Formato legacy (v1.0/v2.0)
+                html = `
+                    <div class="cert-header">
+                        <div class="cert-icon">📜</div>
+                        <h1>Certificato di Studio</h1>
+                        <p style="color: #f44336;">⚠️ Formato Legacy</p>
+                    </div>
+                    <div class="stats-grid">
                 `;
                 
-                // Analizza eventi focus
-                if (session.focusEvents && session.focusEvents.length > 0) {
-                    let totalLostTime = 0;
-                    let violations = [];
+                // Mostra tutti i campi disponibili
+                Object.keys(data).forEach(key => {
+                    let label = key;
+                    let value = data[key];
                     
-                    for (let i = 0; i < session.focusEvents.length; i += 2) {
-                        const blur = session.focusEvents[i];
-                        const focus = session.focusEvents[i + 1];
-                        
-                        if (blur && focus && focus.duration) {
-                            totalLostTime += focus.duration;
-                            violations.push({
-                                time: formatTimeOnly(blur.timestamp),
-                                duration: focus.duration,
-                                timeInSession: blur.timeInSession
-                            });
-                        }
+                    // Mappa etichette comuni
+                    const labels = {
+                        't': 'Tempo Totale',
+                        'p1': 'Fase 1 Completata',
+                        'e1': 'Errori Fase 1',
+                        'p2': 'Risposte Fase 2',
+                        'c2': 'Risposte Corrette',
+                        'activities': 'Attività',
+                        'errors': 'Errori',
+                        'score': 'Punteggio'
+                    };
+                    
+                    if (labels[key]) label = labels[key];
+                    
+                    if (key === 't' || key === 'flt') {
+                        value = formatTime(value);
                     }
                     
-                    if (violations.length > 0) {
-                        focusEventsHTML = `
-                            <div class="focus-violations">
-                                <h4>⚠️ Violazioni Focus Rilevate: ${violations.length}</h4>
-                                <p>Tempo totale fuori focus: <strong>${formatTime(totalLostTime)}</strong></p>
-                                <details>
-                                    <summary style="cursor: pointer; margin: 10px 0;">Dettagli violazioni</summary>
-                                    ${violations.map(v => `
-                                        <div class="focus-event">
-                                            <span class="focus-event-time">Al minuto ${Math.floor(v.timeInSession/60)} - Ore ${v.time}</span><br>
-                                            <span class="focus-event-duration">Durata: ${v.duration}s</span>
-                                        </div>
-                                    `).join('')}
-                                </details>
-                            </div>
-                        `;
-                    }
-                    // Carica da URL al caricamento
-        window.addEventListener('DOMContentLoaded', () => {
+                    html += `
+                        <div class="stat-card">
+                            <div class="stat-value">${value}</div>
+                            <div class="stat-label">${label}</div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+            }
+
+            // Aggiungi bottone stampa
+            html += '<button class="btn btn-print" onclick="window.print()">🖨️ Stampa Certificato</button>';
+
+            // Mostra il risultato
+            display.innerHTML = html;
+            display.style.display = 'block';
+            document.getElementById('inputSection').style.display = 'none';
+        }
+
+        // Funzioni utility
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
+            document.getElementById('errorMessage').style.display = 'block';
+            document.getElementById('certDisplay').style.display = 'none';
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // Auto-carica se c'è un parametro URL
+        window.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const certData = urlParams.get('cert');
+            const cert = urlParams.get('cert');
             
-            if (certData) {
-                try {
-                    const data = JSON.parse(atob(certData));
-                    document.getElementById('inputSection').style.display = 'none';
-                    displayCertificate(data);
-                } catch (e) {
-                    showError('Certificato non valido nell\'URL.');
-                }
+            if (cert) {
+                document.getElementById('certInput').value = cert;
+                decodeCertificate();
             }
         });
     </script>
