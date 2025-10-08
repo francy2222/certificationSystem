@@ -252,6 +252,27 @@
             margin-top: 5px;
         }
 
+        /* Stili per il pannello certificato */
+        .cert-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .cert-stat {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .cert-stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: white;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 20px;
@@ -295,6 +316,9 @@
             <button class="btn btn-primary" id="checkBtn">Verifica Ordine</button>
             <button class="btn btn-success" id="helpBtn">💡 Aiuto - Pronuncia lettera successiva</button>
             <button class="btn btn-primary" id="resetBtn" style="display: none;">Ricomincia</button>
+            
+            <!-- Pannello Certificato v3.0 - AGGIUNTO QUI -->
+            <div id="certificateContainer" style="margin-top: 40px;"></div>
         </div>
 
         <!-- Fase 2: Riconoscimento Audio -->
@@ -327,8 +351,8 @@
 
             <button class="btn btn-primary" id="backToPhase1">Torna alla Fase 1</button>
             
-            <!-- Pannello Certificato v3.0 -->
-            <div id="certificateContainer"></div>
+            <!-- Pannello Certificato v3.0 - Anche qui per la Fase 2 -->
+            <div id="certificateContainer2" style="margin-top: 40px;"></div>
         </div>
     </div>
 
@@ -352,6 +376,43 @@
         let currentPhase = 1;
         let currentLetter = null;
         let stats = { correct: 0, wrong: 0, total: 0 };
+        let errorCount = 0;
+        
+        // Sistema di Certificazione v3.0
+        let certSystem = null;
+        
+        // Inizializza sistema certificazione
+        function initCertificationSystem() {
+            certSystem = new CertificationSystem({
+                appName: 'Alfabeto Inglese',
+                appVersion: '1.0.0',
+                storageKey: 'alfabeto_inglese_cert',
+                certUrl: 'https://certificationsystem.netlify.app/',
+                trackFocus: false,
+                fields: [
+                    { key: 'fase1', label: 'Fase 1 Completata', showZero: false },
+                    { key: 'errori_fase1', label: 'Errori Fase 1', showZero: true },
+                    { key: 'fase2_corrette', label: 'Fase 2: Risposte Corrette', showZero: false },
+                    { key: 'fase2_sbagliate', label: 'Fase 2: Risposte Sbagliate', showZero: true },
+                    { key: 'fase2_totali', label: 'Fase 2: Totale Tentativi', showZero: false }
+                ],
+                onFieldUpdate: (key, value) => {
+                    // Determina quale container aggiornare in base alla fase
+                    const containerId = currentPhase === 1 ? 'certificateContainer' : 'certificateContainer2';
+                    if (certSystem && document.getElementById(containerId + '-stats')) {
+                        certSystem.renderStatsPanel(containerId + '-stats');
+                    }
+                }
+            });
+            
+            // Render pannello completo v3.0 nella fase corrente
+            const containerId = currentPhase === 1 ? 'certificateContainer' : 'certificateContainer2';
+            certSystem.renderFullPanel(containerId, {
+                collapsible: true,
+                showStudentControls: true,
+                showClassroomToggle: false
+            });
+        }
 
         // Inizializzazione Fase 1
         function initPhase1() {
@@ -448,43 +509,6 @@
                         draggedElement = null;
                     }
                 });
-            });
-        }
-
-        // Contatore errori
-        let errorCount = 0;
-        
-        // Sistema di Certificazione v3.0
-        let certSystem = null;
-        
-        // Inizializza sistema certificazione
-        function initCertificationSystem() {
-            certSystem = new CertificationSystem({
-                appName: 'Alfabeto Inglese',
-                appVersion: '1.0.0',
-                storageKey: 'alfabeto_inglese_cert',
-                certUrl: 'https://certificationsystem.netlify.app/',
-                trackFocus: false, // Non serve tracking focus per questo tipo di app
-                fields: [
-                    { key: 'fase1', label: 'Fase 1 Completata', showZero: false },
-                    { key: 'errori_fase1', label: 'Errori Fase 1', showZero: true },
-                    { key: 'fase2_corrette', label: 'Fase 2: Risposte Corrette', showZero: false },
-                    { key: 'fase2_sbagliate', label: 'Fase 2: Risposte Sbagliate', showZero: true },
-                    { key: 'fase2_totali', label: 'Fase 2: Totale Tentativi', showZero: false }
-                ],
-                onFieldUpdate: (key, value) => {
-                    // Aggiorna UI quando cambiano i dati
-                    if (certSystem) {
-                        certSystem.renderStatsPanel('certificateContainer-stats');
-                    }
-                }
-            });
-            
-            // Render pannello completo v3.0
-            certSystem.renderFullPanel('certificateContainer', {
-                collapsible: true,
-                showStudentControls: true,
-                showClassroomToggle: false // Non serve modalità classe per alfabeto
             });
         }
 
@@ -587,6 +611,11 @@
             showMessage('message1', '🎉 Perfetto! Hai completato la Fase 1!', 'success');
             document.getElementById('checkBtn').style.display = 'none';
             
+            // Registra completamento Fase 1
+            if (certSystem) {
+                certSystem.incrementField('fase1');
+            }
+            
             setTimeout(() => {
                 switchToPhase2();
             }, 2000);
@@ -633,9 +662,19 @@
             document.getElementById('phase2').style.display = 'block';
             currentPhase = 2;
             
-            // Registra completamento Fase 1 DOPO aver cambiato fase
-            if (certSystem) {
-                certSystem.incrementField('fase1');
+            // Nascondi pannello certificato fase 1
+            document.getElementById('certificateContainer').style.display = 'none';
+            
+            // Mostra pannello certificato fase 2
+            if (!document.getElementById('certificateContainer2-panel')) {
+                // Se non esiste, crealo
+                certSystem.renderFullPanel('certificateContainer2', {
+                    collapsible: true,
+                    showStudentControls: true,
+                    showClassroomToggle: false
+                });
+            } else {
+                document.getElementById('certificateContainer2').style.display = 'block';
             }
             
             initPhase2();
@@ -647,6 +686,14 @@
             document.getElementById('phase1').style.display = 'block';
             currentPhase = 1;
             stats = { correct: 0, wrong: 0, total: 0 };
+            
+            // Mostra pannello certificato fase 1
+            document.getElementById('certificateContainer').style.display = 'block';
+            // Nascondi pannello certificato fase 2
+            if (document.getElementById('certificateContainer2')) {
+                document.getElementById('certificateContainer2').style.display = 'none';
+            }
+            
             initPhase1();
         });
 
@@ -776,14 +823,10 @@
         }
 
         // Inizializza app
-        initPhase1();
-        
-        // Inizializza sistema certificazione quando il DOM è pronto
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initCertificationSystem);
-        } else {
+        window.addEventListener('DOMContentLoaded', () => {
+            initPhase1();
             initCertificationSystem();
-        }
+        });
     </script>
 </body>
 </html>
