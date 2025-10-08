@@ -525,6 +525,308 @@ class CertificationSystem {
     //#endregion
 
     //#region UI Helper
+    // Nuovo metodo per pannello completo con UI integrata
+    renderFullPanel(containerId, options = {}) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        // Opzioni di configurazione
+        const config = {
+            collapsible: options.collapsible !== false,
+            showStudentControls: options.showStudentControls !== false,
+            showClassroomToggle: options.showClassroomToggle !== false,
+            ...options
+        };
+
+        // CSS inline per garantire stile consistente
+        if (!document.getElementById('cert-system-styles')) {
+            const style = document.createElement('style');
+            style.id = 'cert-system-styles';
+            style.innerHTML = `
+                .cert-panel {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    border-radius: 15px;
+                    color: white;
+                    margin-top: 20px;
+                }
+                .cert-panel-header {
+                    padding: 20px;
+                    cursor: ${config.collapsible ? 'pointer' : 'default'};
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    user-select: none;
+                }
+                .cert-panel-header:hover {
+                    background: ${config.collapsible ? 'rgba(255,255,255,0.1)' : 'transparent'};
+                }
+                .cert-panel-title {
+                    font-size: 1.3em;
+                    font-weight: bold;
+                }
+                .cert-collapse-icon {
+                    font-size: 1.5em;
+                    transition: transform 0.3s;
+                    display: ${config.collapsible ? 'block' : 'none'};
+                }
+                .cert-panel.collapsed .cert-collapse-icon {
+                    transform: rotate(180deg);
+                }
+                .cert-panel-content {
+                    padding: 0 20px 20px 20px;
+                    transition: all 0.3s ease;
+                    max-height: 2000px;
+                    opacity: 1;
+                    overflow: hidden;
+                }
+                .cert-panel.collapsed .cert-panel-content {
+                    max-height: 0;
+                    padding: 0 20px;
+                    opacity: 0;
+                }
+                .cert-controls-bar {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 15px;
+                    background: rgba(255,255,255,0.1);
+                    border-radius: 10px;
+                    margin-bottom: 20px;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                }
+                .cert-student-info {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+                .cert-student-badge {
+                    padding: 8px 15px;
+                    background: rgba(255,255,255,0.2);
+                    border-radius: 8px;
+                    font-weight: bold;
+                }
+                .cert-student-badge.registered {
+                    background: rgba(76, 175, 80, 0.3);
+                }
+                .cert-classroom-toggle {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                }
+                .cert-switch {
+                    position: relative;
+                    width: 60px;
+                    height: 28px;
+                    background: #ccc;
+                    border-radius: 28px;
+                    cursor: pointer;
+                }
+                .cert-switch.active {
+                    background: #f44336;
+                }
+                .cert-switch::after {
+                    content: '';
+                    position: absolute;
+                    width: 20px;
+                    height: 20px;
+                    background: white;
+                    border-radius: 50%;
+                    top: 4px;
+                    left: 4px;
+                    transition: transform 0.3s;
+                }
+                .cert-switch.active::after {
+                    transform: translateX(32px);
+                }
+                .cert-btn {
+                    padding: 10px 20px;
+                    background: rgba(255,255,255,0.2);
+                    color: white;
+                    border: 2px solid rgba(255,255,255,0.3);
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    transition: all 0.3s;
+                }
+                .cert-btn:hover {
+                    background: rgba(255,255,255,0.3);
+                    transform: translateY(-2px);
+                }
+                .cert-btn-primary {
+                    background: rgba(255,255,255,0.9);
+                    color: #667eea;
+                }
+                .cert-btn-danger {
+                    background: #f44336;
+                    border-color: #f44336;
+                }
+                .cert-warning {
+                    background: #ffc107;
+                    color: #000;
+                    padding: 15px;
+                    border-radius: 10px;
+                    margin: 15px 0;
+                    text-align: center;
+                    font-weight: bold;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Genera HTML del pannello
+        let html = `
+            <div class="cert-panel ${container.dataset.collapsed === 'true' ? 'collapsed' : ''}" id="${containerId}-panel">
+                <div class="cert-panel-header" ${config.collapsible ? `onclick="certSystemTogglePanel('${containerId}')"` : ''}>
+                    <span class="cert-panel-title">📜 Certificato di Completamento</span>
+                    <span class="cert-collapse-icon">▼</span>
+                </div>
+                <div class="cert-panel-content">
+        `;
+
+        // Barra controlli (studente + modalità classe)
+        if (config.showStudentControls || config.showClassroomToggle) {
+            html += '<div class="cert-controls-bar">';
+            
+            // Info studente
+            if (config.showStudentControls) {
+                const studentText = this.studentInfo && this.studentInfo.nome ? 
+                    `👤 ${this.studentInfo.nome} ${this.studentInfo.cognome}` : 
+                    '👤 Studente non registrato';
+                const studentClass = this.studentInfo && this.studentInfo.nome ? 'registered' : '';
+                
+                html += `
+                    <div class="cert-student-info">
+                        <div class="cert-student-badge ${studentClass}">${studentText}</div>
+                        <button class="cert-btn" onclick="certSystemPromptStudent('${this.config.storageKey}')">
+                            📝 ${this.studentInfo ? 'Modifica' : 'Registra'}
+                        </button>
+                    </div>
+                `;
+            }
+            
+            // Toggle modalità classe
+            if (config.showClassroomToggle) {
+                const isActive = this.config.classroomMode;
+                html += `
+                    <div class="cert-classroom-toggle">
+                        <label style="font-weight: bold;">🏫 Modalità Classe</label>
+                        <div class="cert-switch ${isActive ? 'active' : ''}" 
+                             onclick="certSystemToggleClassroom('${this.config.storageKey}', this)">
+                        </div>
+                    </div>
+                `;
+            }
+            
+            html += '</div>';
+        }
+
+        // Avviso modalità classe
+        if (this.isInClassroomSession()) {
+            html += `
+                <div class="cert-warning">
+                    ⚠️ MODALITÀ CLASSE ATTIVA - Tracking rigoroso del focus abilitato
+                </div>
+            `;
+        }
+
+        // Pannello statistiche
+        html += '<div class="cert-stats" id="' + containerId + '-stats"></div>';
+        
+        // Bottoni azione
+        html += `
+            <div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                <button class="cert-btn cert-btn-primary" onclick="certSystemGenerateLink('${this.config.storageKey}')">
+                    📋 Genera Certificato
+                </button>
+                <button class="cert-btn cert-btn-danger" onclick="certSystemResetData('${this.config.storageKey}')">
+                    🔄 Reset Dati
+                </button>
+            </div>
+        `;
+
+        // Container per link generato
+        html += `
+            <div id="${containerId}-link" style="display: none; margin-top: 20px;">
+                <p style="text-align: center;">Link certificato generato:</p>
+                <div style="background: white; color: #667eea; padding: 15px; border-radius: 8px; 
+                            word-break: break-all; font-family: monospace; margin: 10px 0;">
+                    <span id="${containerId}-link-text"></span>
+                </div>
+                <div style="text-align: center;">
+                    <button class="cert-btn" onclick="certSystemCopyLink('${containerId}')">📋 Copia Link</button>
+                </div>
+            </div>
+        `;
+
+        html += '</div></div>';
+        
+        container.innerHTML = html;
+        
+        // Render statistiche
+        this.renderStatsPanel(containerId + '-stats');
+
+        // Aggiungi funzioni globali per gestione eventi
+        if (!window.certSystemTogglePanel) {
+            window.certSystemTogglePanel = (id) => {
+                const panel = document.getElementById(id + '-panel');
+                const container = document.getElementById(id);
+                if (panel && container) {
+                    panel.classList.toggle('collapsed');
+                    container.dataset.collapsed = panel.classList.contains('collapsed');
+                }
+            };
+
+            window.certSystemPromptStudent = (storageKey) => {
+                // Trova l'istanza corretta
+                if (this.config.storageKey === storageKey) {
+                    this.promptStudentInfo();
+                    this.renderFullPanel(containerId, options);
+                }
+            };
+
+            window.certSystemToggleClassroom = (storageKey, element) => {
+                if (this.config.storageKey === storageKey) {
+                    const isActive = element.classList.contains('active');
+                    if (!isActive) {
+                        if (confirm('Attivare MODALITÀ CLASSE?\n\nQuesto comporta:\n• Tracking rigoroso\n• Nuova sessione\n• Registrazione di ogni cambio finestra\n\nContinuare?')) {
+                            this.toggleClassroomMode(true);
+                            element.classList.add('active');
+                            this.renderFullPanel(containerId, options);
+                        }
+                    } else {
+                        if (confirm('Disattivare modalità classe?')) {
+                            this.toggleClassroomMode(false);
+                            element.classList.remove('active');
+                            this.renderFullPanel(containerId, options);
+                        }
+                    }
+                }
+            };
+
+            window.certSystemGenerateLink = (storageKey) => {
+                if (this.config.storageKey === storageKey) {
+                    const link = this.generateCertLink();
+                    document.getElementById(containerId + '-link').style.display = 'block';
+                    document.getElementById(containerId + '-link-text').textContent = link;
+                }
+            };
+
+            window.certSystemCopyLink = (containerId) => {
+                const linkText = document.getElementById(containerId + '-link-text').textContent;
+                navigator.clipboard.writeText(linkText).then(() => {
+                    alert('Link certificato copiato!');
+                });
+            };
+
+            window.certSystemResetData = (storageKey) => {
+                if (this.config.storageKey === storageKey) {
+                    this.resetData();
+                }
+            };
+        }
+    }
+
     renderStatsPanel(containerId) {
         const container = document.getElementById(containerId);
         if (!container) return;
