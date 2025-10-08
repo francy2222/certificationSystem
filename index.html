@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lettore Certificati Universale</title>
+    <title>Lettore Certificati v3.0</title>
     <style>
         * {
             margin: 0;
@@ -26,7 +26,7 @@
             border-radius: 20px;
             padding: 50px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 1000px;
+            max-width: 1100px;
             width: 100%;
         }
 
@@ -52,6 +52,75 @@
             color: #999;
             font-size: 0.9em;
             margin-bottom: 20px;
+        }
+
+        /* Student Info Section */
+        .student-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .student-section h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .student-details {
+            font-size: 1.2em;
+        }
+
+        /* Classroom Mode Indicator */
+        .classroom-indicator {
+            background: #ffc107;
+            color: #000;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .classroom-indicator.strict {
+            background: #f44336;
+            color: white;
+        }
+
+        /* Focus Violations Section */
+        .focus-violations {
+            background: #ffebee;
+            border: 3px solid #f44336;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .focus-violations h4 {
+            color: #c62828;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .focus-event {
+            background: white;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border-left: 4px solid #f44336;
+        }
+
+        .focus-event-time {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .focus-event-duration {
+            color: #f44336;
+            font-weight: bold;
         }
 
         /* Input Section */
@@ -169,6 +238,11 @@
             color: white;
         }
 
+        .stat-card.warning {
+            background: #ffebee;
+            border-color: #f44336;
+        }
+
         .stat-card.highlight .stat-label {
             color: rgba(255, 255, 255, 0.9);
         }
@@ -182,6 +256,10 @@
 
         .stat-card.highlight .stat-value {
             color: white;
+        }
+
+        .stat-card.warning .stat-value {
+            color: #f44336;
         }
 
         .stat-label {
@@ -241,6 +319,12 @@
             background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
             color: #856404;
             border: 3px solid #ffc107;
+        }
+
+        .evaluation.violation {
+            background: linear-gradient(135deg, #ffcdd2 0%, #ef9a9a 100%);
+            color: #c62828;
+            border: 3px solid #f44336;
         }
 
         .error-message {
@@ -307,7 +391,8 @@
     <div class="container" id="certContainer">
         <!-- Input Section -->
         <div class="input-section" id="inputSection">
-            <h2>📜 Lettore Certificati Universale</h2>
+            <h2>📜 Lettore Certificati v3.0</h2>
+            <p>Sistema avanzato con supporto modalità classe e tracking studente</p>
             <p>Incolla qui il <strong>link completo</strong> del certificato oppure solo la <strong>stringa dopo ?cert=</strong></p>
             <textarea class="cert-input" id="certInput" rows="4" placeholder="Esempio: https://certificationsystem.netlify.app/?cert=eyJ0Ijo0...
 oppure: eyJ0Ijo0NCwicDEiOjAsImUxIjowLCJwMiI6MCwiYzIiOjB9"></textarea>
@@ -354,6 +439,15 @@ oppure: eyJ0Ijo0NCwicDEiOjAsImUxIjowLCJwMiI6MCwiYzIiOjB9"></textarea>
             });
         }
 
+        function formatTimeOnly(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('it-IT', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
         function loadFromInput() {
             const input = document.getElementById('certInput').value.trim();
             
@@ -364,7 +458,6 @@ oppure: eyJ0Ijo0NCwicDEiOjAsImUxIjowLCJwMiI6MCwiYzIiOjB9"></textarea>
             
             let certData = null;
             
-            // Estrai da URL o usa direttamente
             if (input.includes('?cert=')) {
                 const match = input.match(/\?cert=([^&\s]+)/);
                 if (match) {
@@ -391,7 +484,7 @@ oppure: eyJ0Ijo0NCwicDEiOjAsImUxIjowLCJwMiI6MCwiYzIiOjB9"></textarea>
         function displayCertificate(data) {
             const container = document.getElementById('certContent');
             
-            // Controlla se è formato vecchio o nuovo
+            // Controlla formato
             const isLegacy = !data.meta;
             
             if (isLegacy) {
@@ -399,218 +492,52 @@ oppure: eyJ0Ijo0NCwicDEiOjAsImUxIjowLCJwMiI6MCwiYzIiOjB9"></textarea>
                 return;
             }
             
-            // Formato nuovo con metadati
+            // Formato v3.0 con modalità classe
             const meta = data.meta;
             const values = data.values;
             const fields = data.fields || [];
             const textFields = data.textFields || {};
+            const studentInfo = data.studentInfo;
+            const session = data.session;
             
             // Calcola durata sessione
             const sessionDuration = meta.endTime && meta.startTime ? 
                 Math.floor((meta.endTime - meta.startTime) / 1000) : values.t;
             
-            // Genera HTML per statistiche
-            let statsHTML = '';
-            
-            // Tempo totale sempre per primo
-            statsHTML += `
-                <div class="stat-card highlight">
-                    <div class="stat-value">⏱️ ${formatTime(values.t)}</div>
-                    <div class="stat-label">Tempo di Studio Effettivo</div>
-                </div>
-            `;
-            
-            // Altri campi
-            fields.forEach(field => {
-                if (field.type === 'text' || field.key === 'fl' || field.key === 'flt') {
-                    return; // Salta campi testo e focus (gestiti separatamente)
-                }
-                
-                const value = values[field.key] || 0;
-                let displayValue = value;
-                
-                // Formattazione in base al tipo
-                if (field.type === 'time') {
-                    displayValue = formatTime(value);
-                } else if (field.type === 'percentage') {
-                    displayValue = value + '%';
-                } else if (field.showZero === false && value === 0) {
-                    displayValue = '-';
-                }
-                
-                // Aggiungi unità se presente
-                if (field.unit && value !== 0 && displayValue !== '-') {
-                    displayValue += ' ' + field.unit;
-                }
-                
-                statsHTML += `
-                    <div class="stat-card">
-                        <div class="stat-value">${displayValue}</div>
-                        <div class="stat-label">${field.label}</div>
-                    </div>
-                `;
-            });
-            
-            // Aggiungi statistiche focus se presenti
-            if (values.fl !== undefined || values.flt !== undefined) {
-                statsHTML += `
-                    <div class="stat-card">
-                        <div class="stat-value">👁️ ${values.fl || 0}</div>
-                        <div class="stat-label">Volte Focus Perso</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value">⏸️ ${formatTime(values.flt || 0)}</div>
-                        <div class="stat-label">Tempo Focus Perso</div>
+            // HTML per info studente
+            let studentHTML = '';
+            if (studentInfo && studentInfo.nome) {
+                studentHTML = `
+                    <div class="student-section">
+                        <h3>👤 Dati Studente</h3>
+                        <div class="student-details">
+                            <strong>${studentInfo.nome} ${studentInfo.cognome}</strong><br>
+                            Classe: ${studentInfo.classe || 'Non specificata'}
+                        </div>
                     </div>
                 `;
             }
             
-            // Genera HTML per campi testo
-            let textFieldsHTML = '';
-            if (Object.keys(textFields).length > 0) {
-                textFieldsHTML = '<div class="text-fields"><h3 style="color: #667eea; margin-bottom: 20px;">📝 Note e Osservazioni</h3>';
+            // HTML per modalità classe
+            let classroomHTML = '';
+            let focusEventsHTML = '';
+            
+            if (meta.classroomMode && session) {
+                classroomHTML = `
+                    <div class="classroom-indicator ${session.strictMode ? 'strict' : ''}">
+                        🏫 CERTIFICATO MODALITÀ CLASSE<br>
+                        <small>Sessione: ${session.id}</small>
+                    </div>
+                `;
                 
-                Object.keys(textFields).forEach(key => {
-                    if (textFields[key]) {
-                        // Trova label dal campo
-                        const field = fields.find(f => f.key === key);
-                        const label = field ? field.label : key;
+                // Analizza eventi focus
+                if (session.focusEvents && session.focusEvents.length > 0) {
+                    let totalLostTime = 0;
+                    let violations = [];
+                    
+                    for (let i = 0; i < session.focusEvents.length; i += 2) {
+                        const blur = session.focusEvents[i];
+                        const focus = session.focusEvents[i + 1];
                         
-                        textFieldsHTML += `
-                            <div class="text-field">
-                                <div class="text-field-label">${label}</div>
-                                <div class="text-field-value">${textFields[key]}</div>
-                            </div>
-                        `;
-                    }
-                });
-                
-                textFieldsHTML += '</div>';
-            }
-            
-            // Genera HTML completo
-            container.innerHTML = `
-                <div class="cert-header">
-                    <div class="cert-icon">📜</div>
-                    <h1>Certificato di Studio</h1>
-                    <div class="app-name">${meta.appName}</div>
-                    <div class="app-version">Versione ${meta.appVersion}</div>
-                </div>
-
-                <div class="cert-meta">
-                    <p><strong>📅 Generato il:</strong> ${formatDate(meta.generated)}</p>
-                    <p><strong>⏰ Inizio sessione:</strong> ${formatDate(meta.startTime)}</p>
-                    <p><strong>⏹️ Fine sessione:</strong> ${formatDate(meta.endTime)}</p>
-                    <p><strong>⌛ Durata sessione totale:</strong> ${formatTime(sessionDuration)}</p>
-                </div>
-
-                <div class="stats-grid">
-                    ${statsHTML}
-                </div>
-
-                ${textFieldsHTML}
-
-                <div style="text-align: center; margin-top: 30px;">
-                    <button class="btn btn-print" onclick="window.print()">🖨️ Stampa Certificato</button>
-                </div>
-            `;
-        }
-
-        function displayLegacyCertificate(data) {
-            // Gestione formato vecchio per retrocompatibilità
-            const container = document.getElementById('certContent');
-            
-            const timeStr = formatTime(data.t || 0);
-            
-            let statsHTML = `
-                <div class="stat-card highlight">
-                    <div class="stat-value">⏱️ ${timeStr}</div>
-                    <div class="stat-label">Tempo Totale</div>
-                </div>
-            `;
-            
-            // Mostra tutti i campi disponibili
-            Object.keys(data).forEach(key => {
-                if (key === 't' || key === '_meta') return;
-                
-                let label = key;
-                let value = data[key];
-                
-                // Prova a mappare chiavi comuni
-                const labelMap = {
-                    'p1': 'Fase 1 Completata',
-                    'e1': 'Errori Fase 1',
-                    'p2': 'Risposte Fase 2',
-                    'c2': 'Risposte Corrette',
-                    'fl': 'Focus Perso',
-                    'flt': 'Tempo Focus Perso',
-                    'activities': 'Attività Completate',
-                    'errors': 'Errori',
-                    'score': 'Punteggio'
-                };
-                
-                if (labelMap[key]) {
-                    label = labelMap[key];
-                }
-                
-                // Formatta tempi
-                if (key === 'flt') {
-                    value = formatTime(value);
-                }
-                
-                statsHTML += `
-                    <div class="stat-card">
-                        <div class="stat-value">${value || 0}</div>
-                        <div class="stat-label">${label}</div>
-                    </div>
-                `;
-            });
-            
-            container.innerHTML = `
-                <div class="cert-header">
-                    <div class="cert-icon">📜</div>
-                    <h1>Certificato di Studio</h1>
-                    <div class="legacy-warning">
-                        ⚠️ Questo certificato usa il formato legacy v1.0<br>
-                        Alcune informazioni potrebbero non essere disponibili
-                    </div>
-                </div>
-
-                <div class="cert-meta">
-                    <p><strong>📅 Data visualizzazione:</strong> ${formatDate(Date.now())}</p>
-                </div>
-
-                <div class="stats-grid">
-                    ${statsHTML}
-                </div>
-
-                <div style="text-align: center; margin-top: 30px;">
-                    <button class="btn btn-print" onclick="window.print()">🖨️ Stampa Certificato</button>
-                </div>
-            `;
-        }
-
-        function showError(message) {
-            document.getElementById('errorText').textContent = message;
-            document.getElementById('errorMessage').style.display = 'block';
-            document.getElementById('inputSection').style.display = 'none';
-        }
-
-        // Carica da URL al caricamento
-        window.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const certData = urlParams.get('cert');
-            
-            if (certData) {
-                try {
-                    const data = JSON.parse(atob(certData));
-                    document.getElementById('inputSection').style.display = 'none';
-                    displayCertificate(data);
-                } catch (e) {
-                    showError('Certificato non valido nell\'URL.');
-                }
-            }
-        });
-    </script>
-</body>
-</html>
+                        if (blur && focus && focus.duration) {
+                            totalLostTime += focus.duration;
