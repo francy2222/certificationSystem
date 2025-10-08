@@ -54,6 +54,28 @@
             color: #667eea;
         }
 
+        /* Toggle pronuncia */
+        .sound-toggle {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .sound-toggle label {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .sound-toggle input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
         /* Fase 1 - Ordinamento */
         #phase1 {
             display: block;
@@ -98,6 +120,11 @@
             cursor: grabbing;
         }
 
+        .letter-tile.used {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
         .answer-zone {
             display: flex;
             flex-wrap: wrap;
@@ -113,6 +140,21 @@
 
         .answer-zone.drag-over {
             background: #e8eaf6;
+        }
+
+        .answer-zone.keyboard-active {
+            border-color: #38ef7d;
+            background: #e8f5e9;
+        }
+
+        .keyboard-hint {
+            text-align: center;
+            color: #38ef7d;
+            font-weight: bold;
+            margin: 10px 0;
+            padding: 10px;
+            background: #e8f5e9;
+            border-radius: 10px;
         }
 
         .btn {
@@ -198,6 +240,16 @@
             box-shadow: 0 12px 24px rgba(0,0,0,0.3);
         }
 
+        .play-btn.playing {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
         .keyboard-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -228,6 +280,11 @@
             transform: scale(0.95);
         }
 
+        .key-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .stats {
             display: flex;
             justify-content: space-around;
@@ -250,6 +307,16 @@
         .stat-label {
             color: #666;
             margin-top: 5px;
+        }
+
+        .current-letter-display {
+            text-align: center;
+            font-size: 1.5em;
+            color: #667eea;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
         }
 
         /* Stili per il pannello certificato */
@@ -299,9 +366,19 @@
         <h1>🎓 Alfabeto Inglese</h1>
         <p class="subtitle">Impara l'alfabeto in modo interattivo!</p>
 
+        <!-- Toggle pronuncia -->
+        <div class="sound-toggle">
+            <label>
+                <input type="checkbox" id="soundEnabled" checked>
+                <span>🔊 Pronuncia automatica attiva</span>
+            </label>
+        </div>
+
         <!-- Fase 1: Ordinamento -->
         <div id="phase1">
             <div class="phase-indicator">📝 Fase 1: Ordina le lettere dalla A alla Z</div>
+            
+            <div class="keyboard-hint">💡 Puoi anche digitare le lettere sulla tastiera!</div>
             
             <div class="message" id="message1"></div>
 
@@ -309,7 +386,7 @@
             
             <div class="answer-zone" id="answerZone">
                 <p style="color: #999; width: 100%; text-align: center; margin: auto;">
-                    Trascina qui le lettere in ordine alfabetico
+                    Trascina qui le lettere o digita sulla tastiera
                 </p>
             </div>
 
@@ -317,7 +394,7 @@
             <button class="btn btn-success" id="helpBtn">💡 Aiuto - Pronuncia lettera successiva</button>
             <button class="btn btn-primary" id="resetBtn" style="display: none;">Ricomincia</button>
             
-            <!-- Pannello Certificato v3.0 - AGGIUNTO QUI -->
+            <!-- Pannello Certificato v3.0 -->
             <div id="certificateContainer" style="margin-top: 40px;"></div>
         </div>
 
@@ -340,18 +417,22 @@
                 </div>
             </div>
 
+            <div class="current-letter-display" id="currentLetterDisplay" style="display: none;">
+                Lettera corrente: <strong id="debugLetter"></strong>
+            </div>
+
             <div class="message" id="message2"></div>
 
             <div class="audio-section">
                 <button class="play-btn" id="playAudioBtn">▶️</button>
-                <p style="margin-top: 20px; color: #666;">Clicca per ascoltare la lettera</p>
+                <p style="margin-top: 20px; color: #666;">Clicca per riascoltare la lettera</p>
             </div>
 
             <div class="keyboard-grid" id="keyboardGrid"></div>
 
             <button class="btn btn-primary" id="backToPhase1">Torna alla Fase 1</button>
             
-            <!-- Pannello Certificato v3.0 - Anche qui per la Fase 2 -->
+            <!-- Pannello Certificato v3.0 -->
             <div id="certificateContainer2" style="margin-top: 40px;"></div>
         </div>
     </div>
@@ -363,20 +444,13 @@
         // Alfabeto inglese
         const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
         
-        // Pronuncia corretta delle lettere in inglese
-        const letterPronunciations = {
-            'A': 'ei', 'B': 'bi', 'C': 'si', 'D': 'di', 'E': 'i',
-            'F': 'ef', 'G': 'dgi', 'H': 'eich', 'I': 'ai', 'J': 'dgei',
-            'K': 'kei', 'L': 'el', 'M': 'em', 'N': 'en', 'O': 'ou',
-            'P': 'pi', 'Q': 'kiu', 'R': 'ar', 'S': 'es', 'T': 'ti',
-            'U': 'iu', 'V': 'vi', 'W': 'dabliu', 'X': 'eks', 'Y': 'uai', 'Z': 'zed'
-        };
-
         // Stato applicazione
         let currentPhase = 1;
         let currentLetter = null;
         let stats = { correct: 0, wrong: 0, total: 0 };
         let errorCount = 0;
+        let lettersInAnswer = [];
+        let buttonsLocked = false; // Per evitare click multipli nella Fase 2
         
         // Sistema di Certificazione v3.0
         let certSystem = null;
@@ -397,7 +471,6 @@
                     { key: 'fase2_totali', label: 'Fase 2: Totale Tentativi', showZero: false }
                 ],
                 onFieldUpdate: (key, value) => {
-                    // Determina quale container aggiornare in base alla fase
                     const containerId = currentPhase === 1 ? 'certificateContainer' : 'certificateContainer2';
                     if (certSystem && document.getElementById(containerId + '-stats')) {
                         certSystem.renderStatsPanel(containerId + '-stats');
@@ -405,7 +478,6 @@
                 }
             });
             
-            // Render pannello completo v3.0 nella fase corrente
             const containerId = currentPhase === 1 ? 'certificateContainer' : 'certificateContainer2';
             certSystem.renderFullPanel(containerId, {
                 collapsible: true,
@@ -419,16 +491,156 @@
             const pool = document.getElementById('lettersPool');
             const answerZone = document.getElementById('answerZone');
             
-            // Crea tessere in ordine alfabetico (NON mescolate)
             pool.innerHTML = '';
+            lettersInAnswer = [];
+            
             alphabet.forEach(letter => {
                 const tile = createLetterTile(letter);
                 pool.appendChild(tile);
             });
 
-            answerZone.innerHTML = '<p style="color: #999; width: 100%; text-align: center; margin: auto;">Trascina qui le lettere in ordine alfabetico</p>';
+            answerZone.innerHTML = '<p style="color: #999; width: 100%; text-align: center; margin: auto;">Trascina qui le lettere o digita sulla tastiera</p>';
             
             setupDragAndDrop();
+            setupKeyboardInput();
+        }
+
+        // Setup input da tastiera
+        function setupKeyboardInput() {
+            // Rimuovi event listener precedente per evitare duplicati
+            document.removeEventListener('keydown', handleKeyPress);
+            
+            // Aggiungi nuovo listener
+            document.addEventListener('keydown', handleKeyPress);
+        }
+
+        // Gestisce pressione tasti
+        function handleKeyPress(e) {
+            // Solo in Fase 1
+            if (currentPhase !== 1) return;
+            
+            const key = e.key.toUpperCase();
+            
+            // Verifica se è una lettera dell'alfabeto
+            if (alphabet.includes(key) && !lettersInAnswer.includes(key)) {
+                // Trova la tessera nel pool
+                const tile = Array.from(document.querySelectorAll('#lettersPool .letter-tile'))
+                    .find(t => t.dataset.letter === key && !t.classList.contains('used'));
+                
+                if (tile) {
+                    addLetterToAnswer(key, tile);
+                }
+            }
+            
+            // Backspace per rimuovere ultima lettera
+            if (e.key === 'Backspace' && lettersInAnswer.length > 0) {
+                removeLastLetterFromAnswer();
+            }
+        }
+
+        // Aggiunge lettera alla risposta
+        function addLetterToAnswer(letter, tileElement) {
+            const answerZone = document.getElementById('answerZone');
+            const expectedLetter = alphabet[lettersInAnswer.length];
+            
+            // Rimuovi placeholder se presente
+            const placeholder = answerZone.querySelector('p');
+            if (placeholder) placeholder.remove();
+            
+            if (letter !== expectedLetter) {
+                // Lettera sbagliata
+                errorCount++;
+                playErrorSound();
+                
+                if (certSystem) {
+                    certSystem.incrementField('errori_fase1');
+                }
+                
+                showMessage('message1', 
+                    `❌ Errore ${errorCount}/3: Hai inserito "${letter}" ma la lettera giusta è "${expectedLetter}"`, 
+                    'error');
+                
+                // Pronuncia la lettera corretta se audio abilitato
+                if (document.getElementById('soundEnabled').checked) {
+                    setTimeout(() => {
+                        speakLetter(expectedLetter);
+                    }, 500);
+                }
+
+                if (errorCount >= 3) {
+                    setTimeout(() => {
+                        showMessage('message1', '💥 3 errori! Si ricomincia da capo!', 'error');
+                        setTimeout(() => {
+                            resetPhase1();
+                        }, 2000);
+                    }, 2000);
+                } else {
+                    setTimeout(() => {
+                        document.getElementById('message1').style.display = 'none';
+                    }, 3000);
+                }
+                return false;
+            }
+            
+            // Lettera corretta
+            playSuccessSound();
+            lettersInAnswer.push(letter);
+            
+            // Pronuncia se abilitato
+            if (document.getElementById('soundEnabled').checked) {
+                speakLetter(letter);
+            }
+            
+            // Crea nuova tessera nella zona risposta
+            const newTile = document.createElement('div');
+            newTile.className = 'letter-tile';
+            newTile.textContent = letter;
+            newTile.dataset.letter = letter;
+            answerZone.appendChild(newTile);
+            
+            // Marca tessera originale come usata
+            if (tileElement) {
+                tileElement.classList.add('used');
+            }
+            
+            // Evidenzia zona risposta
+            answerZone.classList.add('keyboard-active');
+            setTimeout(() => {
+                answerZone.classList.remove('keyboard-active');
+            }, 300);
+            
+            // Controlla se alfabeto completo
+            if (lettersInAnswer.length === 26) {
+                showMessage('message1', '✅ Alfabeto completo! Clicca Verifica!', 'success');
+            }
+            
+            return true;
+        }
+
+        // Rimuove ultima lettera dalla risposta
+        function removeLastLetterFromAnswer() {
+            if (lettersInAnswer.length === 0) return;
+            
+            const answerZone = document.getElementById('answerZone');
+            const lastLetter = lettersInAnswer.pop();
+            
+            // Rimuovi l'ultima tessera dalla zona risposta
+            const tiles = answerZone.querySelectorAll('.letter-tile');
+            if (tiles.length > 0) {
+                tiles[tiles.length - 1].remove();
+            }
+            
+            // Riabilita la tessera nel pool
+            const poolTile = Array.from(document.querySelectorAll('#lettersPool .letter-tile'))
+                .find(t => t.dataset.letter === lastLetter);
+            if (poolTile) {
+                poolTile.classList.remove('used');
+            }
+            
+            // Se zona risposta vuota, rimetti placeholder
+            if (lettersInAnswer.length === 0) {
+                answerZone.innerHTML = '<p style="color: #999; width: 100%; text-align: center; margin: auto;">Trascina qui le lettere o digita sulla tastiera</p>';
+            }
         }
 
         // Crea tessera lettera
@@ -439,14 +651,16 @@
             tile.draggable = true;
             tile.dataset.letter = letter;
             
-            // Pronuncia su mousedown (quando inizia a premere)
             tile.addEventListener('mousedown', () => {
-                speakLetter(letter);
+                if (document.getElementById('soundEnabled').checked) {
+                    speakLetter(letter);
+                }
             });
             
-            // Pronuncia anche su touchstart per dispositivi touch
             tile.addEventListener('touchstart', () => {
-                speakLetter(letter);
+                if (document.getElementById('soundEnabled').checked) {
+                    speakLetter(letter);
+                }
             });
             
             return tile;
@@ -457,7 +671,7 @@
             let draggedElement = null;
 
             document.addEventListener('dragstart', (e) => {
-                if (e.target.classList.contains('letter-tile')) {
+                if (e.target.classList.contains('letter-tile') && !e.target.classList.contains('used')) {
                     draggedElement = e.target;
                     e.target.classList.add('dragging');
                 }
@@ -487,24 +701,14 @@
                     zone.classList.remove('drag-over');
                     
                     if (draggedElement && zone === answerZone) {
-                        // Rimuovi messaggio placeholder
-                        const placeholder = zone.querySelector('p');
-                        if (placeholder) placeholder.remove();
-                        
-                        // Verifica se la lettera è corretta prima di aggiungerla
-                        if (checkLetterPosition(draggedElement, zone)) {
-                            zone.appendChild(draggedElement);
-                            
-                            // Se completo, abilita bottone verifica
-                            const tiles = zone.querySelectorAll('.letter-tile');
-                            if (tiles.length === 26) {
-                                showMessage('message1', '✅ Alfabeto completo! Clicca Verifica!', 'success');
+                        const letter = draggedElement.dataset.letter;
+                        if (!lettersInAnswer.includes(letter)) {
+                            if (addLetterToAnswer(letter, draggedElement)) {
+                                draggedElement.classList.add('used');
                             }
                         }
-                        // Se sbagliata, NON aggiungere la lettera (resta nel pool)
                         draggedElement = null;
                     } else if (draggedElement && zone === pool) {
-                        // Permetti di rimettere nel pool
                         zone.appendChild(draggedElement);
                         draggedElement = null;
                     }
@@ -512,7 +716,7 @@
             });
         }
 
-        // Suono di errore
+        // Suoni
         function playErrorSound() {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
@@ -531,7 +735,6 @@
             oscillator.stop(audioContext.currentTime + 0.5);
         }
 
-        // Suono di successo
         function playSuccessSound() {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
@@ -540,7 +743,7 @@
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
             
-            oscillator.frequency.value = 523.25; // Do alto
+            oscillator.frequency.value = 523.25;
             oscillator.type = 'sine';
             
             gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
@@ -550,60 +753,9 @@
             oscillator.stop(audioContext.currentTime + 0.3);
         }
 
-        // Verifica lettera in tempo reale
-        function checkLetterPosition(tile, zone) {
-            const tiles = zone.querySelectorAll('.letter-tile');
-            const position = tiles.length;
-            const letter = tile.dataset.letter;
-            const expectedLetter = alphabet[position];
-
-            if (letter !== expectedLetter) {
-                // Lettera sbagliata!
-                errorCount++;
-                playErrorSound();
-                
-                // Registra errore nel certificato
-                if (certSystem) {
-                    certSystem.incrementField('errori_fase1');
-                }
-                
-                showMessage('message1', 
-                    `❌ Errore ${errorCount}/3: Hai messo "${letter}" ma la lettera giusta è "${expectedLetter}"`, 
-                    'error');
-                
-                // Pronuncia la lettera corretta
-                setTimeout(() => {
-                    speakLetter(expectedLetter);
-                }, 500);
-
-                // SOLO al 3° errore si ricomincia
-                if (errorCount >= 3) {
-                    setTimeout(() => {
-                        showMessage('message1', '💥 3 errori! Si ricomincia da capo!', 'error');
-                        setTimeout(() => {
-                            resetPhase1();
-                        }, 2000);
-                    }, 2000);
-                } else {
-                    // Se NON è il 3° errore, nascondi messaggio dopo 3 secondi
-                    setTimeout(() => {
-                        document.getElementById('message1').style.display = 'none';
-                    }, 3000);
-                }
-                return false;
-            }
-            
-            // Lettera corretta!
-            playSuccessSound();
-            return true;
-        }
-
         // Verifica ordine completo
         document.getElementById('checkBtn').addEventListener('click', () => {
-            const answerZone = document.getElementById('answerZone');
-            const tiles = answerZone.querySelectorAll('.letter-tile');
-            
-            if (tiles.length !== 26) {
+            if (lettersInAnswer.length !== 26) {
                 showMessage('message1', 'Devi completare tutto l\'alfabeto!', 'error');
                 return;
             }
@@ -611,7 +763,6 @@
             showMessage('message1', '🎉 Perfetto! Hai completato la Fase 1!', 'success');
             document.getElementById('checkBtn').style.display = 'none';
             
-            // Registra completamento Fase 1
             if (certSystem) {
                 certSystem.incrementField('fase1');
             }
@@ -626,23 +777,21 @@
             document.getElementById('message1').style.display = 'none';
             document.getElementById('checkBtn').style.display = 'block';
             errorCount = 0;
+            lettersInAnswer = [];
             initPhase1();
         }
 
-        // Reset Fase 1
         document.getElementById('resetBtn').addEventListener('click', () => {
             resetPhase1();
         });
 
-        // Bottone Aiuto - Pronuncia lettera successiva
+        // Bottone Aiuto
         document.getElementById('helpBtn').addEventListener('click', () => {
-            const answerZone = document.getElementById('answerZone');
-            const tiles = answerZone.querySelectorAll('.letter-tile');
-            const position = tiles.length;
+            const position = lettersInAnswer.length;
             
             if (position < 26) {
                 const nextLetter = alphabet[position];
-                showMessage('message1', `💡 Ascolta la lettera successiva...`, 'success');
+                showMessage('message1', `💡 Prossima lettera: ${nextLetter}`, 'success');
                 speakLetter(nextLetter);
                 
                 setTimeout(() => {
@@ -662,12 +811,9 @@
             document.getElementById('phase2').style.display = 'block';
             currentPhase = 2;
             
-            // Nascondi pannello certificato fase 1
             document.getElementById('certificateContainer').style.display = 'none';
             
-            // Mostra pannello certificato fase 2
             if (!document.getElementById('certificateContainer2-panel')) {
-                // Se non esiste, crealo
                 certSystem.renderFullPanel('certificateContainer2', {
                     collapsible: true,
                     showStudentControls: true,
@@ -686,10 +832,9 @@
             document.getElementById('phase1').style.display = 'block';
             currentPhase = 1;
             stats = { correct: 0, wrong: 0, total: 0 };
+            updateStatsDisplay();
             
-            // Mostra pannello certificato fase 1
             document.getElementById('certificateContainer').style.display = 'block';
-            // Nascondi pannello certificato fase 2
             if (document.getElementById('certificateContainer2')) {
                 document.getElementById('certificateContainer2').style.display = 'none';
             }
@@ -702,7 +847,6 @@
             const grid = document.getElementById('keyboardGrid');
             grid.innerHTML = '';
             
-            // Crea tastiera
             alphabet.forEach(letter => {
                 const btn = document.createElement('button');
                 btn.className = 'key-btn';
@@ -711,31 +855,54 @@
                 grid.appendChild(btn);
             });
 
-            // Scegli prima lettera
+            // Genera e pronuncia subito la prima lettera
             pickRandomLetter();
+            setTimeout(() => {
+                speakLetter(currentLetter);
+            }, 500);
         }
 
         // Scegli lettera casuale
         function pickRandomLetter() {
-            currentLetter = alphabet[Math.floor(Math.random() * alphabet.length)];
+            const previousLetter = currentLetter;
+            
+            // Assicurati che non sia la stessa lettera di prima
+            do {
+                currentLetter = alphabet[Math.floor(Math.random() * alphabet.length)];
+            } while (currentLetter === previousLetter && alphabet.length > 1);
+            
+            // Debug: mostra lettera corrente (nascosto di default)
+            // document.getElementById('debugLetter').textContent = currentLetter;
+        }
+
+        // Aggiorna display statistiche
+        function updateStatsDisplay() {
+            document.getElementById('correctCount').textContent = stats.correct;
+            document.getElementById('wrongCount').textContent = stats.wrong;
+            document.getElementById('totalCount').textContent = stats.total;
         }
 
         // Pronuncia lettera
         document.getElementById('playAudioBtn').addEventListener('click', () => {
             if (!currentLetter) return;
             
+            const btn = document.getElementById('playAudioBtn');
+            btn.classList.add('playing');
+            
             speakLetter(currentLetter);
+            
+            setTimeout(() => {
+                btn.classList.remove('playing');
+            }, 1000);
         });
 
-        // TTS con pronuncia corretta
+        // TTS
         function speakLetter(letter) {
-            // Verifica se speechSynthesis è disponibile
             if (typeof speechSynthesis === 'undefined') {
                 console.warn('Speech Synthesis non disponibile in questo browser');
                 return;
             }
             
-            // Cancella eventuali speech in corso
             speechSynthesis.cancel();
             
             const utterance = new SpeechSynthesisUtterance(letter);
@@ -744,7 +911,6 @@
             utterance.pitch = 1;
             utterance.volume = 1;
             
-            // Cerca voce inglese
             const voices = speechSynthesis.getVoices();
             const englishVoice = voices.find(v => v.lang.includes('en-US') || v.lang.includes('en-GB'));
             if (englishVoice) {
@@ -754,48 +920,53 @@
             speechSynthesis.speak(utterance);
         }
 
-        // Carica voci al caricamento e quando cambiano
+        // Carica voci
         if (typeof speechSynthesis !== 'undefined') {
             speechSynthesis.addEventListener('voiceschanged', () => {
                 speechSynthesis.getVoices();
             });
-            
-            // Carica voci immediatamente
             speechSynthesis.getVoices();
         }
 
-        // Verifica risposta
+        // Verifica risposta nella Fase 2
         function checkAnswer(selectedLetter) {
-            if (!currentLetter) return;
-
-            stats.total++;
-            document.getElementById('totalCount').textContent = stats.total;
+            if (!currentLetter || buttonsLocked) return;
             
-            // Registra tentativo nel certificato
+            buttonsLocked = true;
+            
+            stats.total++;
+            updateStatsDisplay();
+            
             if (certSystem) {
                 certSystem.incrementField('fase2_totali');
             }
 
             if (selectedLetter === currentLetter) {
                 stats.correct++;
-                document.getElementById('correctCount').textContent = stats.correct;
+                updateStatsDisplay();
                 
-                // Registra risposta corretta
                 if (certSystem) {
                     certSystem.incrementField('fase2_corrette');
                 }
                 
                 showMessage('message2', `✅ Corretto! Era la lettera ${currentLetter}`, 'success');
                 
+                // Genera nuova lettera e pronunciala automaticamente
                 setTimeout(() => {
                     document.getElementById('message2').style.display = 'none';
                     pickRandomLetter();
+                    
+                    // Pronuncia la nuova lettera automaticamente
+                    setTimeout(() => {
+                        speakLetter(currentLetter);
+                        buttonsLocked = false;
+                    }, 300);
                 }, 1500);
+                
             } else {
                 stats.wrong++;
-                document.getElementById('wrongCount').textContent = stats.wrong;
+                updateStatsDisplay();
                 
-                // Registra risposta sbagliata
                 if (certSystem) {
                     certSystem.incrementField('fase2_sbagliate');
                 }
@@ -807,9 +978,16 @@
                     speakLetter(currentLetter);
                 }, 1000);
                 
+                // Genera nuova lettera e pronunciala
                 setTimeout(() => {
                     document.getElementById('message2').style.display = 'none';
                     pickRandomLetter();
+                    
+                    // Pronuncia la nuova lettera automaticamente
+                    setTimeout(() => {
+                        speakLetter(currentLetter);
+                        buttonsLocked = false;
+                    }, 300);
                 }, 3000);
             }
         }
