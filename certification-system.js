@@ -529,48 +529,52 @@ class CertificationSystem {
         const container = document.getElementById(containerId);
         if (!container) return;
 
-        let statsHTML = `
-            <div class="cert-stat">
-                <div class="cert-stat-value">${this.getFormattedTime(this.data._values.t)}</div>
-                <div>Tempo Totale</div>
-            </div>
-        `;
+        // Inizia con stringa vuota
+        let statsHTML = '';
 
-        // Mostra info studente se disponibili
-        if (this.studentInfo) {
-            statsHTML = `
-                <div class="cert-stat" style="grid-column: span 2;">
+        // 1. Info studente (se presente)
+        if (this.studentInfo && this.studentInfo.nome) {
+            statsHTML += `
+                <div class="cert-stat" style="grid-column: span 2; background: rgba(76,175,80,0.2);">
                     <div class="cert-stat-value" style="font-size: 1.2em;">
                         👤 ${this.studentInfo.nome} ${this.studentInfo.cognome}
                     </div>
                     <div>Classe: ${this.studentInfo.classe || 'N/D'}</div>
                 </div>
-            ` + statsHTML;
+            `;
         }
 
-        // Se modalità classe, mostra avviso
+        // 2. Modalità classe (se attiva)
         if (this.isInClassroomSession()) {
-            statsHTML = `
-                <div class="cert-stat" style="grid-column: span 2; background: #ffc107;">
+            statsHTML += `
+                <div class="cert-stat" style="grid-column: span 2; background: #ffc107; color: #000;">
                     <div class="cert-stat-value" style="color: #000;">
                         🏫 MODALITÀ CLASSE ATTIVA
                     </div>
                     <div style="color: #000;">Tracking rigoroso abilitato</div>
                 </div>
-            ` + statsHTML;
+            `;
         }
 
+        // 3. Tempo totale (sempre presente)
+        statsHTML += `
+            <div class="cert-stat">
+                <div class="cert-stat-value">${this.getFormattedTime(this.data._values.t || 0)}</div>
+                <div>Tempo Totale</div>
+            </div>
+        `;
+
+        // 4. Campi personalizzati
         this.config.fields.forEach(field => {
-            if (field.type === 'text') return;
+            if (field.type === 'text') return; // Salta campi testo
             
             const value = this.data._values[field.key] || 0;
             let displayValue = value;
             
+            // Gestione visualizzazione
             if (field.showZero === false && value === 0) {
                 displayValue = '-';
-            }
-            
-            if (field.type === 'percentage' && value !== 0) {
+            } else if (field.type === 'percentage' && value !== 0) {
                 displayValue = value + '%';
             } else if (field.type === 'time') {
                 displayValue = this.getFormattedTime(value);
@@ -584,22 +588,28 @@ class CertificationSystem {
             `;
         });
 
-        // Mostra tracking focus con warning se necessario
+        // 5. Focus tracking (se abilitato)
         if (this.config.trackFocus || this.config.classroomMode) {
-            const focusWarning = this.data._values.fl > 2 ? 'style="background: #ffebee; border-color: #f44336;"' : '';
+            const focusCount = this.data._values.fl || 0;
+            const focusTime = this.data._values.flt || 0;
+            
+            // Colore warning se troppe violazioni
+            const warningStyle = focusCount > 2 ? 
+                'background: rgba(244,67,54,0.2); border: 2px solid #f44336;' : '';
             
             statsHTML += `
-                <div class="cert-stat" ${focusWarning}>
-                    <div class="cert-stat-value">${this.data._values.fl || 0}</div>
+                <div class="cert-stat" style="${warningStyle}">
+                    <div class="cert-stat-value">${focusCount}</div>
                     <div>Volte Focus Perso</div>
                 </div>
-                <div class="cert-stat">
-                    <div class="cert-stat-value">${this.getFormattedTime(this.data._values.flt || 0)}</div>
+                <div class="cert-stat" style="${warningStyle}">
+                    <div class="cert-stat-value">${this.getFormattedTime(focusTime)}</div>
                     <div>Tempo Focus Perso</div>
                 </div>
             `;
         }
 
+        // Aggiorna container
         container.innerHTML = statsHTML;
     }
 
