@@ -273,3 +273,22 @@ Per domande o bug: gubercml@gmail.com
 
 **Repository:** https://github.com/your-repo  
 **Demo Live:** https://certificationsystem.netlify.app/
+
+## 📌 Changelog v3.0
+- ✨ **NUOVO**: Metodo `renderFullPanel()` con UI completa integrata
+- 🎓 Sistema dati studente persistenti 
+- 🏫 Modalità Classe con tracking rigoroso
+- 🔄 Pannello certificato collassabile
+- 🐛 Fix bug reset statistiche
+
+## 🆕 Uso Semplificato (v3.0+)
+```javascript
+// NUOVO: UI completa con una sola chiamata
+certSystem.renderFullPanel('containerId', {
+    collapsible: true,
+    showStudentControls: true,
+    showClassroomToggle: true
+});
+
+// VECCHIO metodo (ancora supportato)
+certSystem.renderStatsPanel('containerId');
