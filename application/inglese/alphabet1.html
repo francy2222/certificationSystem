@@ -106,7 +106,7 @@
             border-radius: 10px;
             cursor: grab;
             user-select: none;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
@@ -120,9 +120,15 @@
             cursor: grabbing;
         }
 
-        .letter-tile.used {
-            opacity: 0.3;
-            pointer-events: none;
+        .letter-tile.highlight {
+            animation: highlight 0.5s ease;
+            background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%);
+        }
+
+        @keyframes highlight {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
         }
 
         .answer-zone {
@@ -140,11 +146,6 @@
 
         .answer-zone.drag-over {
             background: #e8eaf6;
-        }
-
-        .answer-zone.keyboard-active {
-            border-color: #38ef7d;
-            background: #e8f5e9;
         }
 
         .keyboard-hint {
@@ -309,16 +310,6 @@
             margin-top: 5px;
         }
 
-        .current-letter-display {
-            text-align: center;
-            font-size: 1.5em;
-            color: #667eea;
-            margin: 20px 0;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
-
         /* Stili per il pannello certificato */
         .cert-stats {
             display: grid;
@@ -378,7 +369,7 @@
         <div id="phase1">
             <div class="phase-indicator">📝 Fase 1: Ordina le lettere dalla A alla Z</div>
             
-            <div class="keyboard-hint">💡 Puoi anche digitare le lettere sulla tastiera!</div>
+            <div class="keyboard-hint">💡 Puoi trascinare le tessere o digitarle sulla tastiera!</div>
             
             <div class="message" id="message1"></div>
 
@@ -386,7 +377,7 @@
             
             <div class="answer-zone" id="answerZone">
                 <p style="color: #999; width: 100%; text-align: center; margin: auto;">
-                    Trascina qui le lettere o digita sulla tastiera
+                    Trascina qui le lettere in ordine alfabetico
                 </p>
             </div>
 
@@ -417,10 +408,6 @@
                 </div>
             </div>
 
-            <div class="current-letter-display" id="currentLetterDisplay" style="display: none;">
-                Lettera corrente: <strong id="debugLetter"></strong>
-            </div>
-
             <div class="message" id="message2"></div>
 
             <div class="audio-section">
@@ -449,8 +436,7 @@
         let currentLetter = null;
         let stats = { correct: 0, wrong: 0, total: 0 };
         let errorCount = 0;
-        let lettersInAnswer = [];
-        let buttonsLocked = false; // Per evitare click multipli nella Fase 2
+        let buttonsLocked = false;
         
         // Sistema di Certificazione v3.0
         let certSystem = null;
@@ -486,20 +472,32 @@
             });
         }
 
+        // Funzione per mescolare array (Fisher-Yates)
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
         // Inizializzazione Fase 1
         function initPhase1() {
             const pool = document.getElementById('lettersPool');
             const answerZone = document.getElementById('answerZone');
             
             pool.innerHTML = '';
-            lettersInAnswer = [];
             
-            alphabet.forEach(letter => {
+            // IMPORTANTE: Mescola le lettere!
+            const shuffledLetters = shuffleArray(alphabet);
+            
+            shuffledLetters.forEach(letter => {
                 const tile = createLetterTile(letter);
                 pool.appendChild(tile);
             });
 
-            answerZone.innerHTML = '<p style="color: #999; width: 100%; text-align: center; margin: auto;">Trascina qui le lettere o digita sulla tastiera</p>';
+            answerZone.innerHTML = '<p style="color: #999; width: 100%; text-align: center; margin: auto;">Trascina qui le lettere in ordine alfabetico</p>';
             
             setupDragAndDrop();
             setupKeyboardInput();
@@ -507,7 +505,7 @@
 
         // Setup input da tastiera
         function setupKeyboardInput() {
-            // Rimuovi event listener precedente per evitare duplicati
+            // Rimuovi event listener precedente
             document.removeEventListener('keydown', handleKeyPress);
             
             // Aggiungi nuovo listener
@@ -522,30 +520,39 @@
             const key = e.key.toUpperCase();
             
             // Verifica se è una lettera dell'alfabeto
-            if (alphabet.includes(key) && !lettersInAnswer.includes(key)) {
-                // Trova la tessera nel pool
+            if (alphabet.includes(key)) {
+                // Trova la tessera corrispondente nel pool
                 const tile = Array.from(document.querySelectorAll('#lettersPool .letter-tile'))
-                    .find(t => t.dataset.letter === key && !t.classList.contains('used'));
+                    .find(t => t.dataset.letter === key);
                 
                 if (tile) {
-                    addLetterToAnswer(key, tile);
+                    // Simula il click/selezione della tessera
+                    selectLetterTile(tile);
                 }
             }
             
             // Backspace per rimuovere ultima lettera
-            if (e.key === 'Backspace' && lettersInAnswer.length > 0) {
+            if (e.key === 'Backspace') {
                 removeLastLetterFromAnswer();
             }
         }
 
-        // Aggiunge lettera alla risposta
-        function addLetterToAnswer(letter, tileElement) {
+        // Seleziona una tessera lettera (da tastiera o click)
+        function selectLetterTile(tile) {
+            const letter = tile.dataset.letter;
             const answerZone = document.getElementById('answerZone');
-            const expectedLetter = alphabet[lettersInAnswer.length];
+            const tiles = answerZone.querySelectorAll('.letter-tile');
+            const expectedLetter = alphabet[tiles.length];
             
             // Rimuovi placeholder se presente
             const placeholder = answerZone.querySelector('p');
             if (placeholder) placeholder.remove();
+            
+            // Evidenzia tessera
+            tile.classList.add('highlight');
+            setTimeout(() => {
+                tile.classList.remove('highlight');
+            }, 500);
             
             if (letter !== expectedLetter) {
                 // Lettera sbagliata
@@ -557,7 +564,7 @@
                 }
                 
                 showMessage('message1', 
-                    `❌ Errore ${errorCount}/3: Hai inserito "${letter}" ma la lettera giusta è "${expectedLetter}"`, 
+                    `❌ Errore ${errorCount}/3: Hai selezionato "${letter}" ma la lettera giusta è "${expectedLetter}"`, 
                     'error');
                 
                 // Pronuncia la lettera corretta se audio abilitato
@@ -582,35 +589,20 @@
                 return false;
             }
             
-            // Lettera corretta
+            // Lettera corretta!
             playSuccessSound();
-            lettersInAnswer.push(letter);
             
             // Pronuncia se abilitato
             if (document.getElementById('soundEnabled').checked) {
                 speakLetter(letter);
             }
             
-            // Crea nuova tessera nella zona risposta
-            const newTile = document.createElement('div');
-            newTile.className = 'letter-tile';
-            newTile.textContent = letter;
-            newTile.dataset.letter = letter;
-            answerZone.appendChild(newTile);
-            
-            // Marca tessera originale come usata
-            if (tileElement) {
-                tileElement.classList.add('used');
-            }
-            
-            // Evidenzia zona risposta
-            answerZone.classList.add('keyboard-active');
-            setTimeout(() => {
-                answerZone.classList.remove('keyboard-active');
-            }, 300);
+            // Sposta la tessera nella zona risposta
+            answerZone.appendChild(tile);
             
             // Controlla se alfabeto completo
-            if (lettersInAnswer.length === 26) {
+            const updatedTiles = answerZone.querySelectorAll('.letter-tile');
+            if (updatedTiles.length === 26) {
                 showMessage('message1', '✅ Alfabeto completo! Clicca Verifica!', 'success');
             }
             
@@ -619,27 +611,21 @@
 
         // Rimuove ultima lettera dalla risposta
         function removeLastLetterFromAnswer() {
-            if (lettersInAnswer.length === 0) return;
-            
             const answerZone = document.getElementById('answerZone');
-            const lastLetter = lettersInAnswer.pop();
-            
-            // Rimuovi l'ultima tessera dalla zona risposta
+            const pool = document.getElementById('lettersPool');
             const tiles = answerZone.querySelectorAll('.letter-tile');
-            if (tiles.length > 0) {
-                tiles[tiles.length - 1].remove();
-            }
             
-            // Riabilita la tessera nel pool
-            const poolTile = Array.from(document.querySelectorAll('#lettersPool .letter-tile'))
-                .find(t => t.dataset.letter === lastLetter);
-            if (poolTile) {
-                poolTile.classList.remove('used');
-            }
+            if (tiles.length === 0) return;
+            
+            // Prendi l'ultima tessera
+            const lastTile = tiles[tiles.length - 1];
+            
+            // Rimettila nel pool
+            pool.appendChild(lastTile);
             
             // Se zona risposta vuota, rimetti placeholder
-            if (lettersInAnswer.length === 0) {
-                answerZone.innerHTML = '<p style="color: #999; width: 100%; text-align: center; margin: auto;">Trascina qui le lettere o digita sulla tastiera</p>';
+            if (answerZone.querySelectorAll('.letter-tile').length === 0) {
+                answerZone.innerHTML = '<p style="color: #999; width: 100%; text-align: center; margin: auto;">Trascina qui le lettere in ordine alfabetico</p>';
             }
         }
 
@@ -651,12 +637,21 @@
             tile.draggable = true;
             tile.dataset.letter = letter;
             
+            // Click per selezionare (oltre al drag)
+            tile.addEventListener('click', () => {
+                if (currentPhase === 1) {
+                    selectLetterTile(tile);
+                }
+            });
+            
+            // Pronuncia su mousedown
             tile.addEventListener('mousedown', () => {
                 if (document.getElementById('soundEnabled').checked) {
                     speakLetter(letter);
                 }
             });
             
+            // Pronuncia su touchstart per touch
             tile.addEventListener('touchstart', () => {
                 if (document.getElementById('soundEnabled').checked) {
                     speakLetter(letter);
@@ -671,7 +666,7 @@
             let draggedElement = null;
 
             document.addEventListener('dragstart', (e) => {
-                if (e.target.classList.contains('letter-tile') && !e.target.classList.contains('used')) {
+                if (e.target.classList.contains('letter-tile')) {
                     draggedElement = e.target;
                     e.target.classList.add('dragging');
                 }
@@ -701,10 +696,22 @@
                     zone.classList.remove('drag-over');
                     
                     if (draggedElement && zone === answerZone) {
+                        // Verifica se la lettera è corretta
+                        const tiles = answerZone.querySelectorAll('.letter-tile');
                         const letter = draggedElement.dataset.letter;
-                        if (!lettersInAnswer.includes(letter)) {
-                            if (addLetterToAnswer(letter, draggedElement)) {
-                                draggedElement.classList.add('used');
+                        const expectedLetter = alphabet[tiles.length];
+                        
+                        // Rimuovi placeholder
+                        const placeholder = zone.querySelector('p');
+                        if (placeholder) placeholder.remove();
+                        
+                        if (checkLetterPosition(draggedElement, zone)) {
+                            zone.appendChild(draggedElement);
+                            
+                            // Se completo
+                            const updatedTiles = zone.querySelectorAll('.letter-tile');
+                            if (updatedTiles.length === 26) {
+                                showMessage('message1', '✅ Alfabeto completo! Clicca Verifica!', 'success');
                             }
                         }
                         draggedElement = null;
@@ -714,6 +721,53 @@
                     }
                 });
             });
+        }
+
+        // Verifica posizione lettera
+        function checkLetterPosition(tile, zone) {
+            const tiles = zone.querySelectorAll('.letter-tile');
+            const position = tiles.length;
+            const letter = tile.dataset.letter;
+            const expectedLetter = alphabet[position];
+
+            if (letter !== expectedLetter) {
+                errorCount++;
+                playErrorSound();
+                
+                if (certSystem) {
+                    certSystem.incrementField('errori_fase1');
+                }
+                
+                showMessage('message1', 
+                    `❌ Errore ${errorCount}/3: Hai messo "${letter}" ma la lettera giusta è "${expectedLetter}"`, 
+                    'error');
+                
+                if (document.getElementById('soundEnabled').checked) {
+                    setTimeout(() => {
+                        speakLetter(expectedLetter);
+                    }, 500);
+                }
+
+                if (errorCount >= 3) {
+                    setTimeout(() => {
+                        showMessage('message1', '💥 3 errori! Si ricomincia da capo!', 'error');
+                        setTimeout(() => {
+                            resetPhase1();
+                        }, 2000);
+                    }, 2000);
+                } else {
+                    setTimeout(() => {
+                        document.getElementById('message1').style.display = 'none';
+                    }, 3000);
+                }
+                return false;
+            }
+            
+            playSuccessSound();
+            if (document.getElementById('soundEnabled').checked) {
+                speakLetter(letter);
+            }
+            return true;
         }
 
         // Suoni
@@ -755,7 +809,10 @@
 
         // Verifica ordine completo
         document.getElementById('checkBtn').addEventListener('click', () => {
-            if (lettersInAnswer.length !== 26) {
+            const answerZone = document.getElementById('answerZone');
+            const tiles = answerZone.querySelectorAll('.letter-tile');
+            
+            if (tiles.length !== 26) {
                 showMessage('message1', 'Devi completare tutto l\'alfabeto!', 'error');
                 return;
             }
@@ -777,7 +834,6 @@
             document.getElementById('message1').style.display = 'none';
             document.getElementById('checkBtn').style.display = 'block';
             errorCount = 0;
-            lettersInAnswer = [];
             initPhase1();
         }
 
@@ -787,7 +843,9 @@
 
         // Bottone Aiuto
         document.getElementById('helpBtn').addEventListener('click', () => {
-            const position = lettersInAnswer.length;
+            const answerZone = document.getElementById('answerZone');
+            const tiles = answerZone.querySelectorAll('.letter-tile');
+            const position = tiles.length;
             
             if (position < 26) {
                 const nextLetter = alphabet[position];
@@ -855,7 +913,6 @@
                 grid.appendChild(btn);
             });
 
-            // Genera e pronuncia subito la prima lettera
             pickRandomLetter();
             setTimeout(() => {
                 speakLetter(currentLetter);
@@ -866,13 +923,9 @@
         function pickRandomLetter() {
             const previousLetter = currentLetter;
             
-            // Assicurati che non sia la stessa lettera di prima
             do {
                 currentLetter = alphabet[Math.floor(Math.random() * alphabet.length)];
             } while (currentLetter === previousLetter && alphabet.length > 1);
-            
-            // Debug: mostra lettera corrente (nascosto di default)
-            // document.getElementById('debugLetter').textContent = currentLetter;
         }
 
         // Aggiorna display statistiche
@@ -951,12 +1004,10 @@
                 
                 showMessage('message2', `✅ Corretto! Era la lettera ${currentLetter}`, 'success');
                 
-                // Genera nuova lettera e pronunciala automaticamente
                 setTimeout(() => {
                     document.getElementById('message2').style.display = 'none';
                     pickRandomLetter();
                     
-                    // Pronuncia la nuova lettera automaticamente
                     setTimeout(() => {
                         speakLetter(currentLetter);
                         buttonsLocked = false;
@@ -973,17 +1024,14 @@
                 
                 showMessage('message2', `❌ Sbagliato! Era la lettera ${currentLetter}, hai scelto ${selectedLetter}`, 'error');
                 
-                // Ripronuncia la lettera corretta
                 setTimeout(() => {
                     speakLetter(currentLetter);
                 }, 1000);
                 
-                // Genera nuova lettera e pronunciala
                 setTimeout(() => {
                     document.getElementById('message2').style.display = 'none';
                     pickRandomLetter();
                     
-                    // Pronuncia la nuova lettera automaticamente
                     setTimeout(() => {
                         speakLetter(currentLetter);
                         buttonsLocked = false;
