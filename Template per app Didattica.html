@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Template App Didattica v3.0</title>
+    <title>App Didattica v3.1</title>
     <style>
         * {
             margin: 0;
@@ -26,7 +26,7 @@
             border-radius: 20px;
             padding: 40px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 900px;
+            max-width: 1000px;
             width: 100%;
         }
 
@@ -71,6 +71,8 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            flex: 1;
+            justify-content: center;
         }
 
         .student-badge {
@@ -80,6 +82,15 @@
             border: 2px solid #667eea;
             color: #667eea;
             font-weight: bold;
+            max-width: 300px;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .student-badge.registered {
+            border-color: #4caf50;
+            color: #4caf50;
         }
 
         .mode-toggle {
@@ -153,6 +164,12 @@
 
         .classroom-warning.active {
             display: block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
         }
 
         /* Focus warning */
@@ -180,25 +197,25 @@
         }
 
         .btn {
-            padding: 15px 40px;
-            font-size: 1.1em;
+            padding: 12px 30px;
+            font-size: 1em;
             font-weight: bold;
             border: none;
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
             display: inline-block;
-            margin: 10px 5px;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
         }
 
         .btn-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
 
         .btn-success {
@@ -228,21 +245,58 @@
 
         .btn-small {
             padding: 8px 20px;
-            font-size: 0.95em;
+            font-size: 0.9em;
         }
 
-        /* Pannello Certificato */
+        /* Pannello Certificato Collassabile */
         .certificate-panel {
             margin-top: 30px;
-            padding: 25px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 15px;
             color: white;
+            overflow: hidden;
+            transition: all 0.3s ease;
         }
 
-        .certificate-panel h3 {
-            margin-bottom: 20px;
-            text-align: center;
+        .cert-header {
+            padding: 20px 25px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .cert-header:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .cert-header h3 {
+            margin: 0;
+            font-size: 1.3em;
+        }
+
+        .collapse-icon {
+            font-size: 1.5em;
+            transition: transform 0.3s;
+        }
+
+        .certificate-panel.collapsed .collapse-icon {
+            transform: rotate(180deg);
+        }
+
+        .cert-content {
+            padding: 0 25px 25px 25px;
+            transition: all 0.3s ease;
+            max-height: 2000px;
+            opacity: 1;
+        }
+
+        .certificate-panel.collapsed .cert-content {
+            max-height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            opacity: 0;
         }
 
         .cert-link {
@@ -258,7 +312,7 @@
 
         .cert-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 15px;
             margin-top: 20px;
         }
@@ -268,12 +322,40 @@
             padding: 15px;
             border-radius: 8px;
             text-align: center;
+            transition: all 0.3s;
+        }
+
+        .cert-stat:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
         }
 
         .cert-stat-value {
             font-size: 1.8em;
             font-weight: bold;
             margin-bottom: 5px;
+        }
+
+        .cert-stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        /* Stat speciali */
+        .cert-stat.student-stat {
+            grid-column: span 2;
+            background: rgba(255,255,255,0.25);
+        }
+
+        .cert-stat.classroom-stat {
+            grid-column: span 2;
+            background: #ffc107;
+            color: #000;
+        }
+
+        .cert-stat.warning-stat {
+            background: rgba(244, 67, 54, 0.3);
+            border: 2px solid rgba(255,255,255,0.5);
         }
 
         /* Controlli certificato */
@@ -299,8 +381,17 @@
                 gap: 15px;
             }
 
+            .student-info {
+                width: 100%;
+            }
+
             .cert-stats {
                 grid-template-columns: 1fr;
+            }
+
+            .cert-stat.student-stat,
+            .cert-stat.classroom-stat {
+                grid-column: span 1;
             }
 
             .btn {
@@ -312,20 +403,20 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎓 Template App Didattica v3.0</h1>
-        <p class="subtitle">Sistema avanzato con modalità classe e tracking studente</p>
+        <h1>🎓 App Didattica v3.1</h1>
+        <p class="subtitle">Sistema completo con certificazione avanzata</p>
 
         <!-- Barra di controllo superiore -->
         <div class="control-bar">
             <div class="timer-display" id="timerDisplay">⏱️ 00:00</div>
             
             <div class="student-info">
-                <div class="student-badge" id="studentBadge">👤 Studente non registrato</div>
-                <button class="btn btn-info btn-small" id="studentBtn">📝 Dati Studente</button>
+                <div class="student-badge" id="studentBadge">👤 Non registrato</div>
+                <button class="btn btn-info btn-small" id="studentBtn">📝 Registra</button>
             </div>
             
             <div class="mode-toggle">
-                <label for="classroomToggle">🏫 Modalità Classe:</label>
+                <label for="classroomToggle">🏫 Modalità Classe</label>
                 <label class="switch">
                     <input type="checkbox" id="classroomToggle" onchange="toggleClassroom(this)">
                     <span class="slider"></span>
@@ -335,33 +426,31 @@
 
         <!-- Avviso modalità classe -->
         <div class="classroom-warning" id="classroomWarning">
-            ⚠️ MODALITÀ CLASSE ATTIVA - Il tracking del focus è rigoroso. 
-            Ogni cambio di finestra verrà registrato nel certificato!
+            ⚠️ MODALITÀ CLASSE ATTIVA - Tracking rigoroso abilitato. 
+            Ogni cambio finestra viene registrato!
         </div>
 
         <!-- Avviso perdita focus -->
         <div class="focus-warning" id="focusWarning">
             🚨 ATTENZIONE: Hai lasciato la finestra <span id="focusCount">0</span> volte!
-            Il docente verrà informato di questo comportamento.
+            Questo verrà segnalato nel certificato.
         </div>
 
         <!-- ============================================= -->
-        <!-- SEZIONE DA PERSONALIZZARE PER LA TUA APP -->
+        <!-- AREA ESERCIZI - PERSONALIZZA QUESTA SEZIONE -->
         <!-- ============================================= -->
         <div class="app-content">
             <h2 style="text-align: center; color: #667eea; margin-bottom: 20px;">
-                Area Esercizi - Personalizza questa sezione
+                Area Esercizi
             </h2>
             
             <p style="text-align: center; color: #666; line-height: 1.8; margin-bottom: 30px;">
-                Sostituisci questo contenuto con i tuoi esercizi didattici.<br>
-                Il sistema di certificazione è già configurato e pronto!
+                Sostituisci questa sezione con i tuoi contenuti didattici
             </p>
 
-            <!-- Esempi di interazione -->
             <div style="text-align: center;">
                 <button class="btn btn-primary" onclick="simulateActivity()">
-                    🎯 Simula Attività
+                    🎯 Attività Demo
                 </button>
                 
                 <button class="btn btn-success" onclick="simulateCorrect()">
@@ -369,114 +458,96 @@
                 </button>
                 
                 <button class="btn btn-danger" onclick="simulateError()">
-                    ❌ Risposta Sbagliata
-                </button>
-                
-                <button class="btn btn-warning" onclick="testFocusLoss()">
-                    🔍 Test Cambio Finestra (debug)
+                    ❌ Errore
                 </button>
             </div>
         </div>
-        <!-- ============================================= -->
-        <!-- FINE SEZIONE DA PERSONALIZZARE -->
-        <!-- ============================================= -->
 
-        <!-- Pannello Certificato -->
-        <div class="certificate-panel">
-            <h3>📜 Certificato di Studio</h3>
-            
-            <!-- Statistiche -->
-            <div class="cert-stats" id="certStatsContainer"></div>
-            
-            <!-- Controlli certificato -->
-            <div class="cert-controls">
-                <button class="btn btn-certificate" id="generateCertBtn">
-                    📋 Genera Certificato
-                </button>
-                <button class="btn btn-danger" id="resetBtn">
-                    🔄 Reset Dati
-                </button>
+        <!-- Pannello Certificato Collassabile -->
+        <div class="certificate-panel" id="certificatePanel">
+            <div class="cert-header" onclick="toggleCertPanel()">
+                <h3>📜 Certificato di Completamento</h3>
+                <span class="collapse-icon">▼</span>
             </div>
             
-            <!-- Container link (nascosto inizialmente) -->
-            <div id="certLinkContainer" style="display: none; margin-top: 20px;">
-                <p style="text-align: center;">Link certificato generato:</p>
-                <div class="cert-link"></div>
-                <div style="text-align: center;">
-                    <button class="btn btn-success" id="copyCertBtn">📋 Copia Link</button>
+            <div class="cert-content">
+                <!-- Statistiche -->
+                <div class="cert-stats" id="certStatsContainer"></div>
+                
+                <!-- Controlli -->
+                <div class="cert-controls">
+                    <button class="btn btn-certificate" id="generateCertBtn">
+                        📋 Genera Certificato
+                    </button>
+                    <button class="btn btn-danger" id="resetBtn">
+                        🔄 Reset Dati
+                    </button>
+                </div>
+                
+                <!-- Link certificato -->
+                <div id="certLinkContainer" style="display: none; margin-top: 20px;">
+                    <p style="text-align: center;">Link certificato:</p>
+                    <div class="cert-link"></div>
+                    <div style="text-align: center;">
+                        <button class="btn btn-success" id="copyCertBtn">📋 Copia</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- CDN Sistema Certificazione (sostituisci con v3.0 locale quando pronto) -->
+    <!-- Sistema Certificazione v3 -->
     <script src="certification-system.js"></script>
 
     <script>
-        //#region ⚙️ CONFIGURAZIONE SISTEMA CERTIFICAZIONE
-        
         let certSystem = null;
         
-        // Inizializza il sistema
+        // Toggle pannello certificato
+        function toggleCertPanel() {
+            const panel = document.getElementById('certificatePanel');
+            panel.classList.toggle('collapsed');
+        }
+        
+        // Inizializza sistema
         function initCertSystem(classroomMode = false) {
             certSystem = new CertificationSystem({
-                // 🔴 IMPORTANTE: Personalizza questi valori!
-                appName: 'Template App v3.0',
-                appVersion: '3.0.0',
-                storageKey: 'template_v3_cert',
-                
-                // URL lettore (non modificare)
+                appName: 'App Didattica Demo',
+                appVersion: '3.1.0',
+                storageKey: 'app_demo_v3',
                 certUrl: 'https://certificationsystem.netlify.app/',
-                
-                // Modalità classe
                 classroomMode: classroomMode,
-                
-                // Tracking focus (sempre attivo in modalità classe)
                 trackFocus: true,
                 
-                // 🔴 Campi da tracciare (personalizza per la tua app)
                 fields: [
                     { key: 'activities', label: 'Attività Completate', showZero: false },
                     { key: 'correct', label: 'Risposte Corrette', showZero: false },
-                    { key: 'errors', label: 'Risposte Sbagliate', showZero: true },
+                    { key: 'errors', label: 'Errori', showZero: true },
                     { key: 'score', label: 'Punteggio', showZero: true }
                 ],
                 
-                // Callbacks
                 onTimerUpdate: (time) => {
                     const minutes = Math.floor(time / 60);
                     const seconds = time % 60;
-                    const timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-                    document.getElementById('timerDisplay').textContent = `⏱️ ${timeStr}`;
+                    document.getElementById('timerDisplay').textContent = 
+                        `⏱️ ${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
                 },
                 
                 onFieldUpdate: () => {
-                    certSystem.renderStatsPanel('certStatsContainer');
+                    renderStats();
                 },
                 
                 onReset: () => {
-                    certSystem.renderStatsPanel('certStatsContainer');
+                    renderStats();
                     updateStudentBadge();
+                    // Nascondi link se presente
+                    document.getElementById('certLinkContainer').style.display = 'none';
                 },
                 
                 onFocusLost: (count) => {
-                    if (classroomMode || count > 2) {
+                    if (count > 2 || classroomMode) {
                         document.getElementById('focusCount').textContent = count;
                         document.getElementById('focusWarning').classList.add('show');
                     }
-                },
-                
-                onFocusRestored: (duration) => {
-                    console.log(`Focus perso per ${duration} secondi`);
-                },
-                
-                onSessionStart: (sessionId) => {
-                    console.log('Sessione classe iniziata:', sessionId);
-                },
-                
-                onSessionEnd: (session) => {
-                    console.log('Sessione classe terminata:', session);
-                    alert('Sessione classe terminata! Il certificato è stato generato.');
                 }
             });
             
@@ -490,8 +561,73 @@
             );
             
             // Render iniziale
-            certSystem.renderStatsPanel('certStatsContainer');
+            renderStats();
             updateStudentBadge();
+        }
+        
+        // Renderizza statistiche personalizzate
+        function renderStats() {
+            const container = document.getElementById('certStatsContainer');
+            const data = certSystem.getData();
+            const studentInfo = certSystem.getStudentInfo();
+            
+            let html = '';
+            
+            // Info studente se presente
+            if (studentInfo && studentInfo.nome) {
+                html += `
+                    <div class="cert-stat student-stat">
+                        <div class="cert-stat-value">👤 ${studentInfo.nome} ${studentInfo.cognome}</div>
+                        <div class="cert-stat-label">Classe: ${studentInfo.classe || 'N/D'}</div>
+                    </div>
+                `;
+            }
+            
+            // Modalità classe se attiva
+            if (certSystem.isInClassroomSession && certSystem.isInClassroomSession()) {
+                html += `
+                    <div class="cert-stat classroom-stat">
+                        <div class="cert-stat-value">🏫 MODALITÀ CLASSE</div>
+                        <div class="cert-stat-label">Sessione Attiva</div>
+                    </div>
+                `;
+            }
+            
+            // Tempo
+            html += `
+                <div class="cert-stat">
+                    <div class="cert-stat-value">${certSystem.getFormattedTime(data.t || 0)}</div>
+                    <div class="cert-stat-label">Tempo Totale</div>
+                </div>
+            `;
+            
+            // Campi personalizzati
+            certSystem.config.fields.forEach(field => {
+                if (field.type !== 'text') {
+                    const value = data[field.key] || 0;
+                    const display = (field.showZero === false && value === 0) ? '-' : value;
+                    
+                    html += `
+                        <div class="cert-stat">
+                            <div class="cert-stat-value">${display}</div>
+                            <div class="cert-stat-label">${field.label}</div>
+                        </div>
+                    `;
+                }
+            });
+            
+            // Focus tracking
+            if (data.fl !== undefined) {
+                const isWarning = data.fl > 2;
+                html += `
+                    <div class="cert-stat ${isWarning ? 'warning-stat' : ''}">
+                        <div class="cert-stat-value">${data.fl || 0}</div>
+                        <div class="cert-stat-label">Focus Perso</div>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
         }
         
         // Aggiorna badge studente
@@ -499,14 +635,12 @@
             const info = certSystem.getStudentInfo();
             const badge = document.getElementById('studentBadge');
             
-            if (info && info.nome && info.cognome) {
-                badge.textContent = `👤 ${info.nome} ${info.cognome} - ${info.classe || 'N/D'}`;
-                badge.style.borderColor = '#4caf50';
-                badge.style.color = '#4caf50';
+            if (info && info.nome) {
+                badge.textContent = `👤 ${info.nome} ${info.cognome}`;
+                badge.classList.add('registered');
             } else {
-                badge.textContent = '👤 Studente non registrato';
-                badge.style.borderColor = '#667eea';
-                badge.style.color = '#667eea';
+                badge.textContent = '👤 Non registrato';
+                badge.classList.remove('registered');
             }
         }
         
@@ -516,103 +650,50 @@
             const warning = document.getElementById('classroomWarning');
             
             if (isEnabled) {
-                if (confirm('Attivare la MODALITÀ CLASSE?\n\n' +
-                           '⚠️ Questo comporta:\n' +
-                           '• Tracking rigoroso del focus\n' +
-                           '• Nuova sessione di lavoro\n' +
-                           '• Registrazione di ogni cambio finestra\n\n' +
-                           'Continuare?')) {
+                if (confirm('Attivare MODALITÀ CLASSE?\n\nQuesto comporta:\n• Tracking rigoroso\n• Nuova sessione\n• Registrazione violazioni\n\nContinuare?')) {
                     warning.classList.add('active');
                     
-                    // Chiedi info studente se non presenti
+                    // Verifica studente
                     if (!certSystem.getStudentInfo()) {
+                        alert('Prima devi registrare i tuoi dati!');
                         certSystem.promptStudentInfo();
                         updateStudentBadge();
                     }
                     
-                    // Reinizializza in modalità classe
                     initCertSystem(true);
                 } else {
                     checkbox.checked = false;
                 }
             } else {
-                if (certSystem.isInClassroomSession()) {
-                    if (confirm('Terminare la sessione classe e generare il certificato?')) {
-                        certSystem.endClassroomSession();
-                        warning.classList.remove('active');
-                        initCertSystem(false);
-                    } else {
-                        checkbox.checked = true;
-                    }
-                } else {
-                    warning.classList.remove('active');
-                    initCertSystem(false);
-                }
+                warning.classList.remove('active');
+                initCertSystem(false);
             }
         }
         
-        //#endregion
-
-        //#region 🎯 LOGICA APP (DA PERSONALIZZARE)
-        
+        // Funzioni demo
         function simulateActivity() {
             certSystem.incrementField('activities');
             certSystem.incrementField('score', 10);
-            alert('Attività completata! +10 punti');
         }
         
         function simulateCorrect() {
             certSystem.incrementField('correct');
             certSystem.incrementField('score', 5);
-            alert('Risposta corretta! +5 punti');
         }
         
         function simulateError() {
             certSystem.incrementField('errors');
-            alert('Risposta sbagliata registrata');
         }
         
-        function testFocusLoss() {
-            alert('Ora cambia finestra/tab per testare il tracking del focus');
-        }
-        
-        // ========================================================
-        // INSERISCI QUI LA TUA LOGICA PERSONALIZZATA
-        // ========================================================
-        
-        /*
-         * ESEMPI DI USO:
-         * 
-         * // Registra completamento esercizio
-         * certSystem.incrementField('activities');
-         * 
-         * // Registra risposta corretta con punteggio
-         * certSystem.incrementField('correct');
-         * certSystem.incrementField('score', puntiGuadagnati);
-         * 
-         * // Registra errore
-         * certSystem.incrementField('errors');
-         * 
-         * // Aggiungi nota testuale
-         * certSystem.addTextNote('difficolta', 'Lo studente ha avuto difficoltà con le divisioni');
-         * 
-         * // Controlla modalità classe
-         * if (certSystem.isInClassroomSession()) {
-         *     // Comportamento specifico per modalità classe
-         * }
-         */
-        
-        //#endregion
-        
-        // Inizializza al caricamento
+        // Init
         window.addEventListener('DOMContentLoaded', () => {
             initCertSystem(false);
             
-            // Gestione tasto studente
+            // Gestione registrazione studente
             document.getElementById('studentBtn').addEventListener('click', () => {
                 certSystem.promptStudentInfo();
                 updateStudentBadge();
-                certSystem.renderStatsPanel('certStatsContainer');
+                renderStats();
             });
         });
     </script>
