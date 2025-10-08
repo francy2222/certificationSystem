@@ -261,3 +261,26 @@ Il sistema salva i dati in questo formato:
 ## 📞 Supporto
 
 Per domande o bug, contatta: gubercml@gmail.com
+
+### **2. Documentazione.MD**
+Aggiungi la nuova API:
+```markdown
+## 🆕 Metodi v3.0
+
+### renderFullPanel(containerId, options)
+Crea un pannello certificato completo con UI integrata.
+
+**Parametri:**
+- `containerId` (string): ID del container HTML
+- `options` (object): Opzioni di configurazione
+  - `collapsible` (boolean): Pannello comprimibile (default: true)
+  - `showStudentControls` (boolean): Mostra controlli studente (default: true)
+  - `showClassroomToggle` (boolean): Mostra toggle modalità classe (default: true)
+
+**Esempio:**
+```javascript
+certSystem.renderFullPanel('certificateContainer', {
+    collapsible: true,
+    showStudentControls: true,
+    showClassroomToggle: true
+});
