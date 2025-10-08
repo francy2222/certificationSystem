@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Certificato di Studio - Alfabeto Inglese</title>
+    <title>Lettore Certificati Universale</title>
     <style>
         * {
             margin: 0;
@@ -26,7 +26,7 @@
             border-radius: 20px;
             padding: 50px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 900px;
+            max-width: 1000px;
             width: 100%;
         }
 
@@ -39,7 +39,22 @@
             padding-bottom: 20px;
         }
 
-        /* Input Form */
+        .app-name {
+            text-align: center;
+            color: #764ba2;
+            font-size: 1.8em;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .app-version {
+            text-align: center;
+            color: #999;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+
+        /* Input Section */
         .input-section {
             text-align: center;
             padding: 30px;
@@ -64,6 +79,7 @@
             border-radius: 10px;
             margin-bottom: 20px;
             font-family: monospace;
+            resize: vertical;
         }
 
         .cert-input:focus {
@@ -89,6 +105,11 @@
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
 
+        .btn-print {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            margin-left: 10px;
+        }
+
         /* Certificate Display */
         .cert-header {
             text-align: center;
@@ -104,6 +125,22 @@
             color: #666;
             font-size: 1.1em;
             margin-top: 10px;
+        }
+
+        .cert-meta {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .cert-meta p {
+            margin: 8px 0;
+            color: #555;
+        }
+
+        .cert-meta strong {
+            color: #333;
         }
 
         .stats-grid {
@@ -127,11 +164,24 @@
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
         }
 
+        .stat-card.highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .stat-card.highlight .stat-label {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
         .stat-value {
-            font-size: 3em;
+            font-size: 2.5em;
             font-weight: bold;
             color: #667eea;
             margin-bottom: 10px;
+        }
+
+        .stat-card.highlight .stat-value {
+            color: white;
         }
 
         .stat-label {
@@ -140,37 +190,30 @@
             font-weight: 500;
         }
 
-        .summary-section {
+        .text-fields {
             background: #f8f9fa;
             border-radius: 15px;
-            padding: 30px;
-            margin-top: 30px;
+            padding: 25px;
+            margin: 30px 0;
         }
 
-        .summary-title {
-            font-size: 1.5em;
-            color: #667eea;
-            margin-bottom: 20px;
-            font-weight: bold;
-        }
-
-        .summary-item {
-            display: flex;
-            justify-content: space-between;
+        .text-field {
+            margin: 20px 0;
             padding: 15px;
-            margin: 10px 0;
             background: white;
             border-radius: 10px;
             border-left: 4px solid #667eea;
         }
 
-        .summary-item strong {
-            color: #333;
+        .text-field-label {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
         }
 
-        .summary-item span {
-            color: #667eea;
-            font-weight: bold;
+        .text-field-value {
+            color: #333;
+            line-height: 1.6;
         }
 
         .evaluation {
@@ -213,6 +256,16 @@
             margin-bottom: 15px;
         }
 
+        .legacy-warning {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #856404;
+            text-align: center;
+        }
+
         @media print {
             body {
                 background: white;
@@ -220,6 +273,14 @@
             
             .container {
                 box-shadow: none;
+            }
+
+            .btn {
+                display: none;
+            }
+
+            .input-section {
+                display: none !important;
             }
         }
 
@@ -237,16 +298,16 @@
             }
 
             .stat-value {
-                font-size: 2.5em;
+                font-size: 2em;
             }
         }
     </style>
 </head>
 <body>
     <div class="container" id="certContainer">
-        <!-- Input Section (mostrato solo se non ci sono parametri URL) -->
+        <!-- Input Section -->
         <div class="input-section" id="inputSection">
-            <h2>📜 Lettore Certificato</h2>
+            <h2>📜 Lettore Certificati Universale</h2>
             <p>Incolla qui il <strong>link completo</strong> del certificato oppure solo la <strong>stringa dopo ?cert=</strong></p>
             <textarea class="cert-input" id="certInput" rows="4" placeholder="Esempio: https://certificationsystem.netlify.app/?cert=eyJ0Ijo0...
 oppure: eyJ0Ijo0NCwicDEiOjAsImUxIjowLCJwMiI6MCwiYzIiOjB9"></textarea>
@@ -259,11 +320,40 @@ oppure: eyJ0Ijo0NCwicDEiOjAsImUxIjowLCJwMiI6MCwiYzIiOjB9"></textarea>
             <p id="errorText">Impossibile leggere il certificato. Verifica che il link o la stringa siano corretti.</p>
         </div>
 
-        <!-- Certificate Content (riempito dinamicamente) -->
+        <!-- Certificate Content -->
         <div id="certContent"></div>
     </div>
 
     <script>
+        function formatTime(seconds) {
+            if (!seconds || seconds === 0) return '0s';
+            
+            if (seconds < 60) {
+                return `${seconds}s`;
+            } else if (seconds < 3600) {
+                const minutes = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${minutes}m ${secs}s`;
+            } else {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const secs = seconds % 60;
+                return `${hours}h ${minutes}m ${secs}s`;
+            }
+        }
+
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleDateString('it-IT', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
         function loadFromInput() {
             const input = document.getElementById('certInput').value.trim();
             
@@ -274,14 +364,13 @@ oppure: eyJ0Ijo0NCwicDEiOjAsImUxIjowLCJwMiI6MCwiYzIiOjB9"></textarea>
             
             let certData = null;
             
-            // Prova a estrarre da URL completo
+            // Estrai da URL o usa direttamente
             if (input.includes('?cert=')) {
                 const match = input.match(/\?cert=([^&\s]+)/);
                 if (match) {
                     certData = match[1];
                 }
             } else {
-                // Assume sia solo la stringa base64
                 certData = input;
             }
             
@@ -299,131 +388,204 @@ oppure: eyJ0Ijo0NCwicDEiOjAsImUxIjowLCJwMiI6MCwiYzIiOjB9"></textarea>
             }
         }
 
-        function loadFromURL() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const certData = urlParams.get('cert');
-            
-            if (!certData) {
-                // Nessun parametro URL, mostra form di input
-                return false;
-            }
-            
-            try {
-                const data = JSON.parse(atob(certData));
-                document.getElementById('inputSection').style.display = 'none';
-                displayCertificate(data);
-                return true;
-            } catch (e) {
-                console.error('Errore decodifica:', e);
-                showError('Certificato non valido nell\'URL.');
-                return false;
-            }
-        }
-
         function displayCertificate(data) {
             const container = document.getElementById('certContent');
             
-            // Calcoli
-            const minutes = Math.floor(data.t / 60);
-            const seconds = data.t % 60;
-            const timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            // Controlla se è formato vecchio o nuovo
+            const isLegacy = !data.meta;
             
-            // Usa "-" invece di 0 per valori non applicabili
-            const accuracy = data.p2 > 0 ? Math.round((data.c2 / data.p2) * 100) : '-';
-            const phase1Success = data.p1 > 0;
-            const errorRate = data.p1 > 0 ? (data.e1 / data.p1).toFixed(1) : '-';
-            
-            // Valutazione complessiva
-            let evaluation = '';
-            let evalClass = '';
-            
-            if (phase1Success && accuracy >= 80 && data.t >= 300) {
-                evaluation = '🌟 ECCELLENTE - Lo studente ha dimostrato ottima padronanza dell\'alfabeto inglese!';
-                evalClass = 'excellent';
-            } else if (phase1Success && accuracy >= 60) {
-                evaluation = '👍 BUONO - Lo studente ha una buona comprensione, con margini di miglioramento.';
-                evalClass = 'good';
-            } else {
-                evaluation = '📚 DA MIGLIORARE - Lo studente necessita di ulteriore pratica.';
-                evalClass = 'needs-improvement';
+            if (isLegacy) {
+                displayLegacyCertificate(data);
+                return;
             }
             
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('it-IT', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
+            // Formato nuovo con metadati
+            const meta = data.meta;
+            const values = data.values;
+            const fields = data.fields || [];
+            const textFields = data.textFields || {};
+            
+            // Calcola durata sessione
+            const sessionDuration = meta.endTime && meta.startTime ? 
+                Math.floor((meta.endTime - meta.startTime) / 1000) : values.t;
+            
+            // Genera HTML per statistiche
+            let statsHTML = '';
+            
+            // Tempo totale sempre per primo
+            statsHTML += `
+                <div class="stat-card highlight">
+                    <div class="stat-value">⏱️ ${formatTime(values.t)}</div>
+                    <div class="stat-label">Tempo di Studio Effettivo</div>
+                </div>
+            `;
+            
+            // Altri campi
+            fields.forEach(field => {
+                if (field.type === 'text' || field.key === 'fl' || field.key === 'flt') {
+                    return; // Salta campi testo e focus (gestiti separatamente)
+                }
+                
+                const value = values[field.key] || 0;
+                let displayValue = value;
+                
+                // Formattazione in base al tipo
+                if (field.type === 'time') {
+                    displayValue = formatTime(value);
+                } else if (field.type === 'percentage') {
+                    displayValue = value + '%';
+                } else if (field.showZero === false && value === 0) {
+                    displayValue = '-';
+                }
+                
+                // Aggiungi unità se presente
+                if (field.unit && value !== 0 && displayValue !== '-') {
+                    displayValue += ' ' + field.unit;
+                }
+                
+                statsHTML += `
+                    <div class="stat-card">
+                        <div class="stat-value">${displayValue}</div>
+                        <div class="stat-label">${field.label}</div>
+                    </div>
+                `;
+            });
+            
+            // Aggiungi statistiche focus se presenti
+            if (values.fl !== undefined || values.flt !== undefined) {
+                statsHTML += `
+                    <div class="stat-card">
+                        <div class="stat-value">👁️ ${values.fl || 0}</div>
+                        <div class="stat-label">Volte Focus Perso</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">⏸️ ${formatTime(values.flt || 0)}</div>
+                        <div class="stat-label">Tempo Focus Perso</div>
+                    </div>
+                `;
+            }
+            
+            // Genera HTML per campi testo
+            let textFieldsHTML = '';
+            if (Object.keys(textFields).length > 0) {
+                textFieldsHTML = '<div class="text-fields"><h3 style="color: #667eea; margin-bottom: 20px;">📝 Note e Osservazioni</h3>';
+                
+                Object.keys(textFields).forEach(key => {
+                    if (textFields[key]) {
+                        // Trova label dal campo
+                        const field = fields.find(f => f.key === key);
+                        const label = field ? field.label : key;
+                        
+                        textFieldsHTML += `
+                            <div class="text-field">
+                                <div class="text-field-label">${label}</div>
+                                <div class="text-field-value">${textFields[key]}</div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                textFieldsHTML += '</div>';
+            }
+            
+            // Genera HTML completo
+            container.innerHTML = `
+                <div class="cert-header">
+                    <div class="cert-icon">📜</div>
+                    <h1>Certificato di Studio</h1>
+                    <div class="app-name">${meta.appName}</div>
+                    <div class="app-version">Versione ${meta.appVersion}</div>
+                </div>
+
+                <div class="cert-meta">
+                    <p><strong>📅 Generato il:</strong> ${formatDate(meta.generated)}</p>
+                    <p><strong>⏰ Inizio sessione:</strong> ${formatDate(meta.startTime)}</p>
+                    <p><strong>⏹️ Fine sessione:</strong> ${formatDate(meta.endTime)}</p>
+                    <p><strong>⌛ Durata sessione totale:</strong> ${formatTime(sessionDuration)}</p>
+                </div>
+
+                <div class="stats-grid">
+                    ${statsHTML}
+                </div>
+
+                ${textFieldsHTML}
+
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="btn btn-print" onclick="window.print()">🖨️ Stampa Certificato</button>
+                </div>
+            `;
+        }
+
+        function displayLegacyCertificate(data) {
+            // Gestione formato vecchio per retrocompatibilità
+            const container = document.getElementById('certContent');
+            
+            const timeStr = formatTime(data.t || 0);
+            
+            let statsHTML = `
+                <div class="stat-card highlight">
+                    <div class="stat-value">⏱️ ${timeStr}</div>
+                    <div class="stat-label">Tempo Totale</div>
+                </div>
+            `;
+            
+            // Mostra tutti i campi disponibili
+            Object.keys(data).forEach(key => {
+                if (key === 't' || key === '_meta') return;
+                
+                let label = key;
+                let value = data[key];
+                
+                // Prova a mappare chiavi comuni
+                const labelMap = {
+                    'p1': 'Fase 1 Completata',
+                    'e1': 'Errori Fase 1',
+                    'p2': 'Risposte Fase 2',
+                    'c2': 'Risposte Corrette',
+                    'fl': 'Focus Perso',
+                    'flt': 'Tempo Focus Perso',
+                    'activities': 'Attività Completate',
+                    'errors': 'Errori',
+                    'score': 'Punteggio'
+                };
+                
+                if (labelMap[key]) {
+                    label = labelMap[key];
+                }
+                
+                // Formatta tempi
+                if (key === 'flt') {
+                    value = formatTime(value);
+                }
+                
+                statsHTML += `
+                    <div class="stat-card">
+                        <div class="stat-value">${value || 0}</div>
+                        <div class="stat-label">${label}</div>
+                    </div>
+                `;
             });
             
             container.innerHTML = `
                 <div class="cert-header">
                     <div class="cert-icon">📜</div>
                     <h1>Certificato di Studio</h1>
-                    <h2 style="color: #764ba2; margin-top: 10px;">Alfabeto Inglese Interattivo</h2>
-                    <p class="cert-date">Generato il ${dateStr}</p>
+                    <div class="legacy-warning">
+                        ⚠️ Questo certificato usa il formato legacy v1.0<br>
+                        Alcune informazioni potrebbero non essere disponibili
+                    </div>
+                </div>
+
+                <div class="cert-meta">
+                    <p><strong>📅 Data visualizzazione:</strong> ${formatDate(Date.now())}</p>
                 </div>
 
                 <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value">⏱️ ${timeStr}</div>
-                        <div class="stat-label">Tempo di Studio Effettivo</div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-value">✅ ${data.p1}x</div>
-                        <div class="stat-label">Fase 1 Completata</div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-value">❌ ${data.e1}</div>
-                        <div class="stat-label">Errori Totali Fase 1</div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-value">🎧 ${data.p2}</div>
-                        <div class="stat-label">Risposte Fase 2</div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-value">🎯 ${data.c2}</div>
-                        <div class="stat-label">Risposte Corrette</div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-value">📊 ${accuracy}%</div>
-                        <div class="stat-label">Precisione Fase 2</div>
-                    </div>
+                    ${statsHTML}
                 </div>
 
-                <div class="summary-section">
-                    <div class="summary-title">📋 Riepilogo Dettagliato</div>
-                    
-                    <div class="summary-item">
-                        <strong>Tempo medio per completamento Fase 1:</strong>
-                        <span>${data.p1 > 0 ? Math.round(data.t / data.p1 / 60) : 0} minuti</span>
-                    </div>
-                    
-                    <div class="summary-item">
-                        <strong>Errori medi per tentativo:</strong>
-                        <span>${errorRate} errori</span>
-                    </div>
-                    
-                    <div class="summary-item">
-                        <strong>Risposte sbagliate Fase 2:</strong>
-                        <span>${data.p2 - data.c2}</span>
-                    </div>
-                    
-                    <div class="summary-item">
-                        <strong>Sessione di studio considerata:</strong>
-                        <span>${data.t >= 300 ? 'Adeguata (≥5 min)' : 'Breve (<5 min)'}</span>
-                    </div>
-                </div>
-
-                <div class="evaluation ${evalClass}">
-                    ${evaluation}
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="btn btn-print" onclick="window.print()">🖨️ Stampa Certificato</button>
                 </div>
             `;
         }
@@ -434,12 +596,19 @@ oppure: eyJ0Ijo0NCwicDEiOjAsImUxIjowLCJwMiI6MCwiYzIiOjB9"></textarea>
             document.getElementById('inputSection').style.display = 'none';
         }
 
-        // Carica certificato all'avvio
+        // Carica da URL al caricamento
         window.addEventListener('DOMContentLoaded', () => {
-            const loaded = loadFromURL();
-            if (!loaded) {
-                // Mostra form input
-                document.getElementById('inputSection').style.display = 'block';
+            const urlParams = new URLSearchParams(window.location.search);
+            const certData = urlParams.get('cert');
+            
+            if (certData) {
+                try {
+                    const data = JSON.parse(atob(certData));
+                    document.getElementById('inputSection').style.display = 'none';
+                    displayCertificate(data);
+                } catch (e) {
+                    showError('Certificato non valido nell\'URL.');
+                }
             }
         });
     </script>
