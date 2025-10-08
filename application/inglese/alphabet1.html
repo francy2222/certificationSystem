@@ -273,6 +273,62 @@
         }
     </style>
 </head>
+    <!-- Pannello Certificato -->
+<div id="certificateContainer" style="margin-top: 30px;"></div>
+
+<script>
+// Inizializzazione Sistema Certificazione
+const certSystem = new CertificationSystem({
+    appName: 'Alfabeto Inglese',
+    appVersion: '1.0.0',
+    storageKey: 'alfabeto_inglese_cert',
+    certUrl: 'https://certificationsystem.netlify.app/',
+    trackFocus: true,
+    
+    fields: [
+        { key: 'p1', label: 'Fase 1 Completata', showZero: false },
+        { key: 'e1', label: 'Errori Fase 1', showZero: true },
+        { key: 'p2', label: 'Risposte Fase 2', showZero: false },
+        { key: 'c2', label: 'Corrette Fase 2', showZero: false }
+    ]
+});
+
+// Usa il nuovo metodo per UI completa
+certSystem.renderFullPanel('certificateContainer', {
+    collapsible: true,
+    showStudentControls: true,
+    showClassroomToggle: true
+});
+
+// Modifica le funzioni esistenti per tracciare eventi
+
+// Quando completa fase 1 con successo
+const originalSwitchToPhase2 = switchToPhase2;
+switchToPhase2 = function() {
+    certSystem.incrementField('p1');
+    originalSwitchToPhase2();
+};
+
+// Quando fa errori in fase 1
+const originalCheckLetterPosition = checkLetterPosition;
+checkLetterPosition = function(tile, zone) {
+    const result = originalCheckLetterPosition(tile, zone);
+    if (!result) {
+        certSystem.incrementField('e1');
+    }
+    return result;
+};
+
+// In fase 2, modifica checkAnswer
+const originalCheckAnswer = checkAnswer;
+checkAnswer = function(selectedLetter) {
+    certSystem.incrementField('p2');
+    if (selectedLetter === currentLetter) {
+        certSystem.incrementField('c2');
+    }
+    originalCheckAnswer(selectedLetter);
+};
+</script>
 <body>
     <div class="container">
         <h1>🎓 Alfabeto Inglese</h1>
