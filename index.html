@@ -541,3 +541,46 @@ oppure: eyJ0Ijo0NCwicDEiOjAsImUxIjowLCJwMiI6MCwiYzIiOjB9"></textarea>
                         
                         if (blur && focus && focus.duration) {
                             totalLostTime += focus.duration;
+                            violations.push({
+                                time: formatTimeOnly(blur.timestamp),
+                                duration: focus.duration,
+                                timeInSession: blur.timeInSession
+                            });
+                        }
+                    }
+                    
+                    if (violations.length > 0) {
+                        focusEventsHTML = `
+                            <div class="focus-violations">
+                                <h4>⚠️ Violazioni Focus Rilevate: ${violations.length}</h4>
+                                <p>Tempo totale fuori focus: <strong>${formatTime(totalLostTime)}</strong></p>
+                                <details>
+                                    <summary style="cursor: pointer; margin: 10px 0;">Dettagli violazioni</summary>
+                                    ${violations.map(v => `
+                                        <div class="focus-event">
+                                            <span class="focus-event-time">Al minuto ${Math.floor(v.timeInSession/60)} - Ore ${v.time}</span><br>
+                                            <span class="focus-event-duration">Durata: ${v.duration}s</span>
+                                        </div>
+                                    `).join('')}
+                                </details>
+                            </div>
+                        `;
+                    }
+                    // Carica da URL al caricamento
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const certData = urlParams.get('cert');
+            
+            if (certData) {
+                try {
+                    const data = JSON.parse(atob(certData));
+                    document.getElementById('inputSection').style.display = 'none';
+                    displayCertificate(data);
+                } catch (e) {
+                    showError('Certificato non valido nell\'URL.');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
