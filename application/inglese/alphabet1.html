@@ -54,27 +54,7 @@
             color: #667eea;
         }
 
-        .timer-display {
-            text-align: center;
-            font-size: 1.3em;
-            color: #667eea;
-            font-weight: bold;
-            margin-bottom: 15px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-        }
-
-        .keyboard-hint {
-            text-align: center;
-            color: #999;
-            font-size: 0.9em;
-            margin-bottom: 15px;
-            padding: 8px;
-            background: #f8f9fa;
-            border-radius: 5px;
-        }
-
+        /* Fase 1 - Ordinamento */
         #phase1 {
             display: block;
         }
@@ -116,16 +96,6 @@
         .letter-tile.dragging {
             opacity: 0.5;
             cursor: grabbing;
-        }
-
-        .letter-tile.keyboard-highlight {
-            animation: pulse 0.5s;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
         }
 
         .answer-zone {
@@ -177,11 +147,6 @@
             color: white;
         }
 
-        .btn-certificate {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-        }
-
         .message {
             text-align: center;
             padding: 15px;
@@ -204,6 +169,7 @@
             border: 2px solid #dc3545;
         }
 
+        /* Fase 2 - Ascolto */
         #phase2 {
             display: none;
         }
@@ -286,50 +252,6 @@
             margin-top: 5px;
         }
 
-        .certificate-panel {
-            margin-top: 30px;
-            padding: 25px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 15px;
-            color: white;
-        }
-
-        .certificate-panel h3 {
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .cert-link {
-            background: white;
-            color: #667eea;
-            padding: 15px;
-            border-radius: 8px;
-            word-break: break-all;
-            font-family: monospace;
-            font-size: 0.9em;
-            margin: 15px 0;
-        }
-
-        .cert-stats {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .cert-stat {
-            background: rgba(255,255,255,0.2);
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .cert-stat-value {
-            font-size: 1.8em;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
         @media (max-width: 768px) {
             .container {
                 padding: 20px;
@@ -348,10 +270,6 @@
             .keyboard-grid {
                 grid-template-columns: repeat(5, 1fr);
             }
-
-            .cert-stats {
-                grid-template-columns: 1fr;
-            }
         }
     </style>
 </head>
@@ -360,11 +278,9 @@
         <h1>🎓 Alfabeto Inglese</h1>
         <p class="subtitle">Impara l'alfabeto in modo interattivo!</p>
 
-        <div class="timer-display" id="timerDisplay">⏱️ Tempo: 00:00</div>
-
+        <!-- Fase 1: Ordinamento -->
         <div id="phase1">
             <div class="phase-indicator">📝 Fase 1: Ordina le lettere dalla A alla Z</div>
-            <div class="keyboard-hint">💡 Puoi anche premere i tasti A-Z sulla tastiera!</div>
             
             <div class="message" id="message1"></div>
 
@@ -377,9 +293,11 @@
             </div>
 
             <button class="btn btn-primary" id="checkBtn">Verifica Ordine</button>
-            <button class="btn btn-success" id="helpBtn">💡 Aiuto</button>
+            <button class="btn btn-success" id="helpBtn">💡 Aiuto - Pronuncia lettera successiva</button>
+            <button class="btn btn-primary" id="resetBtn" style="display: none;">Ricomincia</button>
         </div>
 
+        <!-- Fase 2: Riconoscimento Audio -->
         <div id="phase2">
             <div class="phase-indicator">🎧 Fase 2: Ascolta e indovina la lettera</div>
             
@@ -402,177 +320,75 @@
 
             <div class="audio-section">
                 <button class="play-btn" id="playAudioBtn">▶️</button>
-                <p style="margin-top: 20px; color: #666;">Clicca per ascoltare</p>
+                <p style="margin-top: 20px; color: #666;">Clicca per ascoltare la lettera</p>
             </div>
 
             <div class="keyboard-grid" id="keyboardGrid"></div>
 
             <button class="btn btn-primary" id="backToPhase1">Torna alla Fase 1</button>
         </div>
-
-        <div class="certificate-panel">
-            <h3>📜 Certificato di Studio</h3>
-            <div class="cert-stats" id="certStatsContainer"></div>
-            <button class="btn btn-certificate" id="generateCertBtn">📋 Genera Link</button>
-            <button class="btn btn-danger" id="resetBtn" style="margin-top: 10px;">🔄 Azzera Statistiche</button>
-            <div id="certLinkContainer" style="display: none;">
-                <p style="margin-top: 15px;">Copia e invia al docente:</p>
-                <div class="cert-link" id="certLink"></div>
-                <button class="btn btn-success" id="copyCertBtn">📋 Copia</button>
-            </div>
-        </div>
     </div>
 
-    <!-- Importa il sistema di certificazione -->
+    <!-- Sistema di Certificazione v3.0 -->
     <script src="https://certificationsystem.netlify.app/certification-system.js"></script>
 
     <script>
-        //#region Configurazione Sistema Certificazione
-        const certSystem = new CertificationSystem({
-            appName: 'Alfabeto Inglese',
-            storageKey: 'alphabet_cert_data',
-            certUrl: 'https://certificationsystem.netlify.app/',
-            trackFocus: false, // Cambia in true per tracciare focus
-            fields: [
-                { key: 'p1', label: 'Fase 1 Completata', showZero: false },
-                { key: 'e1', label: 'Errori Fase 1', showZero: false },
-                { key: 'p2', label: 'Risposte Fase 2', showZero: false },
-                { key: 'c2', label: 'Corrette Fase 2', showZero: false }
-            ],
-            onTimerUpdate: (time) => {
-                const minutes = Math.floor(time / 60);
-                const seconds = time % 60;
-                const timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-                document.getElementById('timerDisplay').textContent = `⏱️ Tempo: ${timeStr}`;
-            },
-            onFieldUpdate: () => {
-                certSystem.renderStatsPanel('certStatsContainer');
-            },
-            onReset: () => {
-                location.reload();
-            }
-        });
-
-        // Setup bottoni
-        certSystem.setupButtons('generateCertBtn', 'copyCertBtn', 'resetBtn', 'certLinkContainer');
-        certSystem.renderStatsPanel('certStatsContainer');
-        //#endregion
-
-        //#region Variabili App
+        // Alfabeto inglese
         const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+        
+        // Pronuncia corretta delle lettere in inglese
+        const letterPronunciations = {
+            'A': 'ei', 'B': 'bi', 'C': 'si', 'D': 'di', 'E': 'i',
+            'F': 'ef', 'G': 'dgi', 'H': 'eich', 'I': 'ai', 'J': 'dgei',
+            'K': 'kei', 'L': 'el', 'M': 'em', 'N': 'en', 'O': 'ou',
+            'P': 'pi', 'Q': 'kiu', 'R': 'ar', 'S': 'es', 'T': 'ti',
+            'U': 'iu', 'V': 'vi', 'W': 'dabliu', 'X': 'eks', 'Y': 'uai', 'Z': 'zed'
+        };
+
+        // Stato applicazione
         let currentPhase = 1;
         let currentLetter = null;
         let stats = { correct: 0, wrong: 0, total: 0 };
-        let errorCount = 0;
-        //#endregion
 
-        //#region Utilità
-        function shuffleArray(array) {
-            const shuffled = [...array];
-            for (let i = shuffled.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-            }
-            return shuffled;
-        }
-
-        function showMessage(elementId, text, type) {
-            const message = document.getElementById(elementId);
-            message.textContent = text;
-            message.className = `message ${type}`;
-            message.style.display = 'block';
-        }
-
-        function speakLetter(letter) {
-            if (typeof speechSynthesis === 'undefined') return;
-            speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(letter);
-            utterance.lang = 'en-US';
-            utterance.rate = 0.7;
-            speechSynthesis.speak(utterance);
-        }
-
-        function playErrorSound() {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.frequency.value = 200;
-            gain.gain.setValueAtTime(0.3, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.5);
-        }
-
-        function playSuccessSound() {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.frequency.value = 523.25;
-            gain.gain.setValueAtTime(0.3, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.3);
-        }
-        //#endregion
-
-        //#region Fase 1
+        // Inizializzazione Fase 1
         function initPhase1() {
             const pool = document.getElementById('lettersPool');
             const answerZone = document.getElementById('answerZone');
             
+            // Crea tessere in ordine alfabetico (NON mescolate)
             pool.innerHTML = '';
-            shuffleArray(alphabet).forEach(letter => {
+            alphabet.forEach(letter => {
                 const tile = createLetterTile(letter);
                 pool.appendChild(tile);
             });
 
-            answerZone.innerHTML = '<p style="color: #999; width: 100%; text-align: center; margin: auto;">Trascina qui le lettere</p>';
+            answerZone.innerHTML = '<p style="color: #999; width: 100%; text-align: center; margin: auto;">Trascina qui le lettere in ordine alfabetico</p>';
+            
             setupDragAndDrop();
-            setupKeyboardInput();
         }
 
+        // Crea tessera lettera
         function createLetterTile(letter) {
             const tile = document.createElement('div');
             tile.className = 'letter-tile';
             tile.textContent = letter;
             tile.draggable = true;
             tile.dataset.letter = letter;
-            tile.addEventListener('mousedown', () => speakLetter(letter));
+            
+            // Pronuncia su mousedown (quando inizia a premere)
+            tile.addEventListener('mousedown', () => {
+                speakLetter(letter);
+            });
+            
+            // Pronuncia anche su touchstart per dispositivi touch
+            tile.addEventListener('touchstart', () => {
+                speakLetter(letter);
+            });
+            
             return tile;
         }
 
-        function setupKeyboardInput() {
-            document.addEventListener('keydown', (e) => {
-                if (currentPhase !== 1) return;
-                const key = e.key.toUpperCase();
-                if (!alphabet.includes(key)) return;
-                e.preventDefault();
-                
-                const pool = document.getElementById('lettersPool');
-                const tile = Array.from(pool.querySelectorAll('.letter-tile')).find(t => t.dataset.letter === key);
-                
-                if (tile) {
-                    tile.classList.add('keyboard-highlight');
-                    setTimeout(() => tile.classList.remove('keyboard-highlight'), 500);
-                    
-                    const answerZone = document.getElementById('answerZone');
-                    const placeholder = answerZone.querySelector('p');
-                    if (placeholder) placeholder.remove();
-                    
-                    if (checkLetterPosition(tile, answerZone)) {
-                        answerZone.appendChild(tile);
-                        if (answerZone.querySelectorAll('.letter-tile').length === 26) {
-                            showMessage('message1', '✅ Completo!', 'success');
-                        }
-                    }
-                }
-            });
-        }
-
+        // Setup Drag & Drop
         function setupDragAndDrop() {
             let draggedElement = null;
 
@@ -607,17 +423,24 @@
                     zone.classList.remove('drag-over');
                     
                     if (draggedElement && zone === answerZone) {
+                        // Rimuovi messaggio placeholder
                         const placeholder = zone.querySelector('p');
                         if (placeholder) placeholder.remove();
                         
+                        // Verifica se la lettera è corretta prima di aggiungerla
                         if (checkLetterPosition(draggedElement, zone)) {
                             zone.appendChild(draggedElement);
-                            if (zone.querySelectorAll('.letter-tile').length === 26) {
-                                showMessage('message1', '✅ Completo!', 'success');
+                            
+                            // Se completo, abilita bottone verifica
+                            const tiles = zone.querySelectorAll('.letter-tile');
+                            if (tiles.length === 26) {
+                                showMessage('message1', '✅ Alfabeto completo! Clicca Verifica!', 'success');
                             }
                         }
+                        // Se sbagliata, NON aggiungere la lettera (resta nel pool)
                         draggedElement = null;
                     } else if (draggedElement && zone === pool) {
+                        // Permetti di rimettere nel pool
                         zone.appendChild(draggedElement);
                         draggedElement = null;
                     }
@@ -625,6 +448,48 @@
             });
         }
 
+        // Contatore errori
+        let errorCount = 0;
+
+        // Suono di errore
+        function playErrorSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 200;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+
+        // Suono di successo
+        function playSuccessSound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 523.25; // Do alto
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        }
+
+        // Verifica lettera in tempo reale
         function checkLetterPosition(tile, zone) {
             const tiles = zone.querySelectorAll('.letter-tile');
             const position = tiles.length;
@@ -632,22 +497,29 @@
             const expectedLetter = alphabet[position];
 
             if (letter !== expectedLetter) {
+                // Lettera sbagliata!
                 errorCount++;
-                certSystem.incrementField('e1');
                 playErrorSound();
-                showMessage('message1', `❌ Errore ${errorCount}/3: "${letter}" → "${expectedLetter}"`, 'error');
-                setTimeout(() => speakLetter(expectedLetter), 500);
+                
+                showMessage('message1', 
+                    `❌ Errore ${errorCount}/3: Hai messo "${letter}" ma la lettera giusta è "${expectedLetter}"`, 
+                    'error');
+                
+                // Pronuncia la lettera corretta
+                setTimeout(() => {
+                    speakLetter(expectedLetter);
+                }, 500);
 
+                // SOLO al 3° errore si ricomincia
                 if (errorCount >= 3) {
                     setTimeout(() => {
-                        showMessage('message1', '💥 Ricomincia!', 'error');
+                        showMessage('message1', '💥 3 errori! Si ricomincia da capo!', 'error');
                         setTimeout(() => {
-                            errorCount = 0;
-                            document.getElementById('message1').style.display = 'none';
-                            initPhase1();
+                            resetPhase1();
                         }, 2000);
                     }, 2000);
                 } else {
+                    // Se NON è il 3° errore, nascondi messaggio dopo 3 secondi
                     setTimeout(() => {
                         document.getElementById('message1').style.display = 'none';
                     }, 3000);
@@ -655,44 +527,87 @@
                 return false;
             }
             
+            // Lettera corretta!
             playSuccessSound();
             return true;
         }
 
+        // Verifica ordine completo
         document.getElementById('checkBtn').addEventListener('click', () => {
             const answerZone = document.getElementById('answerZone');
             const tiles = answerZone.querySelectorAll('.letter-tile');
             
             if (tiles.length !== 26) {
-                showMessage('message1', 'Completa l\'alfabeto!', 'error');
+                showMessage('message1', 'Devi completare tutto l\'alfabeto!', 'error');
                 return;
             }
 
-            certSystem.incrementField('p1');
-            showMessage('message1', '🎉 Fase 1 Completata!', 'success');
+            showMessage('message1', '🎉 Perfetto! Hai completato la Fase 1!', 'success');
+            document.getElementById('checkBtn').style.display = 'none';
             
             setTimeout(() => {
-                document.getElementById('phase1').style.display = 'none';
-                document.getElementById('phase2').style.display = 'block';
-                currentPhase = 2;
-                initPhase2();
+                switchToPhase2();
             }, 2000);
         });
 
+        // Reset Fase 1
+        function resetPhase1() {
+            document.getElementById('message1').style.display = 'none';
+            document.getElementById('checkBtn').style.display = 'block';
+            errorCount = 0;
+            initPhase1();
+        }
+
+        // Reset Fase 1
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            resetPhase1();
+        });
+
+        // Bottone Aiuto - Pronuncia lettera successiva
         document.getElementById('helpBtn').addEventListener('click', () => {
             const answerZone = document.getElementById('answerZone');
             const tiles = answerZone.querySelectorAll('.letter-tile');
-            if (tiles.length < 26) {
-                speakLetter(alphabet[tiles.length]);
+            const position = tiles.length;
+            
+            if (position < 26) {
+                const nextLetter = alphabet[position];
+                showMessage('message1', `💡 Ascolta la lettera successiva...`, 'success');
+                speakLetter(nextLetter);
+                
+                setTimeout(() => {
+                    document.getElementById('message1').style.display = 'none';
+                }, 2000);
+            } else {
+                showMessage('message1', '✅ Hai già completato tutto l\'alfabeto!', 'success');
+                setTimeout(() => {
+                    document.getElementById('message1').style.display = 'none';
+                }, 2000);
             }
         });
-        //#endregion
 
-        //#region Fase 2
+        // Passa a Fase 2
+        function switchToPhase2() {
+            document.getElementById('phase1').style.display = 'none';
+            document.getElementById('phase2').style.display = 'block';
+            currentPhase = 2;
+            initPhase2();
+        }
+
+        // Torna a Fase 1
+        document.getElementById('backToPhase1').addEventListener('click', () => {
+            document.getElementById('phase2').style.display = 'none';
+            document.getElementById('phase1').style.display = 'block';
+            currentPhase = 1;
+            stats = { correct: 0, wrong: 0, total: 0 };
+            initPhase1();
+        });
+
+        // Inizializzazione Fase 2
         function initPhase2() {
             const grid = document.getElementById('keyboardGrid');
             grid.innerHTML = '';
             
+            // Crea tastiera
             alphabet.forEach(letter => {
                 const btn = document.createElement('button');
                 btn.className = 'key-btn';
@@ -701,29 +616,71 @@
                 grid.appendChild(btn);
             });
 
+            // Scegli prima lettera
             pickRandomLetter();
         }
 
+        // Scegli lettera casuale
         function pickRandomLetter() {
             currentLetter = alphabet[Math.floor(Math.random() * alphabet.length)];
         }
 
+        // Pronuncia lettera
         document.getElementById('playAudioBtn').addEventListener('click', () => {
-            if (currentLetter) speakLetter(currentLetter);
+            if (!currentLetter) return;
+            
+            speakLetter(currentLetter);
         });
 
+        // TTS con pronuncia corretta
+        function speakLetter(letter) {
+            // Verifica se speechSynthesis è disponibile
+            if (typeof speechSynthesis === 'undefined') {
+                console.warn('Speech Synthesis non disponibile in questo browser');
+                return;
+            }
+            
+            // Cancella eventuali speech in corso
+            speechSynthesis.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(letter);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.7;
+            utterance.pitch = 1;
+            utterance.volume = 1;
+            
+            // Cerca voce inglese
+            const voices = speechSynthesis.getVoices();
+            const englishVoice = voices.find(v => v.lang.includes('en-US') || v.lang.includes('en-GB'));
+            if (englishVoice) {
+                utterance.voice = englishVoice;
+            }
+            
+            speechSynthesis.speak(utterance);
+        }
+
+        // Carica voci al caricamento e quando cambiano
+        if (typeof speechSynthesis !== 'undefined') {
+            speechSynthesis.addEventListener('voiceschanged', () => {
+                speechSynthesis.getVoices();
+            });
+            
+            // Carica voci immediatamente
+            speechSynthesis.getVoices();
+        }
+
+        // Verifica risposta
         function checkAnswer(selectedLetter) {
             if (!currentLetter) return;
 
             stats.total++;
-            certSystem.incrementField('p2');
             document.getElementById('totalCount').textContent = stats.total;
 
             if (selectedLetter === currentLetter) {
                 stats.correct++;
-                certSystem.incrementField('c2');
                 document.getElementById('correctCount').textContent = stats.correct;
-                showMessage('message2', `✅ Corretto!`, 'success');
+                showMessage('message2', `✅ Corretto! Era la lettera ${currentLetter}`, 'success');
+                
                 setTimeout(() => {
                     document.getElementById('message2').style.display = 'none';
                     pickRandomLetter();
@@ -731,8 +688,13 @@
             } else {
                 stats.wrong++;
                 document.getElementById('wrongCount').textContent = stats.wrong;
-                showMessage('message2', `❌ Era ${currentLetter}`, 'error');
-                setTimeout(() => speakLetter(currentLetter), 1000);
+                showMessage('message2', `❌ Sbagliato! Era la lettera ${currentLetter}, hai scelto ${selectedLetter}`, 'error');
+                
+                // Ripronuncia la lettera corretta
+                setTimeout(() => {
+                    speakLetter(currentLetter);
+                }, 1000);
+                
                 setTimeout(() => {
                     document.getElementById('message2').style.display = 'none';
                     pickRandomLetter();
@@ -740,16 +702,15 @@
             }
         }
 
-        document.getElementById('backToPhase1').addEventListener('click', () => {
-            document.getElementById('phase2').style.display = 'none';
-            document.getElementById('phase1').style.display = 'block';
-            currentPhase = 1;
-            stats = { correct: 0, wrong: 0, total: 0 };
-            initPhase1();
-        });
-        //#endregion
+        // Mostra messaggio
+        function showMessage(elementId, text, type) {
+            const message = document.getElementById(elementId);
+            message.textContent = text;
+            message.className = `message ${type}`;
+            message.style.display = 'block';
+        }
 
-        // Inizializza
+        // Inizializza app
         initPhase1();
     </script>
 </body>
