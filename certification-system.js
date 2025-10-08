@@ -1088,48 +1088,47 @@ class CertificationSystem {
                 .cert-student-badge.registered {
                     background: rgba(76, 175, 80, 0.3);
                 }
-                .cert-mode-toggles {
+                .cert-mode-selector {
                     display: flex;
-                    gap: 20px;
+                    gap: 15px;
                     align-items: center;
+                    background: rgba(255,255,255,0.1);
+                    padding: 10px 15px;
+                    border-radius: 10px;
                 }
-                .cert-mode-toggle {
+                .cert-mode-option {
                     display: flex;
                     align-items: center;
-                    gap: 10px;
-                }
-                .cert-switch {
-                    position: relative;
-                    width: 60px;
-                    height: 28px;
-                    background: #ccc;
-                    border-radius: 28px;
+                    gap: 8px;
                     cursor: pointer;
+                    padding: 8px 12px;
+                    border-radius: 8px;
+                    transition: all 0.3s;
+                    border: 2px solid transparent;
                 }
-                .cert-switch.active {
-                    background: #ffc107;
+                .cert-mode-option:hover {
+                    background: rgba(255,255,255,0.1);
                 }
-                .cert-switch.active.verification {
-                    background: #f44336;
-                    animation: pulse 1s infinite;
-                }
-                @keyframes pulse {
-                    0%, 100% { opacity: 1; }
-                    50% { opacity: 0.8; }
-                }
-                .cert-switch::after {
-                    content: '';
-                    position: absolute;
+                .cert-mode-option input[type="radio"] {
                     width: 20px;
                     height: 20px;
-                    background: white;
-                    border-radius: 50%;
-                    top: 4px;
-                    left: 4px;
-                    transition: transform 0.3s;
+                    cursor: pointer;
                 }
-                .cert-switch.active::after {
-                    transform: translateX(32px);
+                .cert-mode-option.selected {
+                    background: rgba(255,255,255,0.2);
+                    border-color: rgba(255,255,255,0.5);
+                }
+                .cert-mode-option.selected.verification {
+                    background: rgba(244,67,54,0.3);
+                    border-color: #f44336;
+                }
+                .cert-mode-option.selected.classroom {
+                    background: rgba(255,193,7,0.3);
+                    border-color: #ffc107;
+                }
+                .cert-mode-label {
+                    font-weight: bold;
+                    user-select: none;
                 }
                 .cert-btn {
                     padding: 10px 20px;
@@ -1344,44 +1343,60 @@ class CertificationSystem {
                 }
             };
 
-            window.certSystemToggleClassroom = (storageKey, element) => {
+            window.certSystemSelectMode = (storageKey, mode, element) => {
                 if (this.config.storageKey === storageKey) {
-                    const isActive = element.classList.contains('active');
-                    if (!isActive) {
-                        if (confirm('🏫 ATTIVARE MODALITÀ LAVORO IN CLASSE?\n\nQuesto comporta:\n• Tracking del focus\n• Aiuti e facilitazioni ATTIVI\n• Nuova sessione\n\nContinuare?')) {
-                            if (this.toggleClassroomMode(true)) {
-                                this.renderFullPanel(containerId, options);
+                    const currentMode = this.getCurrentMode();
+                    
+                    // Se è già nella modalità selezionata, non fare nulla
+                    if (currentMode === mode) return;
+                    
+                    // Conferme per cambio modalità
+                    let confirmed = false;
+                    
+                    switch(mode) {
+                        case 'normal':
+                            confirmed = confirm('↩️ Tornare a MODALITÀ NORMALE?\n\nQuesto disattiverà tutti i tracking speciali.');
+                            if (confirmed) {
+                                this.toggleNormalMode();
                             }
+                            break;
+                            
+                        case 'classroom':
+                            confirmed = confirm('🏫 ATTIVARE MODALITÀ LAVORO IN CLASSE?\n\n• Tracking del focus\n• Aiuti e facilitazioni ATTIVI ✅\n• Nuova sessione\n\nContinuare?');
+                            if (confirmed) {
+                                this.toggleClassroomMode(true);
+                            }
+                            break;
+                            
+                        case 'verification':
+                            confirmed = confirm('🔒 ATTIVARE MODALITÀ VERIFICA?\n\n⚠️ ATTENZIONE:\n• Reset completo dei dati\n• Tracking ESTREMO di ogni azione\n• NO aiuti o facilitazioni ❌\n• Registrazione di tutte le violazioni\n\nContinuare?');
+                            if (confirmed) {
+                                this.toggleVerificationMode(true);
+                            }
+                            break;
+                    }
+                    
+                    if (confirmed) {
+                        // Aggiorna UI
+                        this.renderFullPanel(containerId, options);
+                        
+                        // Se era in modalità verifica e l'ha terminata, mostra il certificato
+                        if (currentMode === 'verification' && mode !== 'verification') {
+                            const link = this.generateCertLink();
+                            document.getElementById(containerId + '-link').style.display = 'block';
+                            document.getElementById(containerId + '-link-text').textContent = link;
                         }
                     } else {
-                        if (confirm('Disattivare modalità Lavoro in Classe?')) {
-                            this.toggleClassroomMode(false);
-                            this.renderFullPanel(containerId, options);
-                        }
+                        // Ripristina selezione precedente se non confermato
+                        const radio = element.parentElement.querySelector(`input[value="${currentMode}"]`);
+                        if (radio) radio.checked = true;
                     }
                 }
             };
 
-            window.certSystemToggleVerification = (storageKey, element) => {
-                if (this.config.storageKey === storageKey) {
-                    const isActive = element.classList.contains('active');
-                    if (!isActive) {
-                        if (confirm('🔒 ATTIVARE MODALITÀ VERIFICA?\n\n⚠️ ATTENZIONE:\n• Reset completo dei dati\n• Tracking ESTREMO di ogni azione\n• NO aiuti o facilitazioni\n• Registrazione di tutte le violazioni\n\nContinuare?')) {
-                            if (this.toggleVerificationMode(true)) {
-                                this.renderFullPanel(containerId, options);
-                            }
-                        }
-                    } else {
-                        if (confirm('⚠️ Terminare la modalità verifica?\n\nQuesto genererà il certificato finale.')) {
-                            this.toggleVerificationMode(false);
-                            const link = this.generateCertLink();
-                            document.getElementById(containerId + '-link').style.display = 'block';
-                            document.getElementById(containerId + '-link-text').textContent = link;
-                            this.renderFullPanel(containerId, options);
-                        }
-                    }
-                }
-            };
+            // Rimuovi le vecchie funzioni toggle che non servono più
+            window.certSystemToggleClassroom = () => {};
+            window.certSystemToggleVerification = () => {};
 
             window.certSystemGenerateLink = (storageKey) => {
                 if (this.config.storageKey === storageKey) {
