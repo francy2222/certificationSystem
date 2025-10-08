@@ -273,62 +273,6 @@
         }
     </style>
 </head>
-    <!-- Pannello Certificato -->
-<div id="certificateContainer" style="margin-top: 30px;"></div>
-
-<script>
-// Inizializzazione Sistema Certificazione
-const certSystem = new CertificationSystem({
-    appName: 'Alfabeto Inglese',
-    appVersion: '1.0.0',
-    storageKey: 'alfabeto_inglese_cert',
-    certUrl: 'https://certificationsystem.netlify.app/',
-    trackFocus: true,
-    
-    fields: [
-        { key: 'p1', label: 'Fase 1 Completata', showZero: false },
-        { key: 'e1', label: 'Errori Fase 1', showZero: true },
-        { key: 'p2', label: 'Risposte Fase 2', showZero: false },
-        { key: 'c2', label: 'Corrette Fase 2', showZero: false }
-    ]
-});
-
-// Usa il nuovo metodo per UI completa
-certSystem.renderFullPanel('certificateContainer', {
-    collapsible: true,
-    showStudentControls: true,
-    showClassroomToggle: true
-});
-
-// Modifica le funzioni esistenti per tracciare eventi
-
-// Quando completa fase 1 con successo
-const originalSwitchToPhase2 = switchToPhase2;
-switchToPhase2 = function() {
-    certSystem.incrementField('p1');
-    originalSwitchToPhase2();
-};
-
-// Quando fa errori in fase 1
-const originalCheckLetterPosition = checkLetterPosition;
-checkLetterPosition = function(tile, zone) {
-    const result = originalCheckLetterPosition(tile, zone);
-    if (!result) {
-        certSystem.incrementField('e1');
-    }
-    return result;
-};
-
-// In fase 2, modifica checkAnswer
-const originalCheckAnswer = checkAnswer;
-checkAnswer = function(selectedLetter) {
-    certSystem.incrementField('p2');
-    if (selectedLetter === currentLetter) {
-        certSystem.incrementField('c2');
-    }
-    originalCheckAnswer(selectedLetter);
-};
-</script>
 <body>
     <div class="container">
         <h1>🎓 Alfabeto Inglese</h1>
@@ -382,6 +326,9 @@ checkAnswer = function(selectedLetter) {
             <div class="keyboard-grid" id="keyboardGrid"></div>
 
             <button class="btn btn-primary" id="backToPhase1">Torna alla Fase 1</button>
+            
+            <!-- Pannello Certificato v3.0 -->
+            <div id="certificateContainer"></div>
         </div>
     </div>
 
@@ -506,6 +453,40 @@ checkAnswer = function(selectedLetter) {
 
         // Contatore errori
         let errorCount = 0;
+        
+        // Sistema di Certificazione v3.0
+        let certSystem = null;
+        
+        // Inizializza sistema certificazione
+        function initCertificationSystem() {
+            certSystem = new CertificationSystem({
+                appName: 'Alfabeto Inglese',
+                appVersion: '1.0.0',
+                storageKey: 'alfabeto_inglese_cert',
+                certUrl: 'https://certificationsystem.netlify.app/',
+                trackFocus: false, // Non serve tracking focus per questo tipo di app
+                fields: [
+                    { key: 'fase1', label: 'Fase 1 Completata', showZero: false },
+                    { key: 'errori_fase1', label: 'Errori Fase 1', showZero: true },
+                    { key: 'fase2_corrette', label: 'Fase 2: Risposte Corrette', showZero: false },
+                    { key: 'fase2_sbagliate', label: 'Fase 2: Risposte Sbagliate', showZero: true },
+                    { key: 'fase2_totali', label: 'Fase 2: Totale Tentativi', showZero: false }
+                ],
+                onFieldUpdate: (key, value) => {
+                    // Aggiorna UI quando cambiano i dati
+                    if (certSystem) {
+                        certSystem.renderStatsPanel('certificateContainer-stats');
+                    }
+                }
+            });
+            
+            // Render pannello completo v3.0
+            certSystem.renderFullPanel('certificateContainer', {
+                collapsible: true,
+                showStudentControls: true,
+                showClassroomToggle: false // Non serve modalità classe per alfabeto
+            });
+        }
 
         // Suono di errore
         function playErrorSound() {
@@ -556,6 +537,11 @@ checkAnswer = function(selectedLetter) {
                 // Lettera sbagliata!
                 errorCount++;
                 playErrorSound();
+                
+                // Registra errore nel certificato
+                if (certSystem) {
+                    certSystem.incrementField('errori_fase1');
+                }
                 
                 showMessage('message1', 
                     `❌ Errore ${errorCount}/3: Hai messo "${letter}" ma la lettera giusta è "${expectedLetter}"`, 
@@ -646,6 +632,12 @@ checkAnswer = function(selectedLetter) {
             document.getElementById('phase1').style.display = 'none';
             document.getElementById('phase2').style.display = 'block';
             currentPhase = 2;
+            
+            // Registra completamento Fase 1 DOPO aver cambiato fase
+            if (certSystem) {
+                certSystem.incrementField('fase1');
+            }
+            
             initPhase2();
         }
 
@@ -731,10 +723,21 @@ checkAnswer = function(selectedLetter) {
 
             stats.total++;
             document.getElementById('totalCount').textContent = stats.total;
+            
+            // Registra tentativo nel certificato
+            if (certSystem) {
+                certSystem.incrementField('fase2_totali');
+            }
 
             if (selectedLetter === currentLetter) {
                 stats.correct++;
                 document.getElementById('correctCount').textContent = stats.correct;
+                
+                // Registra risposta corretta
+                if (certSystem) {
+                    certSystem.incrementField('fase2_corrette');
+                }
+                
                 showMessage('message2', `✅ Corretto! Era la lettera ${currentLetter}`, 'success');
                 
                 setTimeout(() => {
@@ -744,6 +747,12 @@ checkAnswer = function(selectedLetter) {
             } else {
                 stats.wrong++;
                 document.getElementById('wrongCount').textContent = stats.wrong;
+                
+                // Registra risposta sbagliata
+                if (certSystem) {
+                    certSystem.incrementField('fase2_sbagliate');
+                }
+                
                 showMessage('message2', `❌ Sbagliato! Era la lettera ${currentLetter}, hai scelto ${selectedLetter}`, 'error');
                 
                 // Ripronuncia la lettera corretta
@@ -768,6 +777,13 @@ checkAnswer = function(selectedLetter) {
 
         // Inizializza app
         initPhase1();
+        
+        // Inizializza sistema certificazione quando il DOM è pronto
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initCertificationSystem);
+        } else {
+            initCertificationSystem();
+        }
     </script>
 </body>
 </html>
