@@ -1,15 +1,16 @@
 /**
- * SISTEMA DI CERTIFICAZIONE MODULARE v3.0
+ * SISTEMA DI CERTIFICAZIONE MODULARE v4.0
  * Autore: Flejta & Claude
  * Licenza: MIT
- * Versione: 3.0.0
+ * Versione: 4.0.0
  * 
- * Changelog v3.0:
- * - Aggiunto sistema dati studente persistenti
- * - Modalità Lavoro in Classe con sessioni isolate
- * - Tracking focus avanzato per verifiche
- * - Fix bug reset pannello statistiche
- * - Gestione sessioni multiple
+ * Changelog v4.0:
+ * - Aggiunta Modalità Verifica con tracking estremo
+ * - Tracking resize finestra e attività sospette
+ * - Persistenza modalità dopo refresh/chiusura
+ * - Timeline completa eventi nel certificato
+ * - Rilevamento tentativi di imbroglio
+ * - Callbacks avanzati per l'app
  */
 
 class CertificationSystem {
@@ -22,14 +23,21 @@ class CertificationSystem {
             fields: config.fields || [],
             trackFocus: config.trackFocus || false,
             inactivityTimeout: config.inactivityTimeout || 120000,
-            classroomMode: config.classroomMode || false,
+            classroomMode: false,
+            verificationMode: false,
+            suspiciousResizeThreshold: config.suspiciousResizeThreshold || 100, // pixel
+            requireFullscreen: config.requireFullscreen || false,
             ...config
         };
         
-        // Carica info studente se disponibili
+        //#region Inizializzazione e Recupero Stato
+        // Carica info studente
         this.studentInfo = this.loadStudentInfo();
         
-        // Inizializza dati (considerando modalità classe)
+        // IMPORTANTE: Recupera modalità persistenti PRIMA di caricare i dati
+        this.recoverPersistedModes();
+        
+        // Inizializza dati
         this.data = this.loadData();
         
         // Variabili di stato
@@ -40,28 +48,385 @@ class CertificationSystem {
         this.totalFocusLostTime = 0;
         this.focusLostStart = null;
         
-        // Dettagli focus per modalità classe
-        this.focusEvents = [];
+        // Tracking avanzato
+        this.windowSize = { width: window.innerWidth, height: window.innerHeight };
+        this.isFullscreen = false;
+        this.suspiciousActivities = [];
         
         this.init();
+        //#endregion
     }
 
-    //#region Inizializzazione e Dati Studente
+    //#region Inizializzazione e Recupero Stato Persistente
     init() {
         this.startTimer();
         this.setupActivityTracking();
         
-        // In modalità classe, tracking focus è SEMPRE attivo
-        if (this.config.classroomMode || this.config.trackFocus) {
+        // Setup tracking in base alle modalità
+        if (this.config.classroomMode || this.config.verificationMode) {
             this.setupFocusTracking();
+            this.setupAdvancedTracking();
         }
         
-        // Se modalità classe, registra inizio sessione
-        if (this.config.classroomMode && !this.data._session) {
-            this.startClassroomSession();
+        // Se modalità verifica, notifica l'app
+        if (this.config.verificationMode) {
+            this.notifyVerificationMode(true);
+        }
+        
+        // Registra apertura pagina se in modalità tracking
+        if (this.config.classroomMode || this.config.verificationMode) {
+            this.logEvent('page_load', {
+                timestamp: Date.now(),
+                mode: this.config.verificationMode ? 'verification' : 'classroom'
+            });
         }
     }
 
+    recoverPersistedModes() {
+        // Recupera modalità persistenti da localStorage
+        const persistedModes = localStorage.getItem(this.config.storageKey + '_modes');
+        if (persistedModes) {
+            try {
+                const modes = JSON.parse(persistedModes);
+                
+                // Se era in modalità verifica, mantienila
+                if (modes.verificationMode) {
+                    this.config.verificationMode = true;
+                    this.config.classroomMode = true; // Verifica implica classe
+                    
+                    // Log del recupero modalità
+                    console.log('Modalità Verifica recuperata dopo refresh/riapertura');
+                } else if (modes.classroomMode) {
+                    this.config.classroomMode = true;
+                }
+                
+                // Registra il recupero
+                if (modes.lastClosed) {
+                    const reopenTime = Date.now() - modes.lastClosed;
+                    if (reopenTime < 60000) { // Meno di 1 minuto
+                        console.log('Probabile refresh della pagina');
+                    } else {
+                        console.log('Pagina riaperta dopo chiusura');
+                    }
+                }
+            } catch (e) {
+                console.error('Errore recupero modalità:', e);
+            }
+        }
+    }
+
+    persistModes() {
+        // Salva stato modalità per sopravvivere a refresh
+        const modes = {
+            classroomMode: this.config.classroomMode,
+            verificationMode: this.config.verificationMode,
+            lastClosed: Date.now()
+        };
+        localStorage.setItem(this.config.storageKey + '_modes', JSON.stringify(modes));
+    }
+    //#endregion
+
+    //#region Tracking Avanzato e Rilevamento Attività Sospette
+    setupAdvancedTracking() {
+        // Tracking resize finestra
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                const newSize = { width: window.innerWidth, height: window.innerHeight };
+                const sizeDiff = Math.abs(newSize.width - this.windowSize.width) + 
+                                Math.abs(newSize.height - this.windowSize.height);
+                
+                // Registra resize
+                this.logEvent('window_resize', {
+                    from: {...this.windowSize},
+                    to: {...newSize},
+                    difference: sizeDiff,
+                    timestamp: Date.now()
+                });
+                
+                // Se resize sospetto in modalità verifica
+                if (this.config.verificationMode && sizeDiff > this.config.suspiciousResizeThreshold) {
+                    this.logSuspiciousActivity('suspicious_resize', {
+                        from: {...this.windowSize},
+                        to: {...newSize},
+                        difference: sizeDiff
+                    });
+                }
+                
+                this.windowSize = newSize;
+                
+                // Callback
+                if (this.config.onWindowResize) {
+                    this.config.onWindowResize({
+                        from: this.windowSize,
+                        to: newSize,
+                        suspicious: sizeDiff > this.config.suspiciousResizeThreshold
+                    });
+                }
+            }, 300);
+        });
+        
+        // Tracking cambio visibilità (tab nascosta)
+        document.addEventListener('visibilitychange', () => {
+            const isHidden = document.hidden;
+            
+            this.logEvent('visibility_change', {
+                hidden: isHidden,
+                timestamp: Date.now()
+            });
+            
+            if (isHidden && this.config.verificationMode) {
+                this.logSuspiciousActivity('tab_hidden', {
+                    timestamp: Date.now()
+                });
+            }
+        });
+        
+        // Tracking fullscreen
+        document.addEventListener('fullscreenchange', () => {
+            const wasFullscreen = this.isFullscreen;
+            this.isFullscreen = !!document.fullscreenElement;
+            
+            if (wasFullscreen && !this.isFullscreen) {
+                this.logEvent('fullscreen_exit', {
+                    timestamp: Date.now()
+                });
+                
+                if (this.config.verificationMode) {
+                    this.logSuspiciousActivity('fullscreen_exit', {
+                        timestamp: Date.now()
+                    });
+                }
+            }
+        });
+        
+        // Tracking tentativi di navigazione
+        window.addEventListener('beforeunload', (e) => {
+            if (this.config.verificationMode) {
+                // Salva stato prima di chiudere
+                this.persistModes();
+                this.saveData();
+                
+                // Mostra avviso
+                e.preventDefault();
+                e.returnValue = 'Sei in modalità verifica. Vuoi davvero uscire?';
+                
+                this.logEvent('exit_attempt', {
+                    timestamp: Date.now()
+                });
+            }
+        });
+        
+        // Tracking copia/incolla (possibile imbroglio)
+        document.addEventListener('copy', () => {
+            if (this.config.verificationMode) {
+                this.logSuspiciousActivity('copy_attempt', {
+                    timestamp: Date.now()
+                });
+            }
+        });
+        
+        document.addEventListener('paste', () => {
+            if (this.config.verificationMode) {
+                this.logSuspiciousActivity('paste_attempt', {
+                    timestamp: Date.now()
+                });
+            }
+        });
+        
+        // Tracking apertura console sviluppatore (F12)
+        let devtools = {open: false, orientation: null};
+        const threshold = 160;
+        
+        setInterval(() => {
+            if (window.outerHeight - window.innerHeight > threshold || 
+                window.outerWidth - window.innerWidth > threshold) {
+                if (!devtools.open) {
+                    devtools.open = true;
+                    if (this.config.verificationMode) {
+                        this.logSuspiciousActivity('devtools_open', {
+                            timestamp: Date.now()
+                        });
+                    }
+                }
+            } else {
+                devtools.open = false;
+            }
+        }, 500);
+    }
+
+    logEvent(eventType, data) {
+        if (!this.data._events) {
+            this.data._events = [];
+        }
+        
+        this.data._events.push({
+            type: eventType,
+            data: data,
+            timestamp: Date.now()
+        });
+        
+        this.saveData();
+    }
+
+    logSuspiciousActivity(type, details) {
+        if (!this.data._suspiciousActivities) {
+            this.data._suspiciousActivities = [];
+        }
+        
+        const activity = {
+            type: type,
+            details: details,
+            timestamp: Date.now()
+        };
+        
+        this.data._suspiciousActivities.push(activity);
+        this.suspiciousActivities.push(activity);
+        
+        this.saveData();
+        
+        // Notifica l'app
+        if (this.config.onSuspiciousActivity) {
+            this.config.onSuspiciousActivity(type, details);
+        }
+        
+        // Alert visivo per lo studente
+        if (this.config.verificationMode) {
+            this.showWarning(`⚠️ Attività registrata: ${this.getSuspiciousActivityMessage(type)}`);
+        }
+    }
+
+    getSuspiciousActivityMessage(type) {
+        const messages = {
+            'suspicious_resize': 'Ridimensionamento finestra',
+            'tab_hidden': 'Tab nascosta',
+            'fullscreen_exit': 'Uscita da schermo intero',
+            'copy_attempt': 'Tentativo di copia',
+            'paste_attempt': 'Tentativo di incolla',
+            'devtools_open': 'Console sviluppatore aperta',
+            'exit_attempt': 'Tentativo di uscita'
+        };
+        return messages[type] || 'Attività non consentita';
+    }
+
+    showWarning(message) {
+        // Crea overlay di warning temporaneo
+        const warning = document.createElement('div');
+        warning.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #f44336;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            z-index: 999999;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        `;
+        warning.textContent = message;
+        document.body.appendChild(warning);
+        
+        setTimeout(() => {
+            warning.remove();
+        }, 3000);
+    }
+    //#endregion
+
+    //#region Modalità Verifica e Classe
+    toggleVerificationMode(enabled) {
+        const wasEnabled = this.config.verificationMode;
+        this.config.verificationMode = enabled;
+        
+        if (enabled) {
+            // Attiva anche modalità classe
+            this.config.classroomMode = true;
+            
+            // Reset completo dei dati
+            this.data = this.createEmptyData();
+            this.data._verificationSession = {
+                startTime: Date.now(),
+                endTime: null,
+                strictMode: true
+            };
+            
+            // Setup tracking avanzato
+            this.setupAdvancedTracking();
+            this.setupFocusTracking();
+            
+            // Notifica app
+            this.notifyVerificationMode(true);
+            
+            // Log attivazione
+            this.logEvent('verification_mode_enabled', {
+                timestamp: Date.now()
+            });
+            
+        } else if (wasEnabled) {
+            // Disattivazione modalità verifica
+            if (this.data._verificationSession) {
+                this.data._verificationSession.endTime = Date.now();
+            }
+            
+            // Log disattivazione
+            this.logEvent('verification_mode_disabled', {
+                timestamp: Date.now(),
+                duration: Date.now() - (this.data._verificationSession?.startTime || 0)
+            });
+            
+            // Notifica app
+            this.notifyVerificationMode(false);
+        }
+        
+        // Persisti stato
+        this.persistModes();
+        this.saveData();
+    }
+
+    notifyVerificationMode(enabled) {
+        if (enabled && this.config.onVerificationModeStart) {
+            this.config.onVerificationModeStart();
+        } else if (!enabled && this.config.onVerificationModeEnd) {
+            this.config.onVerificationModeEnd();
+        }
+    }
+
+    toggleClassroomMode(enabled) {
+        this.config.classroomMode = enabled;
+        
+        if (enabled) {
+            this.startClassroomSession();
+            this.setupFocusTracking();
+            
+            // Log attivazione
+            this.logEvent('classroom_mode_enabled', {
+                timestamp: Date.now()
+            });
+        } else {
+            // Se era in modalità verifica, non può disattivare classe
+            if (this.config.verificationMode) {
+                console.warn('Non puoi disattivare modalità classe mentre sei in verifica');
+                this.config.classroomMode = true;
+                return;
+            }
+            
+            this.endClassroomSession();
+            
+            // Log disattivazione
+            this.logEvent('classroom_mode_disabled', {
+                timestamp: Date.now()
+            });
+        }
+        
+        // Persisti stato
+        this.persistModes();
+        this.saveData();
+    }
+    //#endregion
+
+    //#region Gestione Dati Studente
     loadStudentInfo() {
         const stored = localStorage.getItem('student_global_info');
         if (stored) {
@@ -85,7 +450,6 @@ class CertificationSystem {
     }
 
     promptStudentInfo() {
-        // Metodo helper per richiedere info studente
         const info = {
             nome: prompt('Inserisci il tuo nome:', this.studentInfo?.nome || ''),
             cognome: prompt('Inserisci il tuo cognome:', this.studentInfo?.cognome || ''),
@@ -100,7 +464,7 @@ class CertificationSystem {
     }
     //#endregion
 
-    //#region Modalità Classe
+    //#region Gestione Sessioni
     startClassroomSession() {
         const sessionId = 'session_' + Date.now();
         
@@ -109,6 +473,7 @@ class CertificationSystem {
             startTime: Date.now(),
             endTime: null,
             classroomMode: true,
+            verificationMode: this.config.verificationMode,
             focusEvents: []
         };
         
@@ -129,7 +494,6 @@ class CertificationSystem {
         
         this.saveData();
         
-        // Notifica inizio sessione
         if (this.config.onSessionStart) {
             this.config.onSessionStart(sessionId);
         }
@@ -140,7 +504,6 @@ class CertificationSystem {
             this.data._session.endTime = Date.now();
             this.data._session.focusEvents = this.focusEvents;
             
-            // Salva sessione nello storico
             if (!this.data._sessionHistory) {
                 this.data._sessionHistory = [];
             }
@@ -152,7 +515,6 @@ class CertificationSystem {
                 this.config.onSessionEnd(this.data._session);
             }
             
-            // Genera certificato automaticamente per la sessione
             return this.generateCertLink();
         }
         return null;
@@ -161,14 +523,19 @@ class CertificationSystem {
     isInClassroomSession() {
         return this.config.classroomMode && this.data._session && !this.data._session.endTime;
     }
+
+    isInVerificationMode() {
+        return this.config.verificationMode;
+    }
     //#endregion
 
-    //#region Gestione Dati
+    //#region Gestione Dati e Storage
     loadData() {
         let storageKey = this.config.storageKey;
         
-        // In modalità classe, usa chiave specifica per sessione
-        if (this.config.classroomMode) {
+        if (this.config.verificationMode) {
+            storageKey = this.config.storageKey + '_verification';
+        } else if (this.config.classroomMode) {
             storageKey = this.config.storageKey + '_classroom';
         }
         
@@ -177,17 +544,18 @@ class CertificationSystem {
             try {
                 const parsed = JSON.parse(stored);
                 
-                // Se in modalità classe e c'è già una sessione attiva, continua quella
-                if (this.config.classroomMode && parsed._session && !parsed._session.endTime) {
+                // Se in modalità verifica/classe e c'è una sessione attiva, continua
+                if ((this.config.verificationMode || this.config.classroomMode) && 
+                    parsed._session && !parsed._session.endTime) {
                     return parsed;
                 }
                 
-                // Altrimenti se in modalità classe, inizia nuova sessione
-                if (this.config.classroomMode) {
+                // Altrimenti crea nuovi dati
+                if (this.config.verificationMode || this.config.classroomMode) {
                     return this.createEmptyData();
                 }
                 
-                // Modalità normale: carica dati esistenti o migra
+                // Modalità normale
                 if (!parsed._meta) {
                     return this.migrateOldData(parsed);
                 }
@@ -212,7 +580,9 @@ class CertificationSystem {
                 t: 0
             },
             _textFields: {},
-            _studentInfo: this.studentInfo
+            _studentInfo: this.studentInfo,
+            _events: [],
+            _suspiciousActivities: []
         };
         
         // Inizializza campi personalizzati
@@ -224,7 +594,7 @@ class CertificationSystem {
             }
         });
         
-        if (this.config.trackFocus || this.config.classroomMode) {
+        if (this.config.trackFocus || this.config.classroomMode || this.config.verificationMode) {
             initialData._values.fl = 0;
             initialData._values.flt = 0;
         }
@@ -242,7 +612,9 @@ class CertificationSystem {
             },
             _values: {},
             _textFields: {},
-            _studentInfo: this.studentInfo
+            _studentInfo: this.studentInfo,
+            _events: [],
+            _suspiciousActivities: []
         };
 
         Object.keys(oldData).forEach(key => {
@@ -259,35 +631,52 @@ class CertificationSystem {
         this.data._studentInfo = this.studentInfo;
         
         let storageKey = this.config.storageKey;
-        if (this.config.classroomMode) {
+        if (this.config.verificationMode) {
+            storageKey = this.config.storageKey + '_verification';
+        } else if (this.config.classroomMode) {
             storageKey = this.config.storageKey + '_classroom';
         }
         
         localStorage.setItem(storageKey, JSON.stringify(this.data));
+        
+        // Salva anche modalità persistenti
+        this.persistModes();
     }
 
     resetData() {
-        const confirm = window.confirm('Sei sicuro di voler azzerare tutte le statistiche?');
-        if (confirm) {
-            // Se in modalità classe, termina sessione
-            if (this.isInClassroomSession()) {
-                this.endClassroomSession();
-            }
+        // In modalità verifica, richiedi conferma speciale
+        if (this.config.verificationMode) {
+            const confirm = window.confirm('⚠️ ATTENZIONE: Sei in modalità verifica!\n\nIl reset verrà registrato come attività sospetta.\n\nVuoi davvero procedere?');
+            if (!confirm) return;
             
-            // Reset completo
-            this.data = this.createEmptyData();
-            this.focusLostCount = 0;
-            this.totalFocusLostTime = 0;
-            this.focusEvents = [];
-            
-            this.saveData();
-            
-            // IMPORTANTE: Aggiorna immediatamente il pannello visivo
-            this.renderStatsPanel(document.querySelector('[id*="certStats"]')?.id || 'certStatsContainer');
-            
-            if (this.config.onReset) {
-                this.config.onReset();
-            }
+            // Log tentativo di reset in verifica
+            this.logSuspiciousActivity('reset_attempt_in_verification', {
+                timestamp: Date.now()
+            });
+        } else {
+            const confirm = window.confirm('Sei sicuro di voler azzerare tutte le statistiche?');
+            if (!confirm) return;
+        }
+        
+        // Se in modalità classe/verifica, termina sessione
+        if (this.isInClassroomSession()) {
+            this.endClassroomSession();
+        }
+        
+        // Reset completo
+        this.data = this.createEmptyData();
+        this.focusLostCount = 0;
+        this.totalFocusLostTime = 0;
+        this.focusEvents = [];
+        this.suspiciousActivities = [];
+        
+        this.saveData();
+        
+        // Aggiorna pannello
+        this.renderStatsPanel(document.querySelector('[id*="certStats"]')?.id || 'certStatsContainer');
+        
+        if (this.config.onReset) {
+            this.config.onReset();
         }
     }
     //#endregion
@@ -300,10 +689,12 @@ class CertificationSystem {
             const now = Date.now();
             const inactiveTime = now - this.lastActivity;
             
-            // In modalità classe, conta sempre il tempo se la finestra è attiva
-            const shouldCount = this.config.classroomMode ? 
-                this.isActive : 
-                (inactiveTime < this.config.inactivityTimeout && this.isActive);
+            // In modalità verifica, conta sempre il tempo
+            const shouldCount = this.config.verificationMode ? 
+                true : 
+                (this.config.classroomMode ? 
+                    this.isActive : 
+                    (inactiveTime < this.config.inactivityTimeout && this.isActive));
             
             if (shouldCount) {
                 this.data._values.t++;
@@ -327,32 +718,41 @@ class CertificationSystem {
     }
     //#endregion
 
-    //#region Focus Tracking Avanzato
+    //#region Focus Tracking
     setupFocusTracking() {
-        window.addEventListener('blur', () => {
+        // Rimuovi listener esistenti per evitare duplicati
+        window.removeEventListener('blur', this.handleBlur);
+        window.removeEventListener('focus', this.handleFocus);
+        
+        this.handleBlur = () => {
             this.isActive = false;
             this.focusLostCount++;
             this.focusLostStart = Date.now();
             
-            // In modalità classe, registra evento dettagliato
-            if (this.config.classroomMode) {
-                this.focusEvents.push({
-                    type: 'blur',
-                    timestamp: Date.now(),
-                    timeInSession: this.data._values.t
+            // In modalità verifica, è più grave
+            if (this.config.verificationMode) {
+                this.logSuspiciousActivity('focus_lost', {
+                    count: this.focusLostCount,
+                    timestamp: Date.now()
                 });
             }
+            
+            // Log evento dettagliato
+            this.logEvent('focus_lost', {
+                count: this.focusLostCount,
+                timestamp: Date.now(),
+                timeInSession: this.data._values.t
+            });
             
             this.data._values.fl = this.focusLostCount;
             this.saveData();
             
-            // Callback per notifica immediata
             if (this.config.onFocusLost) {
                 this.config.onFocusLost(this.focusLostCount);
             }
-        });
-
-        window.addEventListener('focus', () => {
+        };
+        
+        this.handleFocus = () => {
             this.isActive = true;
             this.lastActivity = Date.now();
             
@@ -361,27 +761,27 @@ class CertificationSystem {
                 this.totalFocusLostTime += lostTime;
                 this.data._values.flt = this.totalFocusLostTime;
                 
-                // In modalità classe, registra durata fuori focus
-                if (this.config.classroomMode) {
-                    this.focusEvents.push({
-                        type: 'focus',
-                        timestamp: Date.now(),
-                        timeInSession: this.data._values.t,
-                        duration: lostTime
-                    });
-                }
+                // Log evento dettagliato
+                this.logEvent('focus_restored', {
+                    duration: lostTime,
+                    totalLostTime: this.totalFocusLostTime,
+                    timestamp: Date.now(),
+                    timeInSession: this.data._values.t
+                });
                 
                 this.saveData();
                 this.focusLostStart = null;
                 
-                // Callback per notifica
                 if (this.config.onFocusRestored) {
                     this.config.onFocusRestored(lostTime);
                 }
             }
-        });
-
-        // Rileva cambio tab anche senza blur (per alcuni browser)
+        };
+        
+        window.addEventListener('blur', this.handleBlur);
+        window.addEventListener('focus', this.handleFocus);
+        
+        // Rileva cambio tab anche senza blur
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
                 if (this.isActive) {
@@ -432,7 +832,10 @@ class CertificationSystem {
             ...this.data._textFields,
             _meta: this.data._meta,
             _studentInfo: this.studentInfo,
-            _session: this.data._session
+            _session: this.data._session,
+            _verificationSession: this.data._verificationSession,
+            _events: this.data._events,
+            _suspiciousActivities: this.data._suspiciousActivities
         };
     }
     //#endregion
@@ -444,9 +847,14 @@ class CertificationSystem {
                 appName: this.config.appName,
                 appVersion: this.config.appVersion,
                 generated: Date.now(),
-                startTime: this.data._session?.startTime || this.data._meta.startTime,
-                endTime: this.data._session?.endTime || this.data._meta.lastUpdate,
-                classroomMode: this.config.classroomMode
+                startTime: this.data._verificationSession?.startTime || 
+                          this.data._session?.startTime || 
+                          this.data._meta.startTime,
+                endTime: this.data._verificationSession?.endTime || 
+                        this.data._session?.endTime || 
+                        this.data._meta.lastUpdate,
+                classroomMode: this.config.classroomMode,
+                verificationMode: this.config.verificationMode
             },
             studentInfo: this.studentInfo,
             values: this.data._values,
@@ -454,12 +862,31 @@ class CertificationSystem {
             fields: []
         };
 
+        // Se modalità verifica, aggiungi dettagli completi
+        if (this.config.verificationMode) {
+            certData.verification = {
+                session: this.data._verificationSession,
+                suspiciousActivities: this.data._suspiciousActivities || [],
+                events: this.data._events || [],
+                violations: {
+                    focusLost: this.data._values.fl || 0,
+                    focusLostTime: this.data._values.flt || 0,
+                    resizes: this.data._events?.filter(e => e.type === 'window_resize').length || 0,
+                    suspiciousResizes: this.data._suspiciousActivities?.filter(a => a.type === 'suspicious_resize').length || 0,
+                    copyPasteAttempts: this.data._suspiciousActivities?.filter(a => 
+                        a.type === 'copy_attempt' || a.type === 'paste_attempt').length || 0,
+                    devtoolsOpened: this.data._suspiciousActivities?.filter(a => a.type === 'devtools_open').length || 0
+                }
+            };
+        }
+
         // Se modalità classe, aggiungi dettagli sessione
         if (this.config.classroomMode && this.data._session) {
             certData.session = {
                 id: this.data._session.id,
-                focusEvents: this.focusEvents,
-                strictMode: true
+                focusEvents: this.data._events?.filter(e => 
+                    e.type === 'focus_lost' || e.type === 'focus_restored') || [],
+                strictMode: this.config.verificationMode
             };
         }
 
@@ -475,7 +902,7 @@ class CertificationSystem {
         });
 
         // Aggiungi campi focus
-        if (this.config.trackFocus || this.config.classroomMode) {
+        if (this.config.trackFocus || this.config.classroomMode || this.config.verificationMode) {
             certData.fields.push(
                 { key: 'fl', label: 'Volte Finestra Lasciata', type: 'number' },
                 { key: 'flt', label: 'Tempo Fuori Focus', type: 'time' }
@@ -501,14 +928,6 @@ class CertificationSystem {
         });
     }
 
-    addTextNote(fieldKey, text) {
-        if (!this.data._textFields.hasOwnProperty(fieldKey)) {
-            this.data._textFields[fieldKey] = '';
-        }
-        this.data._textFields[fieldKey] = text;
-        this.saveData();
-    }
-
     getFormattedTime(seconds) {
         if (seconds < 60) {
             return `${seconds}s`;
@@ -525,20 +944,19 @@ class CertificationSystem {
     //#endregion
 
     //#region UI Helper
-    // Nuovo metodo per pannello completo con UI integrata
     renderFullPanel(containerId, options = {}) {
         const container = document.getElementById(containerId);
         if (!container) return;
 
-        // Opzioni di configurazione
         const config = {
             collapsible: options.collapsible !== false,
             showStudentControls: options.showStudentControls !== false,
             showClassroomToggle: options.showClassroomToggle !== false,
+            showVerificationToggle: options.showVerificationToggle !== false,
             ...options
         };
 
-        // CSS inline per garantire stile consistente
+        // CSS aggiornato per modalità verifica
         if (!document.getElementById('cert-system-styles')) {
             const style = document.createElement('style');
             style.id = 'cert-system-styles';
@@ -548,6 +966,15 @@ class CertificationSystem {
                     border-radius: 15px;
                     color: white;
                     margin-top: 20px;
+                    position: relative;
+                }
+                .cert-panel.verification-mode {
+                    background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);
+                    animation: pulse-border 2s infinite;
+                }
+                @keyframes pulse-border {
+                    0%, 100% { box-shadow: 0 0 20px rgba(244, 67, 54, 0.5); }
+                    50% { box-shadow: 0 0 40px rgba(244, 67, 54, 0.8); }
                 }
                 .cert-panel-header {
                     padding: 20px;
@@ -609,7 +1036,12 @@ class CertificationSystem {
                 .cert-student-badge.registered {
                     background: rgba(76, 175, 80, 0.3);
                 }
-                .cert-classroom-toggle {
+                .cert-mode-toggles {
+                    display: flex;
+                    gap: 20px;
+                    align-items: center;
+                }
+                .cert-mode-toggle {
                     display: flex;
                     align-items: center;
                     gap: 10px;
@@ -623,7 +1055,15 @@ class CertificationSystem {
                     cursor: pointer;
                 }
                 .cert-switch.active {
+                    background: #ffc107;
+                }
+                .cert-switch.active.verification {
                     background: #f44336;
+                    animation: pulse 1s infinite;
+                }
+                @keyframes pulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.8; }
                 }
                 .cert-switch::after {
                     content: '';
@@ -670,22 +1110,48 @@ class CertificationSystem {
                     text-align: center;
                     font-weight: bold;
                 }
+                .cert-warning.verification {
+                    background: #f44336;
+                    color: white;
+                    animation: pulse 2s infinite;
+                }
+                .cert-violations {
+                    background: rgba(244, 67, 54, 0.2);
+                    border: 2px solid #f44336;
+                    border-radius: 10px;
+                    padding: 15px;
+                    margin: 15px 0;
+                }
+                .cert-violations-title {
+                    font-weight: bold;
+                    margin-bottom: 10px;
+                    color: #ffcdd2;
+                }
+                .cert-violation-item {
+                    padding: 5px 0;
+                    color: #ffebee;
+                }
             `;
             document.head.appendChild(style);
         }
 
         // Genera HTML del pannello
+        const isVerification = this.config.verificationMode;
+        const isClassroom = this.config.classroomMode;
+        
         let html = `
-            <div class="cert-panel ${container.dataset.collapsed === 'true' ? 'collapsed' : ''}" id="${containerId}-panel">
+            <div class="cert-panel ${isVerification ? 'verification-mode' : ''} ${container.dataset.collapsed === 'true' ? 'collapsed' : ''}" id="${containerId}-panel">
                 <div class="cert-panel-header" ${config.collapsible ? `onclick="certSystemTogglePanel('${containerId}')"` : ''}>
-                    <span class="cert-panel-title">📜 Certificato di Completamento</span>
+                    <span class="cert-panel-title">
+                        ${isVerification ? '🔒 MODALITÀ VERIFICA ATTIVA' : '📜 Certificato di Completamento'}
+                    </span>
                     <span class="cert-collapse-icon">▼</span>
                 </div>
                 <div class="cert-panel-content">
         `;
 
-        // Barra controlli (studente + modalità classe)
-        if (config.showStudentControls || config.showClassroomToggle) {
+        // Barra controlli
+        if (config.showStudentControls || config.showClassroomToggle || config.showVerificationToggle) {
             html += '<div class="cert-controls-bar">';
             
             // Info studente
@@ -705,29 +1171,64 @@ class CertificationSystem {
                 `;
             }
             
-            // Toggle modalità classe
-            if (config.showClassroomToggle) {
-                const isActive = this.config.classroomMode;
-                html += `
-                    <div class="cert-classroom-toggle">
-                        <label style="font-weight: bold;">🏫 Modalità Classe</label>
-                        <div class="cert-switch ${isActive ? 'active' : ''}" 
-                             onclick="certSystemToggleClassroom('${this.config.storageKey}', this)">
+            // Toggle modalità
+            if (config.showClassroomToggle || config.showVerificationToggle) {
+                html += '<div class="cert-mode-toggles">';
+                
+                if (config.showClassroomToggle) {
+                    html += `
+                        <div class="cert-mode-toggle">
+                            <label style="font-weight: bold;">🏫 Classe</label>
+                            <div class="cert-switch ${isClassroom && !isVerification ? 'active' : ''}" 
+                                 onclick="certSystemToggleClassroom('${this.config.storageKey}', this)">
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                }
+                
+                if (config.showVerificationToggle) {
+                    html += `
+                        <div class="cert-mode-toggle">
+                            <label style="font-weight: bold;">🔒 Verifica</label>
+                            <div class="cert-switch ${isVerification ? 'active verification' : ''}" 
+                                 onclick="certSystemToggleVerification('${this.config.storageKey}', this)">
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                html += '</div>';
             }
             
             html += '</div>';
         }
 
-        // Avviso modalità classe
-        if (this.isInClassroomSession()) {
+        // Avvisi modalità
+        if (isVerification) {
             html += `
-                <div class="cert-warning">
-                    ⚠️ MODALITÀ CLASSE ATTIVA - Tracking rigoroso del focus abilitato
+                <div class="cert-warning verification">
+                    ⚠️ MODALITÀ VERIFICA - Tracking completo attivo!<br>
+                    Ogni azione viene registrata e sarà riportata nel certificato.
                 </div>
             `;
+        } else if (isClassroom) {
+            html += `
+                <div class="cert-warning">
+                    ⚠️ MODALITÀ CLASSE ATTIVA - Tracking focus abilitato
+                </div>
+            `;
+        }
+
+        // Mostra violazioni se presenti
+        if (isVerification && this.suspiciousActivities.length > 0) {
+            html += `
+                <div class="cert-violations">
+                    <div class="cert-violations-title">🚨 Attività Sospette Rilevate:</div>
+            `;
+            this.suspiciousActivities.forEach(activity => {
+                html += `<div class="cert-violation-item">• ${this.getSuspiciousActivityMessage(activity.type)}</div>`;
+            });
+            html += '</div>';
         }
 
         // Pannello statistiche
@@ -748,7 +1249,7 @@ class CertificationSystem {
         // Container per link generato
         html += `
             <div id="${containerId}-link" style="display: none; margin-top: 20px;">
-                <p style="text-align: center;">Link certificato generato:</p>
+                <p style="text-align: center;">Link certificato:</p>
                 <div style="background: white; color: #667eea; padding: 15px; border-radius: 8px; 
                             word-break: break-all; font-family: monospace; margin: 10px 0;">
                     <span id="${containerId}-link-text"></span>
@@ -766,7 +1267,11 @@ class CertificationSystem {
         // Render statistiche
         this.renderStatsPanel(containerId + '-stats');
 
-        // Aggiungi funzioni globali per gestione eventi
+        // Setup funzioni globali
+        this.setupGlobalFunctions(containerId, options);
+    }
+
+    setupGlobalFunctions(containerId, options) {
         if (!window.certSystemTogglePanel) {
             window.certSystemTogglePanel = (id) => {
                 const panel = document.getElementById(id + '-panel');
@@ -778,7 +1283,6 @@ class CertificationSystem {
             };
 
             window.certSystemPromptStudent = (storageKey) => {
-                // Trova l'istanza corretta
                 if (this.config.storageKey === storageKey) {
                     this.promptStudentInfo();
                     this.renderFullPanel(containerId, options);
@@ -789,15 +1293,37 @@ class CertificationSystem {
                 if (this.config.storageKey === storageKey) {
                     const isActive = element.classList.contains('active');
                     if (!isActive) {
-                        if (confirm('Attivare MODALITÀ CLASSE?\n\nQuesto comporta:\n• Tracking rigoroso\n• Nuova sessione\n• Registrazione di ogni cambio finestra\n\nContinuare?')) {
+                        if (confirm('Attivare MODALITÀ CLASSE?\n\nQuesto comporta:\n• Tracking del focus\n• Nuova sessione\n\nContinuare?')) {
                             this.toggleClassroomMode(true);
-                            element.classList.add('active');
                             this.renderFullPanel(containerId, options);
                         }
                     } else {
+                        if (this.config.verificationMode) {
+                            alert('Non puoi disattivare modalità classe durante una verifica!');
+                            return;
+                        }
                         if (confirm('Disattivare modalità classe?')) {
                             this.toggleClassroomMode(false);
-                            element.classList.remove('active');
+                            this.renderFullPanel(containerId, options);
+                        }
+                    }
+                }
+            };
+
+            window.certSystemToggleVerification = (storageKey, element) => {
+                if (this.config.storageKey === storageKey) {
+                    const isActive = element.classList.contains('active');
+                    if (!isActive) {
+                        if (confirm('🔒 ATTIVARE MODALITÀ VERIFICA?\n\n⚠️ ATTENZIONE:\n• Reset completo dei dati\n• Tracking ESTREMO di ogni azione\n• Registrazione violazioni\n• NON disattivabile fino al termine\n\nContinuare?')) {
+                            this.toggleVerificationMode(true);
+                            this.renderFullPanel(containerId, options);
+                        }
+                    } else {
+                        if (confirm('⚠️ Terminare la modalità verifica?\n\nQuesto genererà il certificato finale.')) {
+                            this.toggleVerificationMode(false);
+                            const link = this.generateCertLink();
+                            document.getElementById(containerId + '-link').style.display = 'block';
+                            document.getElementById(containerId + '-link-text').textContent = link;
                             this.renderFullPanel(containerId, options);
                         }
                     }
@@ -822,6 +1348,7 @@ class CertificationSystem {
             window.certSystemResetData = (storageKey) => {
                 if (this.config.storageKey === storageKey) {
                     this.resetData();
+                    this.renderFullPanel(containerId, options);
                 }
             };
         }
@@ -831,10 +1358,9 @@ class CertificationSystem {
         const container = document.getElementById(containerId);
         if (!container) return;
 
-        // Inizia con stringa vuota
         let statsHTML = '';
 
-        // 1. Info studente (se presente)
+        // Info studente
         if (this.studentInfo && this.studentInfo.nome) {
             statsHTML += `
                 <div class="cert-stat" style="grid-column: span 2; background: rgba(76,175,80,0.2);">
@@ -846,19 +1372,28 @@ class CertificationSystem {
             `;
         }
 
-        // 2. Modalità classe (se attiva)
-        if (this.isInClassroomSession()) {
+        // Modalità attive
+        if (this.config.verificationMode) {
+            statsHTML += `
+                <div class="cert-stat" style="grid-column: span 2; background: #f44336; color: #fff;">
+                    <div class="cert-stat-value" style="color: #fff;">
+                        🔒 MODALITÀ VERIFICA
+                    </div>
+                    <div style="color: #fff;">Tracking completo attivo</div>
+                </div>
+            `;
+        } else if (this.isInClassroomSession()) {
             statsHTML += `
                 <div class="cert-stat" style="grid-column: span 2; background: #ffc107; color: #000;">
                     <div class="cert-stat-value" style="color: #000;">
-                        🏫 MODALITÀ CLASSE ATTIVA
+                        🏫 MODALITÀ CLASSE
                     </div>
-                    <div style="color: #000;">Tracking rigoroso abilitato</div>
+                    <div style="color: #000;">Sessione attiva</div>
                 </div>
             `;
         }
 
-        // 3. Tempo totale (sempre presente)
+        // Tempo totale
         statsHTML += `
             <div class="cert-stat">
                 <div class="cert-stat-value">${this.getFormattedTime(this.data._values.t || 0)}</div>
@@ -866,14 +1401,13 @@ class CertificationSystem {
             </div>
         `;
 
-        // 4. Campi personalizzati
+        // Campi personalizzati
         this.config.fields.forEach(field => {
-            if (field.type === 'text') return; // Salta campi testo
+            if (field.type === 'text') return;
             
             const value = this.data._values[field.key] || 0;
             let displayValue = value;
             
-            // Gestione visualizzazione
             if (field.showZero === false && value === 0) {
                 displayValue = '-';
             } else if (field.type === 'percentage' && value !== 0) {
@@ -890,28 +1424,36 @@ class CertificationSystem {
             `;
         });
 
-        // 5. Focus tracking (se abilitato)
-        if (this.config.trackFocus || this.config.classroomMode) {
+        // Focus tracking
+        if (this.config.trackFocus || this.config.classroomMode || this.config.verificationMode) {
             const focusCount = this.data._values.fl || 0;
             const focusTime = this.data._values.flt || 0;
             
-            // Colore warning se troppe violazioni
             const warningStyle = focusCount > 2 ? 
                 'background: rgba(244,67,54,0.2); border: 2px solid #f44336;' : '';
             
             statsHTML += `
                 <div class="cert-stat" style="${warningStyle}">
                     <div class="cert-stat-value">${focusCount}</div>
-                    <div>Volte Focus Perso</div>
+                    <div>Focus Perso</div>
                 </div>
                 <div class="cert-stat" style="${warningStyle}">
                     <div class="cert-stat-value">${this.getFormattedTime(focusTime)}</div>
-                    <div>Tempo Focus Perso</div>
+                    <div>Tempo Fuori Focus</div>
                 </div>
             `;
         }
 
-        // Aggiorna container
+        // Attività sospette (solo in verifica)
+        if (this.config.verificationMode && this.suspiciousActivities.length > 0) {
+            statsHTML += `
+                <div class="cert-stat" style="grid-column: span 2; background: rgba(244,67,54,0.3);">
+                    <div class="cert-stat-value">${this.suspiciousActivities.length}</div>
+                    <div>⚠️ Violazioni Rilevate</div>
+                </div>
+            `;
+        }
+
         container.innerHTML = statsHTML;
     }
 
@@ -924,10 +1466,13 @@ class CertificationSystem {
 
         if (generateBtn) {
             generateBtn.addEventListener('click', () => {
-                // In modalità classe, termina sessione prima di generare
-                if (this.isInClassroomSession()) {
-                    if (confirm('Vuoi terminare la sessione classe e generare il certificato?')) {
-                        this.endClassroomSession();
+                if (this.isInClassroomSession() || this.config.verificationMode) {
+                    if (confirm('Vuoi terminare la sessione e generare il certificato?')) {
+                        if (this.config.verificationMode) {
+                            this.toggleVerificationMode(false);
+                        } else {
+                            this.endClassroomSession();
+                        }
                     } else {
                         return;
                     }
@@ -956,19 +1501,6 @@ class CertificationSystem {
                 this.renderStatsPanel(document.querySelector('[id*="certStats"]')?.id || 'certStatsContainer');
             });
         }
-    }
-
-    // Metodi helper per modalità classe
-    toggleClassroomMode(enabled) {
-        this.config.classroomMode = enabled;
-        
-        if (enabled) {
-            this.startClassroomSession();
-        } else if (this.isInClassroomSession()) {
-            this.endClassroomSession();
-        }
-        
-        this.renderStatsPanel(document.querySelector('[id*="certStats"]')?.id || 'certStatsContainer');
     }
     //#endregion
 }
