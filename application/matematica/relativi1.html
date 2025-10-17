@@ -601,26 +601,25 @@
                     exerciseText = `${formatNumber(currentNum1)} ${currentOperator} ${formatNumber(currentNum2)} = ?`;
                     typeText = '📘 Livello 1: Addizioni e Sottrazioni';
                     
-                    // Calcola trasformazione corretta
+                    // Calcola trasformazione corretta e l'operazione originale
+                    const originalOp = `${formatNumber(currentNum1)}${currentOperator}${formatNumber(currentNum2)}`.replace(/\s+/g, '');
+                    
                     if (currentOperator === '+') {
-                        if (currentNum2 >= 0) {
-                            correctTransform = `${formatNumber(currentNum1)}+${formatNumber(currentNum2)}`;
-                        } else {
-                            correctTransform = `${formatNumber(currentNum1)}${formatNumber(currentNum2)}`;
-                        }
+                        // Addizione: resta uguale
+                        correctTransform = `${formatNumber(currentNum1)}+${formatNumber(currentNum2)}`;
                         correctAnswer = currentNum1 + currentNum2;
                     } else { // sottrazione
+                        // Sottrazione: diventa addizione con numero opposto
                         const transformedNum2 = -currentNum2;
-                        if (transformedNum2 >= 0) {
-                            correctTransform = `${formatNumber(currentNum1)}+${formatNumber(transformedNum2)}`;
-                        } else {
-                            correctTransform = `${formatNumber(currentNum1)}${formatNumber(transformedNum2)}`;
-                        }
+                        correctTransform = `${formatNumber(currentNum1)}+${formatNumber(transformedNum2)}`;
                         correctAnswer = currentNum1 - currentNum2;
                     }
                     
                     // Normalizza rimuovendo spazi
                     correctTransform = correctTransform.replace(/\s+/g, '');
+                    
+                    // Memorizza se la trasformazione è identica all'originale
+                    window.noTransformNeeded = (originalOp === correctTransform);
                     
                     document.getElementById('inputAreaLevel1').style.display = 'flex';
                     document.getElementById('transformInput').value = '';
@@ -654,7 +653,9 @@
                         currentOperator = Math.random() < 0.5 ? '+' : '-';
                         exerciseText = `${formatNumber(currentNum1)} ${currentOperator} ${formatNumber(currentNum2)} = ?`;
                         
-                        // Calcola trasformazione
+                        // Calcola trasformazione e operazione originale
+                        const originalOp = `${formatNumber(currentNum1)}${currentOperator}${formatNumber(currentNum2)}`.replace(/\s+/g, '');
+                        
                         if (currentOperator === '+') {
                             if (currentNum2 >= 0) {
                                 correctTransform = `${formatNumber(currentNum1)}+${formatNumber(currentNum2)}`;
@@ -673,6 +674,7 @@
                         }
                         
                         correctTransform = correctTransform.replace(/\s+/g, '');
+                        window.noTransformNeeded = (originalOp === correctTransform);
                         
                         document.getElementById('inputAreaLevel1').style.display = 'flex';
                         document.getElementById('transformInput').value = '';
@@ -694,8 +696,56 @@
             const userTransform = document.getElementById('transformInput').value.replace(/\s+/g, '');
             const userResult = parseInt(document.getElementById('resultInputLevel1').value);
             
-            if (!userTransform || isNaN(userResult)) {
-                showFeedback(false, 'Completa entrambi i campi!');
+            if (isNaN(userResult)) {
+                showFeedback(false, 'Inserisci almeno il risultato!');
+                return;
+            }
+            
+            // Se la trasformazione non è necessaria
+            if (window.noTransformNeeded) {
+                // Accetta campo vuoto O riscrittura corretta
+                if (userTransform === '' || userTransform === correctTransform) {
+                    // Passa direttamente alla verifica del risultato
+                    if (userResult === correctAnswer) {
+                        showFeedback(true, `✓ CORRETTO! ${correctAnswer}`);
+                        certSystem.incrementField(`ex${currentLevel}`);
+                        
+                        setTimeout(() => {
+                            generateExercise(currentLevel);
+                            hideFeedback();
+                        }, 1500);
+                    } else {
+                        showFeedback(false, `✗ Risultato errato! La risposta era ${correctAnswer}`);
+                        certSystem.incrementField('err');
+                        
+                        setTimeout(() => {
+                            generateExercise(currentLevel);
+                            hideFeedback();
+                        }, 2500);
+                    }
+                    return;
+                } else {
+                    // Ha scritto qualcosa di errato quando non serviva trasformare
+                    showFeedback(false, `✗ Non serve trasformare! Lascia vuoto o scrivi: ${correctTransform}`);
+                    certSystem.incrementField('err');
+                    
+                    setTimeout(() => {
+                        generateExercise(currentLevel);
+                        hideFeedback();
+                    }, 2500);
+                    return;
+                }
+            }
+            
+            // Se serve la trasformazione
+            if (userTransform === '') {
+                showFeedback(false, `✗ Devi trasformare! Era: ${correctTransform}`);
+                certSystem.incrementField('err');
+                
+                setTimeout(() => {
+                    generateExercise(currentLevel);
+                    hideFeedback();
+                }, 2500);
                 return;
             }
             
