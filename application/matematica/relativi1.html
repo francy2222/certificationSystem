@@ -305,6 +305,56 @@
             color: #666;
             font-size: 0.9em;
         }
+
+        .level-menu {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .level-card {
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .level-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            border-color: #764ba2;
+        }
+
+        .level-number {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .level-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .level-desc {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 0.95em;
+        }
+
+        .level-example {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            color: #333;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
@@ -320,15 +370,15 @@
         <div class="stats-quick">
             <div class="stat-item">
                 <div class="stat-value" id="quickEx1">0</div>
-                <div class="stat-label">Tipo 1</div>
+                <div class="stat-label">Livello 1</div>
             </div>
             <div class="stat-item">
                 <div class="stat-value" id="quickEx2">0</div>
-                <div class="stat-label">Tipo 2</div>
+                <div class="stat-label">Livello 2</div>
             </div>
             <div class="stat-item">
                 <div class="stat-value" id="quickEx3">0</div>
-                <div class="stat-label">Tipo 3</div>
+                <div class="stat-label">Livello 3</div>
             </div>
             <div class="stat-item">
                 <div class="stat-value" id="quickErr">0</div>
@@ -336,19 +386,64 @@
             </div>
         </div>
 
-        <div class="exercise-area">
-            <div class="exercise-type" id="exerciseType">Esercizio Tipo 1: Addizioni e Sottrazioni</div>
-            <div class="exercise-display" id="exerciseDisplay">Premi START per iniziare</div>
+        <!-- Menu Selezione Livello -->
+        <div class="level-menu" id="levelMenu">
+            <h2 style="text-align: center; color: #667eea; margin-bottom: 20px;">Scegli il livello</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                <div class="level-card" onclick="selectLevel(1)">
+                    <div class="level-number">1️⃣</div>
+                    <div class="level-title">Addizioni e Sottrazioni</div>
+                    <div class="level-desc">Con passaggio intermedio</div>
+                    <div class="level-example">(+3)-(-1) = (+3)+(+1) = 4</div>
+                </div>
+                <div class="level-card" onclick="selectLevel(2)">
+                    <div class="level-number">2️⃣</div>
+                    <div class="level-title">Moltiplicazioni</div>
+                    <div class="level-desc">Calcolo diretto</div>
+                    <div class="level-example">(-5)×(+3) = -15</div>
+                </div>
+                <div class="level-card" onclick="selectLevel(3)">
+                    <div class="level-number">3️⃣</div>
+                    <div class="level-title">Operazioni Miste</div>
+                    <div class="level-desc">Tutti i tipi combinati</div>
+                    <div class="level-example">Mix casuale</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="exercise-area" id="exerciseArea" style="display: none;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <button class="btn btn-primary" onclick="backToMenu()">↩️ Cambia Livello</button>
+            </div>
+
+            <div class="exercise-type" id="exerciseType"></div>
+            <div class="exercise-display" id="exerciseDisplay"></div>
             
             <div class="feedback" id="feedback"></div>
 
-            <div class="input-area" id="inputArea" style="display: none;">
-                <input type="number" class="result-input" id="resultInput" placeholder="?" autofocus>
-                <button class="btn btn-success" onclick="checkAnswer()">✓ Verifica</button>
+            <!-- Livello 1: Due input (trasformazione + risultato) -->
+            <div class="input-area" id="inputAreaLevel1" style="display: none; flex-direction: column; gap: 20px;">
+                <div style="text-align: center;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #667eea;">
+                        1️⃣ Trasforma l'operazione:
+                    </label>
+                    <input type="text" class="result-input" id="transformInput" placeholder="(+3)+(+1)" style="width: 300px;">
+                </div>
+                <div style="text-align: center;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #667eea;">
+                        2️⃣ Risultato finale:
+                    </label>
+                    <input type="number" class="result-input" id="resultInputLevel1" placeholder="?" style="width: 200px;">
+                </div>
+                <div style="text-align: center;">
+                    <button class="btn btn-success" onclick="checkAnswerLevel1()">✓ Verifica</button>
+                </div>
             </div>
 
-            <div style="text-align: center; margin-top: 20px;">
-                <button class="btn btn-primary" id="startBtn" onclick="startExercise()">🚀 START</button>
+            <!-- Livello 2 e 3: Input singolo -->
+            <div class="input-area" id="inputAreaNormal" style="display: none;">
+                <input type="number" class="result-input" id="resultInput" placeholder="?" autofocus>
+                <button class="btn btn-success" onclick="checkAnswer()">✓ Verifica</button>
             </div>
         </div>
 
@@ -389,11 +484,12 @@
     <script>
         //#region Variabili Globali
         let certSystem = null;
-        let currentExerciseType = 1;
+        let currentLevel = 0;
         let currentNum1 = 0;
         let currentNum2 = 0;
         let currentOperator = '';
         let correctAnswer = 0;
+        let correctTransform = '';
         let exerciseStarted = false;
 
         // Calcolatrice
@@ -411,9 +507,9 @@
                 trackFocus: false,
                 
                 fields: [
-                    { key: 'ex1', label: 'Esercizi Tipo 1 (Addizioni/Sottrazioni)', showZero: false },
-                    { key: 'ex2', label: 'Esercizi Tipo 2 (Moltiplicazioni)', showZero: false },
-                    { key: 'ex3', label: 'Esercizi Tipo 3 (Misti)', showZero: false },
+                    { key: 'ex1', label: 'Livello 1 Completati (Add/Sott)', showZero: false },
+                    { key: 'ex2', label: 'Livello 2 Completati (Moltip.)', showZero: false },
+                    { key: 'ex3', label: 'Livello 3 Completati (Misti)', showZero: false },
                     { key: 'err', label: 'Errori Totali', showZero: true }
                 ],
                 
@@ -448,6 +544,30 @@
         }
         //#endregion
 
+        //#region Gestione Livelli e Menu
+        function selectLevel(level) {
+            currentLevel = level;
+            exerciseStarted = true;
+            
+            document.getElementById('levelMenu').style.display = 'none';
+            document.getElementById('exerciseArea').style.display = 'block';
+            
+            generateExercise(level);
+        }
+
+        function backToMenu() {
+            currentLevel = 0;
+            exerciseStarted = false;
+            
+            document.getElementById('levelMenu').style.display = 'block';
+            document.getElementById('exerciseArea').style.display = 'none';
+            document.getElementById('inputAreaLevel1').style.display = 'none';
+            document.getElementById('inputAreaNormal').style.display = 'none';
+            
+            hideFeedback();
+        }
+        //#endregion
+
         //#region Generazione Esercizi
         function getRandomNumber() {
             let num = 0;
@@ -461,73 +581,151 @@
             return num >= 0 ? `(+${num})` : `(${num})`;
         }
 
-        function generateExercise(type) {
-            currentExerciseType = type;
+        function generateExercise(level) {
             currentNum1 = getRandomNumber();
             currentNum2 = getRandomNumber();
             
             let exerciseText = '';
             let typeText = '';
             
-            switch(type) {
-                case 1: // Addizioni/Sottrazioni
+            // Nascondi tutti gli input
+            document.getElementById('inputAreaLevel1').style.display = 'none';
+            document.getElementById('inputAreaNormal').style.display = 'none';
+            
+            switch(level) {
+                case 1: // Addizioni/Sottrazioni con trasformazione
                     currentOperator = Math.random() < 0.5 ? '+' : '-';
-                    exerciseText = `${formatNumber(currentNum1)} ${currentOperator} ${formatNumber(currentNum2)}`;
-                    typeText = 'Esercizio Tipo 1: Addizioni e Sottrazioni';
+                    exerciseText = `${formatNumber(currentNum1)} ${currentOperator} ${formatNumber(currentNum2)} = ?`;
+                    typeText = '📘 Livello 1: Addizioni e Sottrazioni';
                     
+                    // Calcola trasformazione corretta
                     if (currentOperator === '+') {
+                        if (currentNum2 >= 0) {
+                            correctTransform = `${formatNumber(currentNum1)}+${formatNumber(currentNum2)}`;
+                        } else {
+                            correctTransform = `${formatNumber(currentNum1)}${formatNumber(currentNum2)}`;
+                        }
                         correctAnswer = currentNum1 + currentNum2;
-                    } else {
+                    } else { // sottrazione
+                        const transformedNum2 = -currentNum2;
+                        if (transformedNum2 >= 0) {
+                            correctTransform = `${formatNumber(currentNum1)}+${formatNumber(transformedNum2)}`;
+                        } else {
+                            correctTransform = `${formatNumber(currentNum1)}${formatNumber(transformedNum2)}`;
+                        }
                         correctAnswer = currentNum1 - currentNum2;
                     }
+                    
+                    // Normalizza rimuovendo spazi
+                    correctTransform = correctTransform.replace(/\s+/g, '');
+                    
+                    document.getElementById('inputAreaLevel1').style.display = 'flex';
+                    document.getElementById('transformInput').value = '';
+                    document.getElementById('resultInputLevel1').value = '';
+                    document.getElementById('transformInput').focus();
                     break;
                     
                 case 2: // Moltiplicazioni
                     currentOperator = '*';
-                    exerciseText = `${formatNumber(currentNum1)} × ${formatNumber(currentNum2)}`;
-                    typeText = 'Esercizio Tipo 2: Moltiplicazioni';
+                    exerciseText = `${formatNumber(currentNum1)} × ${formatNumber(currentNum2)} = ?`;
+                    typeText = '📗 Livello 2: Moltiplicazioni';
                     correctAnswer = currentNum1 * currentNum2;
+                    
+                    document.getElementById('inputAreaNormal').style.display = 'flex';
+                    document.getElementById('resultInput').value = '';
+                    document.getElementById('resultInput').focus();
                     break;
                     
                 case 3: // Miste
-                    const operators = ['+', '-', '*'];
-                    currentOperator = operators[Math.floor(Math.random() * operators.length)];
+                    const isMult = Math.random() < 0.5;
                     
-                    if (currentOperator === '*') {
-                        exerciseText = `${formatNumber(currentNum1)} × ${formatNumber(currentNum2)}`;
-                    } else {
-                        exerciseText = `${formatNumber(currentNum1)} ${currentOperator} ${formatNumber(currentNum2)}`;
-                    }
-                    
-                    typeText = 'Esercizio Tipo 3: Operazioni Miste';
-                    
-                    if (currentOperator === '+') {
-                        correctAnswer = currentNum1 + currentNum2;
-                    } else if (currentOperator === '-') {
-                        correctAnswer = currentNum1 - currentNum2;
-                    } else {
+                    if (isMult) {
+                        currentOperator = '*';
+                        exerciseText = `${formatNumber(currentNum1)} × ${formatNumber(currentNum2)} = ?`;
                         correctAnswer = currentNum1 * currentNum2;
+                        
+                        document.getElementById('inputAreaNormal').style.display = 'flex';
+                        document.getElementById('resultInput').value = '';
+                        document.getElementById('resultInput').focus();
+                    } else {
+                        currentOperator = Math.random() < 0.5 ? '+' : '-';
+                        exerciseText = `${formatNumber(currentNum1)} ${currentOperator} ${formatNumber(currentNum2)} = ?`;
+                        
+                        // Calcola trasformazione
+                        if (currentOperator === '+') {
+                            if (currentNum2 >= 0) {
+                                correctTransform = `${formatNumber(currentNum1)}+${formatNumber(currentNum2)}`;
+                            } else {
+                                correctTransform = `${formatNumber(currentNum1)}${formatNumber(currentNum2)}`;
+                            }
+                            correctAnswer = currentNum1 + currentNum2;
+                        } else {
+                            const transformedNum2 = -currentNum2;
+                            if (transformedNum2 >= 0) {
+                                correctTransform = `${formatNumber(currentNum1)}+${formatNumber(transformedNum2)}`;
+                            } else {
+                                correctTransform = `${formatNumber(currentNum1)}${formatNumber(transformedNum2)}`;
+                            }
+                            correctAnswer = currentNum1 - currentNum2;
+                        }
+                        
+                        correctTransform = correctTransform.replace(/\s+/g, '');
+                        
+                        document.getElementById('inputAreaLevel1').style.display = 'flex';
+                        document.getElementById('transformInput').value = '';
+                        document.getElementById('resultInputLevel1').value = '';
+                        document.getElementById('transformInput').focus();
                     }
+                    
+                    typeText = '📙 Livello 3: Operazioni Miste';
                     break;
             }
             
             document.getElementById('exerciseType').textContent = typeText;
             document.getElementById('exerciseDisplay').textContent = exerciseText;
-            document.getElementById('resultInput').value = '';
-            document.getElementById('resultInput').focus();
         }
         //#endregion
 
-        //#region Gestione Esercizi
-        function startExercise() {
-            if (!exerciseStarted) {
-                exerciseStarted = true;
-                currentExerciseType = 1;
-                document.getElementById('startBtn').style.display = 'none';
-                document.getElementById('inputArea').style.display = 'flex';
+        //#region Verifica Risposte
+        function checkAnswerLevel1() {
+            const userTransform = document.getElementById('transformInput').value.replace(/\s+/g, '');
+            const userResult = parseInt(document.getElementById('resultInputLevel1').value);
+            
+            if (!userTransform || isNaN(userResult)) {
+                showFeedback(false, 'Completa entrambi i campi!');
+                return;
             }
-            generateExercise(currentExerciseType);
-            hideFeedback();
+            
+            // Verifica trasformazione
+            if (userTransform !== correctTransform) {
+                showFeedback(false, `✗ Trasformazione errata! Era: ${correctTransform}`);
+                certSystem.incrementField('err');
+                
+                setTimeout(() => {
+                    generateExercise(currentLevel);
+                    hideFeedback();
+                }, 2500);
+                return;
+            }
+            
+            // Verifica risultato
+            if (userResult === correctAnswer) {
+                showFeedback(true, `✓ CORRETTO! ${correctTransform} = ${correctAnswer}`);
+                certSystem.incrementField(`ex${currentLevel}`);
+                
+                setTimeout(() => {
+                    generateExercise(currentLevel);
+                    hideFeedback();
+                }, 1500);
+            } else {
+                showFeedback(false, `✗ Risultato errato! ${correctTransform} = ${correctAnswer}`);
+                certSystem.incrementField('err');
+                
+                setTimeout(() => {
+                    generateExercise(currentLevel);
+                    hideFeedback();
+                }, 2500);
+            }
         }
 
         function checkAnswer() {
@@ -540,32 +738,18 @@
             
             if (userAnswer === correctAnswer) {
                 showFeedback(true, `✓ CORRETTO! ${correctAnswer}`);
+                certSystem.incrementField(`ex${currentLevel}`);
                 
-                // Incrementa contatore tipo esercizio
-                certSystem.incrementField(`ex${currentExerciseType}`);
-                
-                // Passa al tipo successivo
                 setTimeout(() => {
-                    if (currentExerciseType < 3) {
-                        currentExerciseType++;
-                        generateExercise(currentExerciseType);
-                    } else {
-                        // Ricomincia dal tipo 1
-                        currentExerciseType = 1;
-                        generateExercise(currentExerciseType);
-                    }
+                    generateExercise(currentLevel);
                     hideFeedback();
                 }, 1500);
-                
             } else {
                 showFeedback(false, `✗ SBAGLIATO! La risposta era ${correctAnswer}`);
-                
-                // Incrementa errori
                 certSystem.incrementField('err');
                 
-                // Ricomincia dallo stesso tipo
                 setTimeout(() => {
-                    generateExercise(currentExerciseType);
+                    generateExercise(currentLevel);
                     hideFeedback();
                 }, 2000);
             }
@@ -581,10 +765,14 @@
             document.getElementById('feedback').className = 'feedback';
         }
 
-        // Gestione Enter per verificare
+        // Gestione Enter
         document.addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && exerciseStarted) {
-                checkAnswer();
+                if (currentLevel === 1 || (currentLevel === 3 && currentOperator !== '*')) {
+                    checkAnswerLevel1();
+                } else {
+                    checkAnswer();
+                }
             }
         });
         //#endregion
