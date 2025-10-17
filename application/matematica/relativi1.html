@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operazioni con Numeri Relativi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .control-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .timer-display {
+            font-size: 1.3em;
+            color: #667eea;
+            font-weight: bold;
+            padding: 8px 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+        }
+
+        .exercise-area {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            min-height: 300px;
+        }
+
+        .exercise-type {
+            text-align: center;
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .exercise-display {
+            text-align: center;
+            font-size: 3em;
+            font-weight: bold;
+            color: #333;
+            margin: 40px 0;
+            letter-spacing: 0.1em;
+        }
+
+        .input-area {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin: 30px 0;
+        }
+
+        .result-input {
+            font-size: 2em;
+            padding: 15px 25px;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            text-align: center;
+            width: 200px;
+            font-weight: bold;
+        }
+
+        .result-input:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn {
+            padding: 12px 30px;
+            font-size: 1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-calculator {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .feedback {
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .feedback.correct {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #28a745;
+            display: block;
+        }
+
+        .feedback.wrong {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #dc3545;
+            display: block;
+        }
+
+        .calculator {
+            display: none;
+            background: #2c3e50;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .calculator.show {
+            display: block;
+        }
+
+        .calc-display {
+            background: #34495e;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 2em;
+            text-align: right;
+            margin-bottom: 15px;
+            min-height: 60px;
+            word-wrap: break-word;
+        }
+
+        .calc-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .calc-btn {
+            padding: 20px;
+            font-size: 1.5em;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #95a5a6;
+            color: white;
+        }
+
+        .calc-btn:hover {
+            transform: scale(1.05);
+            background: #7f8c8d;
+        }
+
+        .calc-btn.operator {
+            background: #3498db;
+        }
+
+        .calc-btn.equals {
+            background: #27ae60;
+            grid-column: span 2;
+        }
+
+        .calc-btn.clear {
+            background: #e74c3c;
+        }
+
+        .calc-btn.copy {
+            background: #f39c12;
+            grid-column: span 2;
+        }
+
+        .stats-quick {
+            display: flex;
+            justify-content: space-around;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .exercise-display {
+                font-size: 2em;
+            }
+
+            .result-input {
+                font-size: 1.5em;
+                width: 150px;
+            }
+
+            .calc-buttons {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .calc-btn {
+                padding: 15px;
+                font-size: 1.2em;
+            }
+        }
+
+        .cert-stat {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .cert-stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .cert-stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔢 Numeri Relativi</h1>
+        <p class="subtitle">Esercitati con le operazioni sui numeri relativi</p>
+
+        <div class="control-bar">
+            <div class="timer-display" id="timerDisplay">⏱️ 00:00</div>
+            <button class="btn btn-calculator" onclick="toggleCalculator()">🧮 Calcolatrice</button>
+        </div>
+
+        <div class="stats-quick">
+            <div class="stat-item">
+                <div class="stat-value" id="quickEx1">0</div>
+                <div class="stat-label">Tipo 1</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="quickEx2">0</div>
+                <div class="stat-label">Tipo 2</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="quickEx3">0</div>
+                <div class="stat-label">Tipo 3</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="quickErr">0</div>
+                <div class="stat-label">Errori</div>
+            </div>
+        </div>
+
+        <div class="exercise-area">
+            <div class="exercise-type" id="exerciseType">Esercizio Tipo 1: Addizioni e Sottrazioni</div>
+            <div class="exercise-display" id="exerciseDisplay">Premi START per iniziare</div>
+            
+            <div class="feedback" id="feedback"></div>
+
+            <div class="input-area" id="inputArea" style="display: none;">
+                <input type="number" class="result-input" id="resultInput" placeholder="?" autofocus>
+                <button class="btn btn-success" onclick="checkAnswer()">✓ Verifica</button>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-primary" id="startBtn" onclick="startExercise()">🚀 START</button>
+            </div>
+        </div>
+
+        <!-- Calcolatrice -->
+        <div class="calculator" id="calculator">
+            <div class="calc-display" id="calcDisplay">0</div>
+            <div class="calc-buttons">
+                <button class="calc-btn" onclick="calcInput('7')">7</button>
+                <button class="calc-btn" onclick="calcInput('8')">8</button>
+                <button class="calc-btn" onclick="calcInput('9')">9</button>
+                <button class="calc-btn operator" onclick="calcInput('/')">÷</button>
+                
+                <button class="calc-btn" onclick="calcInput('4')">4</button>
+                <button class="calc-btn" onclick="calcInput('5')">5</button>
+                <button class="calc-btn" onclick="calcInput('6')">6</button>
+                <button class="calc-btn operator" onclick="calcInput('*')">×</button>
+                
+                <button class="calc-btn" onclick="calcInput('1')">1</button>
+                <button class="calc-btn" onclick="calcInput('2')">2</button>
+                <button class="calc-btn" onclick="calcInput('3')">3</button>
+                <button class="calc-btn operator" onclick="calcInput('-')">−</button>
+                
+                <button class="calc-btn" onclick="calcInput('0')">0</button>
+                <button class="calc-btn" onclick="calcInput('.')">.</button>
+                <button class="calc-btn clear" onclick="calcClear()">C</button>
+                <button class="calc-btn operator" onclick="calcInput('+')">+</button>
+                
+                <button class="calc-btn equals" onclick="calcEquals()">=</button>
+                <button class="calc-btn copy" onclick="calcCopy()">📋 Copia</button>
+            </div>
+        </div>
+
+        <!-- Pannello Certificato -->
+        <div id="certificateContainer"></div>
+    </div>
+
+    <script src="https://certificationsystem.netlify.app/certification-system.js"></script>
+    <script>
+        //#region Variabili Globali
+        let certSystem = null;
+        let currentExerciseType = 1;
+        let currentNum1 = 0;
+        let currentNum2 = 0;
+        let currentOperator = '';
+        let correctAnswer = 0;
+        let exerciseStarted = false;
+
+        // Calcolatrice
+        let calcExpression = '';
+        let calcResult = '';
+        //#endregion
+
+        //#region Inizializzazione Sistema Certificazione
+        function initCertSystem() {
+            certSystem = new CertificationSystem({
+                appName: 'Operazioni con Numeri Relativi',
+                appVersion: '1.0.0',
+                storageKey: 'numeri_relativi_v1',
+                certUrl: 'https://certificationsystem.netlify.app/',
+                trackFocus: false,
+                
+                fields: [
+                    { key: 'ex1', label: 'Esercizi Tipo 1 (Addizioni/Sottrazioni)', showZero: false },
+                    { key: 'ex2', label: 'Esercizi Tipo 2 (Moltiplicazioni)', showZero: false },
+                    { key: 'ex3', label: 'Esercizi Tipo 3 (Misti)', showZero: false },
+                    { key: 'err', label: 'Errori Totali', showZero: true }
+                ],
+                
+                onTimerUpdate: (time) => {
+                    const minutes = Math.floor(time / 60);
+                    const seconds = time % 60;
+                    document.getElementById('timerDisplay').textContent = 
+                        `⏱️ ${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+                },
+                
+                onFieldUpdate: () => {
+                    updateQuickStats();
+                }
+            });
+            
+            certSystem.renderFullPanel('certificateContainer', {
+                collapsible: true,
+                showStudentControls: true,
+                showClassroomToggle: true,
+                showVerificationToggle: true
+            });
+            
+            updateQuickStats();
+        }
+
+        function updateQuickStats() {
+            const data = certSystem.getData();
+            document.getElementById('quickEx1').textContent = data.ex1 || 0;
+            document.getElementById('quickEx2').textContent = data.ex2 || 0;
+            document.getElementById('quickEx3').textContent = data.ex3 || 0;
+            document.getElementById('quickErr').textContent = data.err || 0;
+        }
+        //#endregion
+
+        //#region Generazione Esercizi
+        function getRandomNumber() {
+            let num = 0;
+            while (num === 0) {
+                num = Math.floor(Math.random() * 21) - 10; // da -10 a +10
+            }
+            return num;
+        }
+
+        function formatNumber(num) {
+            return num >= 0 ? `(+${num})` : `(${num})`;
+        }
+
+        function generateExercise(type) {
+            currentExerciseType = type;
+            currentNum1 = getRandomNumber();
+            currentNum2 = getRandomNumber();
+            
+            let exerciseText = '';
+            let typeText = '';
+            
+            switch(type) {
+                case 1: // Addizioni/Sottrazioni
+                    currentOperator = Math.random() < 0.5 ? '+' : '-';
+                    exerciseText = `${formatNumber(currentNum1)} ${currentOperator} ${formatNumber(currentNum2)}`;
+                    typeText = 'Esercizio Tipo 1: Addizioni e Sottrazioni';
+                    
+                    if (currentOperator === '+') {
+                        correctAnswer = currentNum1 + currentNum2;
+                    } else {
+                        correctAnswer = currentNum1 - currentNum2;
+                    }
+                    break;
+                    
+                case 2: // Moltiplicazioni
+                    currentOperator = '*';
+                    exerciseText = `${formatNumber(currentNum1)} × ${formatNumber(currentNum2)}`;
+                    typeText = 'Esercizio Tipo 2: Moltiplicazioni';
+                    correctAnswer = currentNum1 * currentNum2;
+                    break;
+                    
+                case 3: // Miste
+                    const operators = ['+', '-', '*'];
+                    currentOperator = operators[Math.floor(Math.random() * operators.length)];
+                    
+                    if (currentOperator === '*') {
+                        exerciseText = `${formatNumber(currentNum1)} × ${formatNumber(currentNum2)}`;
+                    } else {
+                        exerciseText = `${formatNumber(currentNum1)} ${currentOperator} ${formatNumber(currentNum2)}`;
+                    }
+                    
+                    typeText = 'Esercizio Tipo 3: Operazioni Miste';
+                    
+                    if (currentOperator === '+') {
+                        correctAnswer = currentNum1 + currentNum2;
+                    } else if (currentOperator === '-') {
+                        correctAnswer = currentNum1 - currentNum2;
+                    } else {
+                        correctAnswer = currentNum1 * currentNum2;
+                    }
+                    break;
+            }
+            
+            document.getElementById('exerciseType').textContent = typeText;
+            document.getElementById('exerciseDisplay').textContent = exerciseText;
+            document.getElementById('resultInput').value = '';
+            document.getElementById('resultInput').focus();
+        }
+        //#endregion
+
+        //#region Gestione Esercizi
+        function startExercise() {
+            if (!exerciseStarted) {
+                exerciseStarted = true;
+                currentExerciseType = 1;
+                document.getElementById('startBtn').style.display = 'none';
+                document.getElementById('inputArea').style.display = 'flex';
+            }
+            generateExercise(currentExerciseType);
+            hideFeedback();
+        }
+
+        function checkAnswer() {
+            const userAnswer = parseInt(document.getElementById('resultInput').value);
+            
+            if (isNaN(userAnswer)) {
+                showFeedback(false, 'Inserisci un numero valido!');
+                return;
+            }
+            
+            if (userAnswer === correctAnswer) {
+                showFeedback(true, `✓ CORRETTO! ${correctAnswer}`);
+                
+                // Incrementa contatore tipo esercizio
+                certSystem.incrementField(`ex${currentExerciseType}`);
+                
+                // Passa al tipo successivo
+                setTimeout(() => {
+                    if (currentExerciseType < 3) {
+                        currentExerciseType++;
+                        generateExercise(currentExerciseType);
+                    } else {
+                        // Ricomincia dal tipo 1
+                        currentExerciseType = 1;
+                        generateExercise(currentExerciseType);
+                    }
+                    hideFeedback();
+                }, 1500);
+                
+            } else {
+                showFeedback(false, `✗ SBAGLIATO! La risposta era ${correctAnswer}`);
+                
+                // Incrementa errori
+                certSystem.incrementField('err');
+                
+                // Ricomincia dallo stesso tipo
+                setTimeout(() => {
+                    generateExercise(currentExerciseType);
+                    hideFeedback();
+                }, 2000);
+            }
+        }
+
+        function showFeedback(isCorrect, message) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = message;
+            feedback.className = 'feedback ' + (isCorrect ? 'correct' : 'wrong');
+        }
+
+        function hideFeedback() {
+            document.getElementById('feedback').className = 'feedback';
+        }
+
+        // Gestione Enter per verificare
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && exerciseStarted) {
+                checkAnswer();
+            }
+        });
+        //#endregion
+
+        //#region Calcolatrice
+        function toggleCalculator() {
+            const calc = document.getElementById('calculator');
+            calc.classList.toggle('show');
+        }
+
+        function calcInput(value) {
+            if (calcResult !== '') {
+                calcExpression = calcResult;
+                calcResult = '';
+            }
+            calcExpression += value;
+            document.getElementById('calcDisplay').textContent = calcExpression || '0';
+        }
+
+        function calcClear() {
+            calcExpression = '';
+            calcResult = '';
+            document.getElementById('calcDisplay').textContent = '0';
+        }
+
+        function calcEquals() {
+            try {
+                calcResult = eval(calcExpression).toString();
+                document.getElementById('calcDisplay').textContent = calcResult;
+                calcExpression = '';
+            } catch(e) {
+                document.getElementById('calcDisplay').textContent = 'Errore';
+                calcExpression = '';
+                calcResult = '';
+            }
+        }
+
+        function calcCopy() {
+            const display = document.getElementById('calcDisplay');
+            const textToCopy = display.textContent;
+            
+            if (textToCopy && textToCopy !== '0' && textToCopy !== 'Errore') {
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    const originalText = display.textContent;
+                    display.textContent = '✓ Copiato!';
+                    setTimeout(() => {
+                        display.textContent = originalText;
+                    }, 1000);
+                }).catch(err => {
+                    alert('Impossibile copiare');
+                });
+            }
+        }
+        //#endregion
+
+        //#region Init
+        window.addEventListener('DOMContentLoaded', () => {
+            initCertSystem();
+        });
+        //#endregion
+    </script>
+</body>
+</html>
