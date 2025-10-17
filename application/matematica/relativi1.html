@@ -427,7 +427,10 @@
                     <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #667eea;">
                         1️⃣ Trasforma l'operazione:
                     </label>
-                    <input type="text" class="result-input" id="transformInput" placeholder="(+3)+(+1)" style="width: 300px;">
+                    <input type="text" class="result-input" id="transformInput" placeholder="(+3)+(+1) o lascia vuoto" style="width: 300px;">
+                    <div style="font-size: 0.85em; color: #999; margin-top: 5px;">
+                        💡 Lascia vuoto se non serve trasformare
+                    </div>
                 </div>
                 <div style="text-align: center;">
                     <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #667eea;">
@@ -598,7 +601,9 @@
                     exerciseText = `${formatNumber(currentNum1)} ${currentOperator} ${formatNumber(currentNum2)} = ?`;
                     typeText = '📘 Livello 1: Addizioni e Sottrazioni';
                     
-                    // Calcola trasformazione corretta
+                    // Calcola trasformazione corretta e l'operazione originale
+                    const originalOp = `${formatNumber(currentNum1)}${currentOperator}${formatNumber(currentNum2)}`.replace(/\s+/g, '');
+                    
                     if (currentOperator === '+') {
                         if (currentNum2 >= 0) {
                             correctTransform = `${formatNumber(currentNum1)}+${formatNumber(currentNum2)}`;
@@ -618,6 +623,9 @@
                     
                     // Normalizza rimuovendo spazi
                     correctTransform = correctTransform.replace(/\s+/g, '');
+                    
+                    // Memorizza se la trasformazione è identica all'originale
+                    window.noTransformNeeded = (originalOp === correctTransform);
                     
                     document.getElementById('inputAreaLevel1').style.display = 'flex';
                     document.getElementById('transformInput').value = '';
