@@ -601,9 +601,7 @@
                     exerciseText = `${formatNumber(currentNum1)} ${currentOperator} ${formatNumber(currentNum2)} = ?`;
                     typeText = '📘 Livello 1: Addizioni e Sottrazioni';
                     
-                    // Calcola trasformazione corretta e l'operazione originale
-                    const originalOp = `${formatNumber(currentNum1)}${currentOperator}${formatNumber(currentNum2)}`.replace(/\s+/g, '');
-                    
+                    // Calcola trasformazione corretta
                     if (currentOperator === '+') {
                         if (currentNum2 >= 0) {
                             correctTransform = `${formatNumber(currentNum1)}+${formatNumber(currentNum2)}`;
@@ -623,9 +621,6 @@
                     
                     // Normalizza rimuovendo spazi
                     correctTransform = correctTransform.replace(/\s+/g, '');
-                    
-                    // Memorizza se la trasformazione è identica all'originale
-                    window.noTransformNeeded = (originalOp === correctTransform);
                     
                     document.getElementById('inputAreaLevel1').style.display = 'flex';
                     document.getElementById('transformInput').value = '';
