@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impara le Misure - Righello Interattivo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 30px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .ruler-container {
+            background: #f5f5f5;
+            padding: 40px 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            overflow-x: auto;
+        }
+
+        #ruler {
+            position: relative;
+            width: 1000px;
+            height: 120px;
+            background: linear-gradient(to bottom, #ffffff 0%, #f8f8f8 100%);
+            border: 2px solid #333;
+            border-radius: 3px;
+            margin: 0 auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+
+        .tick {
+            position: absolute;
+            bottom: 0;
+            width: 1px;
+            background: #333;
+        }
+
+        .tick.mm {
+            height: 20px;
+            background: #666;
+        }
+
+        .tick.mm5 {
+            height: 30px;
+            width: 1.5px;
+            background: #444;
+        }
+
+        .tick.cm {
+            height: 45px;
+            width: 2px;
+            background: #222;
+        }
+
+        .tick.cm10 {
+            height: 60px;
+            width: 3px;
+            background: #000;
+        }
+
+        .number {
+            position: absolute;
+            bottom: 65px;
+            font-size: 18px;
+            font-weight: bold;
+            transform: translateX(-50%);
+            color: #000;
+        }
+
+        .number.cm10 {
+            font-size: 22px;
+            background: #333;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 50%;
+            bottom: 75px;
+        }
+
+        .highlight {
+            position: absolute;
+            background: rgba(255, 215, 0, 0.5);
+            border: 3px solid #FFD700;
+            bottom: 0;
+            height: 120px;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            z-index: 10;
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            font-size: 16px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-answer {
+            background: #4CAF50;
+            color: white;
+            margin: 10px;
+            padding: 15px 30px;
+            font-size: 18px;
+        }
+
+        .btn-answer:hover:not(:disabled) {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+
+        .btn-answer:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .btn-answer.wrong {
+            background: #f44336;
+            animation: shake 0.5s;
+        }
+
+        .btn-answer.correct {
+            background: #8BC34A;
+            animation: pulse 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .question {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .score {
+            text-align: center;
+            font-size: 20px;
+            margin-top: 20px;
+            color: #333;
+        }
+
+        .score span {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .feedback {
+            text-align: center;
+            font-size: 20px;
+            margin-top: 15px;
+            height: 30px;
+            font-weight: bold;
+        }
+
+        .feedback.correct {
+            color: #4CAF50;
+        }
+
+        .feedback.wrong {
+            color: #f44336;
+        }
+
+        /* Pannello Certificato */
+        .certificate-panel {
+            margin-top: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            color: white;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .cert-header {
+            padding: 20px 25px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .cert-header:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .cert-header h3 {
+            margin: 0;
+            font-size: 1.3em;
+        }
+
+        .collapse-icon {
+            font-size: 1.5em;
+            transition: transform 0.3s;
+        }
+
+        .certificate-panel.collapsed .collapse-icon {
+            transform: rotate(180deg);
+        }
+
+        .cert-content {
+            padding: 0 25px 25px 25px;
+            transition: all 0.3s ease;
+            max-height: 2000px;
+            opacity: 1;
+        }
+
+        .certificate-panel.collapsed .cert-content {
+            max-height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            opacity: 0;
+        }
+
+        .cert-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .cert-stat {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .cert-stat:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .cert-stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .cert-stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .cert-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .cert-btn {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .cert-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .cert-btn-primary {
+            background: rgba(255,255,255,0.9);
+            color: #667eea;
+        }
+
+        .cert-btn-danger {
+            background: #f44336;
+            border-color: #f44336;
+        }
+
+        .cert-link {
+            background: white;
+            color: #667eea;
+            padding: 15px;
+            border-radius: 8px;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 0.9em;
+            margin: 15px 0;
+        }
+
+        /* Info bar */
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .timer-display {
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: bold;
+            padding: 8px 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+        }
+
+        .student-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .student-badge {
+            padding: 8px 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .student-badge.registered {
+            border-color: #4caf50;
+            color: #4caf50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 Impara le Misure del Righello 📏</h1>
+        
+        <!-- Barra Info -->
+        <div class="info-bar">
+            <div class="timer-display" id="timerDisplay">⏱️ 00:00</div>
+            
+            <div class="student-info">
+                <div class="student-badge" id="studentBadge">👤 Non registrato</div>
+                <button class="btn btn-primary" id="studentBtn">📝 Registra</button>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-primary" onclick="newQuestion()">Nuova Domanda</button>
+        </div>
+
+        <div class="ruler-container">
+            <div id="ruler">
+                <div class="highlight" id="highlight"></div>
+            </div>
+        </div>
+
+        <div class="question">Quale unità di misura è evidenziata?</div>
+
+        <div class="answer-buttons">
+            <button class="btn btn-answer" onclick="checkAnswer('millimetro')">Millimetro</button>
+            <button class="btn btn-answer" onclick="checkAnswer('centimetro')">Centimetro</button>
+            <button class="btn btn-answer" onclick="checkAnswer('decimetro')">Decimetro</button>
+        </div>
+
+        <div class="feedback" id="feedback"></div>
+
+        <div class="score">
+            Punteggio: <span id="correct">0</span> / <span id="total">0</span>
+        </div>
+
+        <!-- Pannello Certificato -->
+        <div class="certificate-panel" id="certificatePanel">
+            <div class="cert-header" onclick="toggleCertPanel()">
+                <h3>📜 Certificato di Completamento</h3>
+                <span class="collapse-icon">▼</span>
+            </div>
+            
+            <div class="cert-content">
+                <div class="cert-stats" id="certStatsContainer"></div>
+                
+                <div class="cert-controls">
+                    <button class="cert-btn cert-btn-primary" id="generateCertBtn">
+                        📋 Genera Certificato
+                    </button>
+                    <button class="cert-btn cert-btn-danger" id="resetBtn">
+                        🔄 Reset Dati
+                    </button>
+                </div>
+                
+                <div id="certLinkContainer" style="display: none; margin-top: 20px;">
+                    <p style="text-align: center;">Link certificato:</p>
+                    <div class="cert-link" id="certLink"></div>
+                    <div style="text-align: center;">
+                        <button class="cert-btn" id="copyCertBtn">📋 Copia</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sistema Certificazione -->
+    <script src="https://certificationsystem.netlify.app/certification-system.js"></script>
+
+    <script>
+        //#region Variabili globali
+        let currentAnswer = '';
+        let correct = 0;
+        let total = 0;
+        let isAnswering = false;
+        let certSystem = null;
+        
+        // Scala: 1mm = 5px
+        const SCALE = 5;
+        //#endregion
+
+        //#region Sistema Certificazione
+        function initCertificationSystem() {
+            certSystem = new CertificationSystem({
+                appName: 'Righello Interattivo',
+                appVersion: '1.0.0',
+                storageKey: 'righello_cert_data',
+                certUrl: 'https://certificationsystem.netlify.app/',
+                trackFocus: true,
+                
+                fields: [
+                    { key: 'domande', label: 'Domande Totali', showZero: false },
+                    { key: 'corrette', label: 'Risposte Corrette', showZero: false },
+                    { key: 'sbagliate', label: 'Risposte Sbagliate', showZero: true },
+                    { key: 'millimetri', label: 'Millimetri Identificati', showZero: false },
+                    { key: 'centimetri', label: 'Centimetri Identificati', showZero: false },
+                    { key: 'decimetri', label: 'Decimetri Identificati', showZero: false },
+                    { key: 'precisione', label: 'Precisione %', showZero: true, type: 'percentage' }
+                ],
+                
+                onTimerUpdate: (time) => {
+                    const minutes = Math.floor(time / 60);
+                    const seconds = time % 60;
+                    document.getElementById('timerDisplay').textContent = 
+                        `⏱️ ${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+                },
+                
+                onFieldUpdate: () => {
+                    renderStats();
+                },
+                
+                onReset: () => {
+                    correct = 0;
+                    total = 0;
+                    document.getElementById('correct').textContent = '0';
+                    document.getElementById('total').textContent = '0';
+                    document.getElementById('feedback').textContent = '';
+                    document.getElementById('certLinkContainer').style.display = 'none';
+                    renderStats();
+                    updateStudentBadge();
+                },
+                
+                onFocusLost: (count) => {
+                    if (count > 2) {
+                        console.log('Attenzione: hai lasciato la finestra ' + count + ' volte');
+                    }
+                }
+            });
+            
+            // Setup bottoni certificato
+            certSystem.setupButtons(
+                'generateCertBtn', 
+                'copyCertBtn', 
+                'resetBtn', 
+                'certLinkContainer',
+                'studentBtn'
+            );
+            
+            // Render iniziale statistiche
+            renderStats();
+            updateStudentBadge();
+        }
+
+        function renderStats() {
+            const container = document.getElementById('certStatsContainer');
+            const data = certSystem.getData();
+            const studentInfo = certSystem.getStudentInfo();
+            
+            let html = '';
+            
+            // Info studente
+            if (studentInfo && studentInfo.nome) {
+                html += `
+                    <div class="cert-stat" style="grid-column: span 2; background: rgba(76,175,80,0.2);">
+                        <div class="cert-stat-value" style="font-size: 1em;">
+                            👤 ${studentInfo.nome} ${studentInfo.cognome}
+                        </div>
+                        <div class="cert-stat-label">Classe: ${studentInfo.classe || 'N/D'}</div>
+                    </div>
+                `;
+            }
+            
+            // Tempo totale
+            html += `
+                <div class="cert-stat">
+                    <div class="cert-stat-value">${certSystem.getFormattedTime(data.t || 0)}</div>
+                    <div class="cert-stat-label">Tempo Totale</div>
+                </div>
+            `;
+            
+            // Statistiche esercizio
+            const domande = data.domande || 0;
+            const corrette = data.corrette || 0;
+            const sbagliate = data.sbagliate || 0;
+            const precisione = domande > 0 ? Math.round((corrette / domande) * 100) : 0;
+            
+            // Aggiorna precisione nel sistema
+            if (domande > 0) {
+                certSystem.setField('precisione', precisione);
+            }
+            
+            html += `
+                <div class="cert-stat">
+                    <div class="cert-stat-value">${domande || '-'}</div>
+                    <div class="cert-stat-label">Domande Totali</div>
+                </div>
+                <div class="cert-stat">
+                    <div class="cert-stat-value">${corrette || '-'}</div>
+                    <div class="cert-stat-label">Risposte Corrette</div>
+                </div>
+                <div class="cert-stat">
+                    <div class="cert-stat-value">${sbagliate || 0}</div>
+                    <div class="cert-stat-label">Risposte Sbagliate</div>
+                </div>
+                <div class="cert-stat">
+                    <div class="cert-stat-value">${precisione}%</div>
+                    <div class="cert-stat-label">Precisione</div>
+                </div>
+            `;
+            
+            // Dettaglio per tipo
+            html += `
+                <div class="cert-stat">
+                    <div class="cert-stat-value">${data.millimetri || '-'}</div>
+                    <div class="cert-stat-label">Millimetri OK</div>
+                </div>
+                <div class="cert-stat">
+                    <div class="cert-stat-value">${data.centimetri || '-'}</div>
+                    <div class="cert-stat-label">Centimetri OK</div>
+                </div>
+                <div class="cert-stat">
+                    <div class="cert-stat-value">${data.decimetri || '-'}</div>
+                    <div class="cert-stat-label">Decimetri OK</div>
+                </div>
+            `;
+            
+            // Focus tracking
+            if (data.fl !== undefined) {
+                const isWarning = data.fl > 2;
+                html += `
+                    <div class="cert-stat" style="${isWarning ? 'background: rgba(244,67,54,0.2);' : ''}">
+                        <div class="cert-stat-value">${data.fl || 0}</div>
+                        <div class="cert-stat-label">Focus Perso</div>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function updateStudentBadge() {
+            const info = certSystem.getStudentInfo();
+            const badge = document.getElementById('studentBadge');
+            
+            if (info && info.nome) {
+                badge.textContent = `👤 ${info.nome} ${info.cognome}`;
+                badge.classList.add('registered');
+            } else {
+                badge.textContent = '👤 Non registrato';
+                badge.classList.remove('registered');
+            }
+        }
+
+        function toggleCertPanel() {
+            const panel = document.getElementById('certificatePanel');
+            panel.classList.toggle('collapsed');
+        }
+        //#endregion
+
+        //#region Righello e Logica Quiz
+        function initRuler() {
+            const ruler = document.getElementById('ruler');
+            
+            // Pulisci il righello (mantieni solo l'highlight)
+            const highlight = document.getElementById('highlight');
+            ruler.innerHTML = '';
+            ruler.appendChild(highlight);
+            
+            // Disegna le tacche per 20cm (200mm = 2 decimetri)
+            for (let mm = 0; mm <= 200; mm++) {
+                const tick = document.createElement('div');
+                tick.className = 'tick';
+                tick.style.left = (mm * SCALE) + 'px';
+                
+                if (mm % 10 === 0) {
+                    // Ogni centimetro
+                    const cm = mm / 10;
+                    
+                    if (cm % 10 === 0) {
+                        // Decimetro (10 cm) - tacca più grande e numero cerchiato
+                        tick.className = 'tick cm10';
+                        
+                        const num = document.createElement('div');
+                        num.className = 'number cm10';
+                        num.style.left = (mm * SCALE) + 'px';
+                        num.textContent = cm;
+                        ruler.appendChild(num);
+                    } else if (cm % 5 === 0) {
+                        // Ogni 5 cm - tacca media con numero evidenziato
+                        tick.className = 'tick cm10';
+                        tick.style.height = '50px';
+                        
+                        const num = document.createElement('div');
+                        num.className = 'number';
+                        num.style.left = (mm * SCALE) + 'px';
+                        num.style.fontWeight = 'bold';
+                        num.style.fontSize = '20px';
+                        num.textContent = cm;
+                        ruler.appendChild(num);
+                    } else {
+                        // Altri centimetri
+                        tick.className = 'tick cm';
+                        
+                        const num = document.createElement('div');
+                        num.className = 'number';
+                        num.style.left = (mm * SCALE) + 'px';
+                        num.textContent = cm;
+                        ruler.appendChild(num);
+                    }
+                } else if (mm % 5 === 0) {
+                    // Mezzo centimetro
+                    tick.className = 'tick mm5';
+                } else {
+                    // Millimetro
+                    tick.className = 'tick mm';
+                }
+                
+                ruler.appendChild(tick);
+            }
+        }
+
+        function newQuestion() {
+            // Rimuovi il controllo che blocca se isAnswering è true
+            // if (isAnswering) return;
+            
+            // Reset lo stato per permettere nuove risposte
+            isAnswering = false;
+            
+            const highlight = document.getElementById('highlight');
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = '';
+            feedback.className = 'feedback';
+            
+            // Reset buttons - assicurati che siano abilitati
+            const buttons = document.querySelectorAll('.btn-answer');
+            buttons.forEach(btn => {
+                btn.className = 'btn btn-answer';
+                btn.disabled = false;
+            });
+            
+            // Genera una domanda casuale
+            const questionType = Math.floor(Math.random() * 3);
+            let start, width;
+            
+            switch(questionType) {
+                case 0: // Millimetro
+                    // Scegli un millimetro casuale (evita i multipli di 5 per chiarezza)
+                    let mmPos;
+                    do {
+                        mmPos = Math.floor(Math.random() * 190);
+                    } while (mmPos % 5 === 0);
+                    
+                    start = mmPos * SCALE;
+                    width = SCALE; // 1mm
+                    currentAnswer = 'millimetro';
+                    break;
+                    
+                case 1: // Centimetro
+                    // Scegli un centimetro casuale
+                    const cmPos = Math.floor(Math.random() * 19) + 1;
+                    start = (cmPos * 10 - 10) * SCALE;
+                    width = 10 * SCALE; // 10mm = 1cm
+                    currentAnswer = 'centimetro';
+                    break;
+                    
+                case 2: // Decimetro
+                    // Scegli il primo o il secondo decimetro
+                    const dmPos = Math.floor(Math.random() * 2);
+                    start = dmPos * 100 * SCALE;
+                    width = 100 * SCALE; // 100mm = 10cm = 1dm
+                    currentAnswer = 'decimetro';
+                    break;
+            }
+            
+            highlight.style.left = start + 'px';
+            highlight.style.width = width + 'px';
+            
+            isAnswering = true;
+        }
+
+        function checkAnswer(answer) {
+            if (!isAnswering) return;
+            
+            const feedback = document.getElementById('feedback');
+            const buttons = document.querySelectorAll('.btn-answer');
+            
+            // Disabilita i pulsanti
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                if (btn.textContent.toLowerCase() === answer) {
+                    if (answer === currentAnswer) {
+                        btn.classList.add('correct');
+                    } else {
+                        btn.classList.add('wrong');
+                    }
+                }
+                if (btn.textContent.toLowerCase() === currentAnswer) {
+                    btn.classList.add('correct');
+                }
+            });
+            
+            // Aggiorna contatori
+            total++;
+            certSystem.incrementField('domande');
+            
+            if (answer === currentAnswer) {
+                correct++;
+                certSystem.incrementField('corrette');
+                
+                // Incrementa contatore specifico per tipo
+                if (currentAnswer === 'millimetro') {
+                    certSystem.incrementField('millimetri');
+                } else if (currentAnswer === 'centimetro') {
+                    certSystem.incrementField('centimetri');
+                } else if (currentAnswer === 'decimetro') {
+                    certSystem.incrementField('decimetri');
+                }
+                
+                feedback.textContent = '✅ Giusto! Ottimo lavoro!';
+                feedback.className = 'feedback correct';
+            } else {
+                certSystem.incrementField('sbagliate');
+                let articolo = currentAnswer === 'millimetro' ? 'un' : 
+                              currentAnswer === 'centimetro' ? 'un' : 'un';
+                feedback.textContent = `❌ Sbagliato! Era ${articolo} ${currentAnswer}`;
+                feedback.className = 'feedback wrong';
+            }
+            
+            document.getElementById('correct').textContent = correct;
+            document.getElementById('total').textContent = total;
+            
+            isAnswering = false;
+            
+            // Nuova domanda automatica dopo 2.5 secondi
+            setTimeout(() => {
+                newQuestion();
+            }, 2500);
+        }
+        //#endregion
+
+        //#region Inizializzazione
+        window.addEventListener('DOMContentLoaded', () => {
+            // Inizializza righello
+            initRuler();
+            newQuestion();
+            
+            // Inizializza sistema certificazione
+            initCertificationSystem();
+            
+            // Gestione registrazione studente
+            document.getElementById('studentBtn').addEventListener('click', () => {
+                certSystem.promptStudentInfo();
+                updateStudentBadge();
+                renderStats();
+            });
+        });
+        //#endregion
+    </script>
+</body>
+</html>
