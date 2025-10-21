@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Esercizi Insiemi - Livello 1 (Rappresentazione)</title>
+    <title>Misura sul Righello - Esercizi Interattivi</title>
     <style>
         * {
             margin: 0;
@@ -12,11 +12,11 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Arial', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             padding: 20px;
         }
@@ -24,288 +24,444 @@
         .container {
             background: white;
             border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 900px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 30px;
+            max-width: 1200px;
             width: 100%;
         }
 
         h1 {
             text-align: center;
-            color: #667eea;
-            margin-bottom: 10px;
-            font-size: 2.5em;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 1.1em;
-        }
-
-        .timer-stats {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 30px;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
-
-        .stat {
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: #667eea;
-        }
-
-        .stat-label {
-            font-size: 0.9em;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        .exercise-area {
-            background: #f8f9fa;
-            padding: 30px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-        }
-
-        .venn-diagram {
-            background: white;
-            border: 3px solid #667eea;
-            border-radius: 50%;
-            width: 300px;
-            height: 300px;
-            margin: 20px auto;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-items: center;
-            padding: 40px;
-            position: relative;
-        }
-
-        .venn-label {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-weight: bold;
-            font-size: 1.3em;
-            color: #667eea;
-        }
-
-        .element {
-            display: inline-block;
-            padding: 8px 15px;
-            margin: 5px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 20px;
-            font-size: 1.1em;
-            font-weight: bold;
-        }
-
-        .question {
-            text-align: center;
-            font-size: 1.2em;
             color: #333;
-            margin: 20px 0;
-            font-weight: 600;
+            margin-bottom: 20px;
+            font-size: 2em;
         }
 
-        .input-area {
-            margin: 20px 0;
-        }
-
-        .answer-input {
-            width: 100%;
-            padding: 15px;
-            font-size: 1.2em;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            font-family: 'Courier New', monospace;
-        }
-
-        .answer-input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .special-chars {
+        .level-selector {
             display: flex;
-            gap: 10px;
             justify-content: center;
-            margin-bottom: 15px;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
         }
 
-        .char-btn {
-            padding: 10px 20px;
-            font-size: 1.1em;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
+        .level-btn {
+            padding: 12px 25px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 10px;
             font-weight: bold;
+            cursor: pointer;
             transition: all 0.3s;
+            font-size: 16px;
         }
 
-        .char-btn:hover {
-            background: #764ba2;
+        .level-btn:hover {
+            background: #f0f0ff;
             transform: translateY(-2px);
         }
 
-        .btn {
-            padding: 15px 40px;
-            font-size: 1.1em;
+        .level-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #764ba2;
+        }
+
+        .level-description {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 14px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .ruler-container {
+            background: #f5f5f5;
+            padding: 40px 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            overflow-x: auto;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+        
+        .zoom-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            font-size: 20px;
             font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .zoom-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .zoom-label {
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        
+        .ruler-wrapper {
+            transform-origin: left center;
+            transition: transform 0.3s ease;
+        }
+
+        #ruler {
+            position: relative;
+            width: 800px;
+            height: 120px;
+            background: linear-gradient(to bottom, #ffffff 0%, #f8f8f8 100%);
+            border: 2px solid #333;
+            border-radius: 3px;
+            margin: 0 auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+        }
+
+        .tick {
+            position: absolute;
+            bottom: 0;
+            width: 1px;
+            background: #333;
+        }
+
+        .tick.mm {
+            height: 20px;
+            background: #666;
+        }
+
+        .tick.mm5 {
+            height: 30px;
+            width: 1.5px;
+            background: #444;
+        }
+
+        .tick.cm {
+            height: 45px;
+            width: 2px;
+            background: #222;
+        }
+
+        .tick.cm10 {
+            height: 60px;
+            width: 3px;
+            background: #000;
+        }
+
+        .number {
+            position: absolute;
+            bottom: 65px;
+            font-size: 18px;
+            font-weight: bold;
+            transform: translateX(-50%);
+            color: #000;
+        }
+
+        .number.cm10 {
+            font-size: 22px;
+            background: #333;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 50%;
+            bottom: 75px;
+        }
+
+        .measurement-area {
+            position: absolute;
+            background: rgba(255, 100, 100, 0.3);
+            border-left: 3px solid #ff0000;
+            border-right: 3px solid #ff0000;
+            bottom: 0;
+            height: 120px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .measurement-area::before,
+        .measurement-area::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-style: solid;
+        }
+
+        .measurement-area::before {
+            left: -8px;
+            bottom: -10px;
+            border-width: 10px 8px 0 8px;
+            border-color: #ff0000 transparent transparent transparent;
+        }
+
+        .measurement-area::after {
+            right: -8px;
+            bottom: -10px;
+            border-width: 10px 8px 0 8px;
+            border-color: #ff0000 transparent transparent transparent;
+        }
+
+        .question-area {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .question {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .answer-input {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"] {
+            padding: 12px 20px;
+            font-size: 20px;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            width: 150px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .unit-label {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            font-size: 16px;
             border: none;
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
-            display: block;
-            margin: 10px auto;
+            margin: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
         }
 
-        .btn-check {
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
             background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
             color: white;
         }
 
-        .btn-next {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-certificate {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-        }
-
-        .btn-check:hover, .btn-next:hover, .btn-certificate:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        .btn-warning {
+            background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+            color: #333;
         }
 
         .feedback {
-            text-align: center;
+            margin-top: 20px;
             padding: 15px;
-            margin: 20px 0;
             border-radius: 10px;
+            font-size: 18px;
             font-weight: bold;
-            font-size: 1.1em;
-            display: none;
+            text-align: center;
+            transition: all 0.3s ease;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { 
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .feedback.correct {
             background: #d4edda;
             color: #155724;
             border: 2px solid #c3e6cb;
+            display: block !important;
         }
 
-        .feedback.incorrect {
+        .feedback.wrong {
             background: #f8d7da;
             color: #721c24;
             border: 2px solid #f5c6cb;
+            display: block !important;
         }
 
-        .hint {
-            background: #fff3cd;
-            border: 2px solid #ffc107;
-            color: #856404;
-            padding: 10px;
-            border-radius: 8px;
-            margin: 10px 0;
-            font-size: 0.95em;
+        .score {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
         }
 
-        .help-btn {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            padding: 8px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.95em;
-            font-weight: bold;
-            display: none;
-            margin: 10px auto;
-            transition: all 0.3s;
-        }
-
-        .help-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
-        }
-
-        .help-content {
-            background: #e7f3ff;
-            border: 2px solid #2196F3;
-            color: #0d47a1;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
-            font-size: 1em;
-            display: none;
-            line-height: 1.6;
-        }
-
-        .help-content strong {
-            color: #1565c0;
-        }
-
-        .phase-indicator {
+        .score-item {
             text-align: center;
-            padding: 10px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        }
+
+        .score-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .score-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        /* Info bar */
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f8f9fa;
             border-radius: 10px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .timer-display {
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: bold;
+            padding: 8px 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+        }
+
+        .student-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            justify-content: center;
+        }
+
+        .student-badge {
+            padding: 8px 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+            color: #667eea;
             font-weight: bold;
         }
 
-        .progress-bar {
-            background: #e0e0e0;
-            height: 8px;
-            border-radius: 4px;
-            margin: 10px 0;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            transition: width 0.3s ease;
+        .student-badge.registered {
+            border-color: #4caf50;
+            color: #4caf50;
         }
 
         /* Pannello Certificato */
         .certificate-panel {
             margin-top: 30px;
-            padding: 25px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 15px;
             color: white;
+            overflow: hidden;
+            transition: all 0.3s ease;
         }
 
-        .certificate-panel h3 {
-            margin-bottom: 20px;
-            text-align: center;
+        .cert-header {
+            padding: 20px 25px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .cert-header:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .cert-header h3 {
+            margin: 0;
+            font-size: 1.3em;
+        }
+
+        .collapse-icon {
             font-size: 1.5em;
+            transition: transform 0.3s;
+        }
+
+        .certificate-panel.collapsed .collapse-icon {
+            transform: rotate(180deg);
+        }
+
+        .cert-content {
+            padding: 0 25px 25px 25px;
+            transition: all 0.3s ease;
+            max-height: 2000px;
+            opacity: 1;
+        }
+
+        .certificate-panel.collapsed .cert-content {
+            max-height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            opacity: 0;
         }
 
         .cert-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 15px;
-            margin-bottom: 20px;
+            margin-top: 20px;
         }
 
         .cert-stat {
@@ -313,10 +469,16 @@
             padding: 15px;
             border-radius: 8px;
             text-align: center;
+            transition: all 0.3s;
+        }
+
+        .cert-stat:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
         }
 
         .cert-stat-value {
-            font-size: 1.5em;
+            font-size: 1.8em;
             font-weight: bold;
             margin-bottom: 5px;
         }
@@ -324,6 +486,40 @@
         .cert-stat-label {
             font-size: 0.9em;
             opacity: 0.9;
+        }
+
+        .cert-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .cert-btn {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .cert-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .cert-btn-primary {
+            background: rgba(255,255,255,0.9);
+            color: #667eea;
+        }
+
+        .cert-btn-danger {
+            background: #f44336;
+            border-color: #f44336;
         }
 
         .cert-link {
@@ -336,596 +532,570 @@
             font-size: 0.9em;
             margin: 15px 0;
         }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-            }
-
-            h1 {
-                font-size: 1.8em;
-            }
-
-            .venn-diagram {
-                width: 250px;
-                height: 250px;
-            }
-
-            .cert-stats {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📊 Esercizi sugli Insiemi</h1>
-        <p class="subtitle">Livello 1: Rappresentazione degli Insiemi</p>
-
-        <div class="phase-indicator" id="phaseIndicator">
-            Fase 1/3: Solo Elencazione (0/5)
-        </div>
-        <div class="progress-bar">
-            <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
-        </div>
-
-        <div class="timer-stats">
-            <div class="stat">
-                <div class="stat-value" id="timer">00:00</div>
-                <div class="stat-label">Tempo</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value" id="completed">0</div>
-                <div class="stat-label">Completati</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value" id="errors">0</div>
-                <div class="stat-label">Errori</div>
+        <h1>📏 Misura sul Righello - Esercizi Interattivi</h1>
+        
+        <!-- Barra Info -->
+        <div class="info-bar">
+            <div class="timer-display" id="timerDisplay">⏱️ 00:00</div>
+            
+            <div class="student-info">
+                <div class="student-badge" id="studentBadge">👤 Non registrato</div>
+                <button class="btn btn-primary" id="studentBtn">📝 Registra</button>
             </div>
         </div>
+        
+        <!-- Selezione Livello -->
+        <div class="level-selector">
+            <button class="level-btn active" onclick="setLevel(1)">Livello 1</button>
+            <button class="level-btn" onclick="setLevel(2)">Livello 2</button>
+            <button class="level-btn" onclick="setLevel(3)">Livello 3</button>
+        </div>
+        
+        <div class="level-description" id="levelDescription">
+            <strong>Livello 1:</strong> Misura solo centimetri interi (es: 5 cm)
+        </div>
 
-        <div class="exercise-area">
-            <!-- Diagramma di Eulero-Venn -->
-            <div class="venn-diagram" id="vennDiagram">
-                <div class="venn-label" id="setLabel">A</div>
-                <div id="elements"></div>
+        <!-- Righello -->
+        <div class="ruler-container">
+            <div class="zoom-controls">
+                <button class="zoom-btn" onclick="zoomOut()">−</button>
+                <div class="zoom-label" id="zoomLabel">100%</div>
+                <button class="zoom-btn" onclick="zoomIn()">+</button>
             </div>
-
-            <!-- Domanda -->
-            <div class="question" id="question"></div>
-
-            <!-- Area input -->
-            <div class="input-area">
-                <div class="special-chars">
-                    <button class="char-btn" onclick="insertChar('{')">{</button>
-                    <button class="char-btn" onclick="insertChar('{x|x')">{ x | x</button>
-                    <button class="char-btn" onclick="insertChar('}')">}</button>
+            <div class="ruler-wrapper" id="rulerWrapper">
+                <div id="ruler">
+                    <div class="measurement-area" id="measurementArea"></div>
                 </div>
-                <input type="text" class="answer-input" id="answerInput" placeholder="Scrivi qui la tua risposta...">
-                <div class="hint" id="hint" style="display: none;"></div>
-                <button class="help-btn" id="helpBtn" onclick="showHelp()">💡 Aiuto: Cosa sono i numeri pari/dispari?</button>
-                <div class="help-content" id="helpContent"></div>
             </div>
+        </div>
 
-            <!-- Feedback -->
+        <!-- Area Domanda e Risposta -->
+        <div class="question-area">
+            <div class="question" id="questionText">
+                Quanto misura la parte evidenziata?
+            </div>
+            
+            <div class="answer-input">
+                <input type="text" id="answerInput" placeholder="0" autocomplete="off">
+                <span class="unit-label" id="unitLabel">cm</span>
+                <button class="btn btn-success" onclick="checkAnswer()">✅ Verifica</button>
+                <button class="btn btn-warning" onclick="newQuestion()">🔄 Nuova Domanda</button>
+            </div>
+            
             <div class="feedback" id="feedback"></div>
+        </div>
 
-            <!-- Bottoni -->
-            <button class="btn btn-check" id="checkBtn" onclick="checkAnswer()">Verifica Risposta</button>
-            <button class="btn btn-next" id="nextBtn" onclick="nextExercise()" style="display: none;">Prossimo Esercizio</button>
+        <!-- Punteggio -->
+        <div class="score">
+            <div class="score-item">
+                <div class="score-value" id="correctScore">0</div>
+                <div class="score-label">Corrette</div>
+            </div>
+            <div class="score-item">
+                <div class="score-value" id="totalScore">0</div>
+                <div class="score-label">Totali</div>
+            </div>
+            <div class="score-item">
+                <div class="score-value" id="percentScore">0%</div>
+                <div class="score-label">Precisione</div>
+            </div>
         </div>
 
         <!-- Pannello Certificato -->
-        <div class="certificate-panel">
-            <h3>📜 Certificato di Studio</h3>
+        <div class="certificate-panel collapsed" id="certificatePanel">
+            <div class="cert-header" onclick="toggleCertPanel()">
+                <h3>📜 Certificato di Completamento</h3>
+                <span class="collapse-icon">▼</span>
+            </div>
             
-            <div class="cert-stats" id="certStatsContainer"></div>
-            
-            <button class="btn btn-certificate" id="generateCertBtn">📋 Genera Link Certificato</button>
-            <button class="btn btn-certificate" id="resetBtn" style="margin-top: 10px; background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);">🔄 Azzera Statistiche</button>
-            
-            <div id="certLinkContainer" style="display: none;">
-                <p style="margin-top: 15px;">Copia questo link e invialo al docente:</p>
-                <div class="cert-link" id="certLink"></div>
-                <button class="btn btn-certificate" id="copyCertBtn" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">📋 Copia Link</button>
+            <div class="cert-content">
+                <div class="cert-stats" id="certStatsContainer"></div>
+                
+                <div class="cert-controls">
+                    <button class="cert-btn cert-btn-primary" id="generateCertBtn">
+                        📋 Genera Certificato
+                    </button>
+                    <button class="cert-btn cert-btn-danger" id="resetBtn">
+                        🔄 Reset Dati
+                    </button>
+                </div>
+                
+                <div id="certLinkContainer" style="display: none; margin-top: 20px;">
+                    <p style="text-align: center;">Link certificato:</p>
+                    <div class="cert-link" id="certLink"></div>
+                    <div style="text-align: center;">
+                        <button class="cert-btn" id="copyCertBtn">📋 Copia</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Import sistema certificazione -->
+    <!-- Sistema Certificazione -->
     <script src="https://certificationsystem.netlify.app/certification-system.js"></script>
 
     <script>
-        //#region Configurazione Sistema Certificazione
+        //#region Variabili globali
+        let currentLevel = 1;
+        let correctAnswer = 0;
+        let correctCount = 0;
+        let totalCount = 0;
+        let certSystem = null;
+        let isWaitingForAnswer = false;
+        let currentZoom = 100;
         
-        const certSystem = new CertificationSystem({
-            appName: 'Insiemi Livello 1',
-            storageKey: 'insiemi_l1_cert',
-            certUrl: 'https://certificationsystem.netlify.app/',
-            trackFocus: false,
-            fields: [
-                { key: 'completed', label: 'Esercizi Completati', showZero: false },
-                { key: 'phase1', label: 'Fase 1 Superata', showZero: false },
-                { key: 'phase2', label: 'Fase 2 Superata', showZero: false },
-                { key: 'phase3', label: 'Fase 3 Completata', showZero: false },
-                { key: 'errors', label: 'Errori Totali', showZero: true },
-                { key: 'helps', label: 'Aiuti Utilizzati', showZero: true }
-            ],
-            onTimerUpdate: (time) => {
-                const minutes = Math.floor(time / 60);
-                const seconds = time % 60;
-                document.getElementById('timer').textContent = 
-                    `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-            },
-            onFieldUpdate: () => {
-                certSystem.renderStatsPanel('certStatsContainer');
-            },
-            onReset: () => {
-                location.reload();
-            }
-        });
-
-        certSystem.setupButtons('generateCertBtn', 'copyCertBtn', 'resetBtn', 'certLinkContainer');
-        certSystem.renderStatsPanel('certStatsContainer');
-
+        // Scala: 1mm = 4px (ridotto per far stare meglio il righello)
+        const SCALE = 4;
         //#endregion
 
-        //#region Dati e Configurazione
-        
-        let currentExercise = null;
-        let phaseCorrectCount = 0;
-        let difficultyPhase = 'elencazione';
-        let exerciseHistory = []; // Previene ripetizioni
-
-        // Tipi di insiemi disponibili (ampliati)
-        const setTypes = [
-            {
-                name: 'lettere_parola',
-                generate: () => {
-                    const words = [
-                        'GATTO', 'CANE', 'SOLE', 'MARE', 'LUNA', 'CASA', 'FIORE', 'ALBERO',
-                        'STELLE', 'NOTTE', 'GIORNO', 'TEMPO', 'CUORE', 'AMICO', 'SCUOLA',
-                        'LIBRO', 'PENNA', 'TAVOLO', 'SEDIA', 'PORTA', 'FINESTRA', 'CIELO',
-                        'TERRA', 'ACQUA', 'FUOCO', 'VENTO', 'MONTE', 'CAMPO', 'BOSCO'
-                    ];
-                    const word = words[Math.floor(Math.random() * words.length)];
-                    const letters = [...new Set(word.toLowerCase().split(''))];
-                    return {
-                        elements: letters,
-                        description: `x è una lettera della parola ${word}`,
-                        word: word
-                    };
-                }
-            },
-            {
-                name: 'numeri_pari',
-                generate: () => {
-                    const min = Math.floor(Math.random() * 5) * 2; // 0, 2, 4, 6, 8
-                    const range = 8 + Math.floor(Math.random() * 8);
-                    const max = min + range;
-                    const elements = [];
-                    for (let i = min || 2; i <= max; i += 2) {
-                        elements.push(i);
-                    }
-                    return {
-                        elements: elements,
-                        description: min > 0 
-                            ? `x è un numero pari compreso tra ${min} e ${max}`
-                            : `x è un numero pari minore o uguale a ${max}`
-                    };
-                }
-            },
-            {
-                name: 'numeri_dispari',
-                generate: () => {
-                    const min = Math.random() < 0.5 ? 1 : (Math.floor(Math.random() * 4) * 2 + 1);
-                    const range = 8 + Math.floor(Math.random() * 8);
-                    const max = min + range;
-                    const elements = [];
-                    for (let i = min; i <= max; i += 2) {
-                        elements.push(i);
-                    }
-                    return {
-                        elements: elements,
-                        description: min > 1
-                            ? `x è un numero dispari compreso tra ${min} e ${max}`
-                            : `x è un numero dispari minore o uguale a ${max}`
-                    };
-                }
-            },
-            {
-                name: 'vocali',
-                generate: () => {
-                    return {
-                        elements: ['a', 'e', 'i', 'o', 'u'],
-                        description: 'x è una vocale'
-                    };
-                }
-            },
-            {
-                name: 'consonanti_inizio',
-                generate: () => {
-                    const lettere = ['b', 'c', 'd', 'f', 'g'];
-                    return {
-                        elements: lettere,
-                        description: 'x è una consonante dall\'inizio dell\'alfabeto'
-                    };
-                }
-            },
-            {
-                name: 'colori_primari',
-                generate: () => {
-                    return {
-                        elements: ['rosso', 'blu', 'giallo'],
-                        description: 'x è un colore primario'
-                    };
-                }
-            },
-            {
-                name: 'colori_secondari',
-                generate: () => {
-                    return {
-                        elements: ['verde', 'arancione', 'viola'],
-                        description: 'x è un colore secondario'
-                    };
-                }
-            },
-            {
-                name: 'giorni_settimana',
-                generate: () => {
-                    const giorni = ['lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì'];
-                    return {
-                        elements: giorni,
-                        description: 'x è un giorno feriale della settimana'
-                    };
-                }
-            },
-            {
-                name: 'weekend',
-                generate: () => {
-                    return {
-                        elements: ['sabato', 'domenica'],
-                        description: 'x è un giorno del weekend'
-                    };
-                }
-            },
-            {
-                name: 'mesi_estate',
-                generate: () => {
-                    return {
-                        elements: ['giugno', 'luglio', 'agosto'],
-                        description: 'x è un mese estivo'
-                    };
-                }
-            },
-            {
-                name: 'multipli',
-                generate: () => {
-                    const base = 3 + Math.floor(Math.random() * 3); // 3, 4, o 5
-                    const count = 3 + Math.floor(Math.random() * 3);
-                    const elements = [];
-                    for (let i = 1; i <= count; i++) {
-                        elements.push(base * i);
-                    }
-                    return {
-                        elements: elements,
-                        description: `x è un multiplo di ${base} minore o uguale a ${base * count}`
-                    };
-                }
-            },
-            {
-                name: 'numeri_minori',
-                generate: () => {
-                    const max = 5 + Math.floor(Math.random() * 8);
-                    const elements = [];
-                    for (let i = 1; i <= max; i++) {
-                        elements.push(i);
-                    }
-                    return {
-                        elements: elements,
-                        description: `x è un numero naturale minore o uguale a ${max}`
-                    };
-                }
-            },
-            {
-                name: 'numeri_quadrati',
-                generate: () => {
-                    const count = 3 + Math.floor(Math.random() * 2);
-                    const elements = [];
-                    for (let i = 1; i <= count; i++) {
-                        elements.push(i * i);
-                    }
-                    return {
-                        elements: elements,
-                        description: `x è un quadrato perfetto minore o uguale a ${count * count}`
-                    };
-                }
-            },
-            {
-                name: 'stagioni',
-                generate: () => {
-                    return {
-                        elements: ['primavera', 'estate', 'autunno', 'inverno'],
-                        description: 'x è una stagione dell\'anno'
-                    };
-                }
-            },
-            {
-                name: 'punti_cardinali',
-                generate: () => {
-                    return {
-                        elements: ['nord', 'sud', 'est', 'ovest'],
-                        description: 'x è un punto cardinale'
-                    };
-                }
+        //#region Zoom Functions
+        function zoomIn() {
+            if (currentZoom < 200) {
+                currentZoom += 25;
+                applyZoom();
             }
-        ];
-
+        }
+        
+        function zoomOut() {
+            if (currentZoom > 50) {
+                currentZoom -= 25;
+                applyZoom();
+            }
+        }
+        
+        function applyZoom() {
+            const wrapper = document.getElementById('rulerWrapper');
+            wrapper.style.transform = `scale(${currentZoom / 100})`;
+            document.getElementById('zoomLabel').textContent = currentZoom + '%';
+        }
         //#endregion
 
-        //#region Funzioni Timer e Progresso
-        
-        function updatePhaseIndicator() {
-            const indicator = document.getElementById('phaseIndicator');
-            const progressFill = document.getElementById('progressFill');
+        //#region Sistema Certificazione
+        function initCertificationSystem() {
+            certSystem = new CertificationSystem({
+                appName: 'Misura sul Righello',
+                appVersion: '1.0.0',
+                storageKey: 'righello_misura_cert',
+                certUrl: 'https://certificationsystem.netlify.app/',
+                trackFocus: true,
+                
+                fields: [
+                    { key: 'domande', label: 'Domande Totali', showZero: false },
+                    { key: 'corrette', label: 'Risposte Corrette', showZero: false },
+                    { key: 'sbagliate', label: 'Risposte Sbagliate', showZero: true },
+                    { key: 'liv1_corrette', label: 'Livello 1 Corrette', showZero: false },
+                    { key: 'liv2_corrette', label: 'Livello 2 Corrette', showZero: false },
+                    { key: 'liv3_corrette', label: 'Livello 3 Corrette', showZero: false },
+                    { key: 'precisione', label: 'Precisione %', showZero: true, type: 'percentage' }
+                ],
+                
+                onTimerUpdate: (time) => {
+                    const minutes = Math.floor(time / 60);
+                    const seconds = time % 60;
+                    document.getElementById('timerDisplay').textContent = 
+                        `⏱️ ${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+                },
+                
+                onFieldUpdate: () => {
+                    renderStats();
+                },
+                
+                onReset: () => {
+                    correctCount = 0;
+                    totalCount = 0;
+                    updateScore();
+                    document.getElementById('feedback').style.display = 'none';
+                    document.getElementById('certLinkContainer').style.display = 'none';
+                    renderStats();
+                    updateStudentBadge();
+                }
+            });
             
-            let phaseText = '';
-            let progressPercent = 0;
+            // Setup bottoni certificato
+            certSystem.setupButtons(
+                'generateCertBtn', 
+                'copyCertBtn', 
+                'resetBtn', 
+                'certLinkContainer',
+                'studentBtn'
+            );
             
-            if (difficultyPhase === 'elencazione') {
-                phaseText = `Fase 1/3: Solo Elencazione (${phaseCorrectCount}/5)`;
-                progressPercent = (phaseCorrectCount / 5) * 33.33;
-            } else if (difficultyPhase === 'descrizione') {
-                phaseText = `Fase 2/3: Solo Descrizione (${phaseCorrectCount}/5)`;
-                progressPercent = 33.33 + (phaseCorrectCount / 5) * 33.33;
-            } else {
-                phaseText = 'Fase 3/3: Elencazione e Descrizione (Misto)';
-                progressPercent = 100;
-            }
-            
-            indicator.textContent = phaseText;
-            progressFill.style.width = progressPercent + '%';
+            // Render iniziale statistiche
+            renderStats();
+            updateStudentBadge();
         }
 
+        function renderStats() {
+            const container = document.getElementById('certStatsContainer');
+            const data = certSystem.getData();
+            const studentInfo = certSystem.getStudentInfo();
+            
+            let html = '';
+            
+            // Info studente
+            if (studentInfo && studentInfo.nome) {
+                html += `
+                    <div class="cert-stat" style="grid-column: span 2; background: rgba(76,175,80,0.2);">
+                        <div class="cert-stat-value" style="font-size: 1em;">
+                            👤 ${studentInfo.nome} ${studentInfo.cognome}
+                        </div>
+                        <div class="cert-stat-label">Classe: ${studentInfo.classe || 'N/D'}</div>
+                    </div>
+                `;
+            }
+            
+            // Tempo totale
+            html += `
+                <div class="cert-stat">
+                    <div class="cert-stat-value">${certSystem.getFormattedTime(data.t || 0)}</div>
+                    <div class="cert-stat-label">Tempo Totale</div>
+                </div>
+            `;
+            
+            // Statistiche esercizio
+            const domande = data.domande || 0;
+            const corrette = data.corrette || 0;
+            const sbagliate = data.sbagliate || 0;
+            const precisione = domande > 0 ? Math.round((corrette / domande) * 100) : 0;
+            
+            html += `
+                <div class="cert-stat">
+                    <div class="cert-stat-value">${domande || '-'}</div>
+                    <div class="cert-stat-label">Domande Totali</div>
+                </div>
+                <div class="cert-stat">
+                    <div class="cert-stat-value">${corrette || '-'}</div>
+                    <div class="cert-stat-label">Corrette</div>
+                </div>
+                <div class="cert-stat">
+                    <div class="cert-stat-value">${sbagliate || 0}</div>
+                    <div class="cert-stat-label">Sbagliate</div>
+                </div>
+                <div class="cert-stat">
+                    <div class="cert-stat-value">${precisione}%</div>
+                    <div class="cert-stat-label">Precisione</div>
+                </div>
+            `;
+            
+            // Dettaglio per livello
+            html += `
+                <div class="cert-stat">
+                    <div class="cert-stat-value">${data.liv1_corrette || '-'}</div>
+                    <div class="cert-stat-label">Livello 1 OK</div>
+                </div>
+                <div class="cert-stat">
+                    <div class="cert-stat-value">${data.liv2_corrette || '-'}</div>
+                    <div class="cert-stat-label">Livello 2 OK</div>
+                </div>
+                <div class="cert-stat">
+                    <div class="cert-stat-value">${data.liv3_corrette || '-'}</div>
+                    <div class="cert-stat-label">Livello 3 OK</div>
+                </div>
+            `;
+            
+            // Focus tracking
+            if (data.fl !== undefined) {
+                const isWarning = data.fl > 2;
+                html += `
+                    <div class="cert-stat" style="${isWarning ? 'background: rgba(244,67,54,0.2);' : ''}">
+                        <div class="cert-stat-value">${data.fl || 0}</div>
+                        <div class="cert-stat-label">Focus Perso</div>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function updateStudentBadge() {
+            const info = certSystem.getStudentInfo();
+            const badge = document.getElementById('studentBadge');
+            
+            if (info && info.nome) {
+                badge.textContent = `👤 ${info.nome} ${info.cognome}`;
+                badge.classList.add('registered');
+            } else {
+                badge.textContent = '👤 Non registrato';
+                badge.classList.remove('registered');
+            }
+        }
+
+        function toggleCertPanel() {
+            const panel = document.getElementById('certificatePanel');
+            panel.classList.toggle('collapsed');
+        }
         //#endregion
 
-        //#region Generazione Esercizi
-        
-        function generateExercise() {
-            // PRIMA controlla se deve cambiare fase
-            if (difficultyPhase === 'elencazione' && phaseCorrectCount >= 5) {
-                difficultyPhase = 'descrizione';
-                phaseCorrectCount = 0;
-                certSystem.setField('phase1', 1); // Traccia fase completata
-                console.log('Passaggio a Fase 2: Descrizione');
-            } else if (difficultyPhase === 'descrizione' && phaseCorrectCount >= 5) {
-                difficultyPhase = 'misto';
-                phaseCorrectCount = 0;
-                certSystem.setField('phase2', 1);
-                console.log('Passaggio a Fase 3: Misto');
-            }
+        //#region Righello
+        function initRuler() {
+            const ruler = document.getElementById('ruler');
             
-            updatePhaseIndicator();
+            // Pulisci il righello (mantieni solo l'area di misurazione)
+            const measurementArea = document.getElementById('measurementArea');
+            ruler.innerHTML = '';
+            ruler.appendChild(measurementArea);
+            
+            // Disegna le tacche per 20cm (200mm)
+            for (let mm = 0; mm <= 200; mm++) {
+                const tick = document.createElement('div');
+                tick.className = 'tick';
+                tick.style.left = (mm * SCALE) + 'px';
+                
+                if (mm % 10 === 0) {
+                    // Ogni centimetro
+                    const cm = mm / 10;
+                    
+                    if (cm % 10 === 0) {
+                        // Decimetro
+                        tick.className = 'tick cm10';
+                        
+                        const num = document.createElement('div');
+                        num.className = 'number cm10';
+                        num.style.left = (mm * SCALE) + 'px';
+                        num.textContent = cm;
+                        ruler.appendChild(num);
+                    } else if (cm % 5 === 0) {
+                        // Ogni 5 cm
+                        tick.className = 'tick cm10';
+                        tick.style.height = '50px';
+                        
+                        const num = document.createElement('div');
+                        num.className = 'number';
+                        num.style.left = (mm * SCALE) + 'px';
+                        num.style.fontWeight = 'bold';
+                        num.style.fontSize = '20px';
+                        num.textContent = cm;
+                        ruler.appendChild(num);
+                    } else {
+                        // Altri centimetri
+                        tick.className = 'tick cm';
+                        
+                        const num = document.createElement('div');
+                        num.className = 'number';
+                        num.style.left = (mm * SCALE) + 'px';
+                        num.textContent = cm;
+                        ruler.appendChild(num);
+                    }
+                } else if (mm % 5 === 0) {
+                    tick.className = 'tick mm5';
+                } else {
+                    tick.className = 'tick mm';
+                }
+                
+                ruler.appendChild(tick);
+            }
+        }
+        //#endregion
 
-            // Determina modalità
-            let mode;
-            if (difficultyPhase === 'elencazione') {
-                mode = 'elencazione';
-            } else if (difficultyPhase === 'descrizione') {
-                mode = 'descrizione';
-            } else {
-                mode = Math.random() < 0.5 ? 'elencazione' : 'descrizione';
-            }
-
-            // Genera esercizio non ripetuto
-            let attempts = 0;
-            let type, setData, exerciseKey;
+        //#region Livelli e Domande
+        function setLevel(level) {
+            currentLevel = level;
             
-            do {
-                type = setTypes[Math.floor(Math.random() * setTypes.length)];
-                setData = type.generate();
-                exerciseKey = `${type.name}_${mode}_${JSON.stringify(setData.elements)}`;
-                attempts++;
-            } while (exerciseHistory.includes(exerciseKey) && attempts < 10);
+            // Aggiorna bottoni
+            document.querySelectorAll('.level-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
             
-            // Aggiorna history
-            exerciseHistory.push(exerciseKey);
-            if (exerciseHistory.length > 4) {
-                exerciseHistory.shift();
-            }
-            
-            currentExercise = {
-                elements: setData.elements,
-                mode: mode,
-                description: setData.description,
-                correctAnswer: mode === 'elencazione' 
-                    ? `A={${setData.elements.join(',')}}` 
-                    : `A={x|x ${setData.description}}`,
-                needsHelp: type.name === 'numeri_pari' || type.name === 'numeri_dispari' || type.name === 'multipli',
-                helpType: type.name
+            // Aggiorna descrizione
+            const descriptions = {
+                1: '<strong>Livello 1:</strong> Misura solo centimetri interi (es: 5 cm)',
+                2: '<strong>Livello 2:</strong> Misura centimetri con decimali (es: 3,5 cm)',
+                3: '<strong>Livello 3:</strong> Misura in cm o mm secondo la richiesta'
             };
-
-            displayExercise();
+            document.getElementById('levelDescription').innerHTML = descriptions[level];
+            
+            // Genera nuova domanda
+            newQuestion();
         }
 
-        function displayExercise() {
-            // Mostra elementi nel diagramma
-            const elementsDiv = document.getElementById('elements');
-            elementsDiv.innerHTML = currentExercise.elements
-                .map(el => `<span class="element">${el}</span>`)
-                .join('');
-
-            // Mostra domanda
-            const questionDiv = document.getElementById('question');
-            if (currentExercise.mode === 'elencazione') {
-                questionDiv.innerHTML = '<strong>Scrivi l\'insieme A per ELENCAZIONE:</strong>';
-                document.getElementById('hint').textContent = 'Suggerimento: A={elemento1,elemento2,...}';
-            } else {
-                questionDiv.innerHTML = '<strong>Scrivi l\'insieme A per DESCRIZIONE:</strong>';
-                document.getElementById('hint').textContent = 'Suggerimento: A={x|x proprietà degli elementi}';
-            }
-            document.getElementById('hint').style.display = 'block';
-
-            // Mostra/nascondi bottone HELP
-            const helpBtn = document.getElementById('helpBtn');
-            if (currentExercise.mode === 'descrizione' && currentExercise.needsHelp) {
-                helpBtn.style.display = 'block';
-            } else {
-                helpBtn.style.display = 'none';
-            }
-            document.getElementById('helpContent').style.display = 'none';
-
-            // Reset UI
+        function newQuestion() {
+            isWaitingForAnswer = true;
+            
+            // Reset feedback - nascondi completamente
+            const feedback = document.getElementById('feedback');
+            feedback.style.display = 'none';
+            feedback.className = 'feedback';
+            feedback.textContent = '';
+            
             document.getElementById('answerInput').value = '';
-            document.getElementById('answerInput').disabled = false;
-            document.getElementById('feedback').style.display = 'none';
-            document.getElementById('checkBtn').style.display = 'block';
-            document.getElementById('nextBtn').style.display = 'none';
+            
+            const measurementArea = document.getElementById('measurementArea');
+            let startMm = 0; // Sempre da 0
+            let lengthMm;
+            let unit = 'cm';
+            
+            switch(currentLevel) {
+                case 1:
+                    // Solo centimetri interi (1-10 cm)
+                    lengthMm = (Math.floor(Math.random() * 10) + 1) * 10;
+                    correctAnswer = lengthMm / 10;
+                    document.getElementById('questionText').textContent = 'Quanto misura la parte evidenziata?';
+                    document.getElementById('unitLabel').textContent = 'cm';
+                    break;
+                    
+                case 2:
+                    // Centimetri con millimetri precisi (es: 3,4 cm)
+                    lengthMm = Math.floor(Math.random() * 100) + 1; // 0.1 - 10.0 cm
+                    correctAnswer = lengthMm / 10;
+                    document.getElementById('questionText').textContent = 'Quanto misura la parte evidenziata? (con decimali)';
+                    document.getElementById('unitLabel').textContent = 'cm';
+                    break;
+                    
+                case 3:
+                    // Misure miste, max 3 cm (30 mm)
+                    lengthMm = Math.floor(Math.random() * 30) + 1;
+                    
+                    // 50% di probabilità di chiedere in mm o cm
+                    if (Math.random() < 0.5) {
+                        // Chiedi in millimetri
+                        unit = 'mm';
+                        correctAnswer = lengthMm;
+                        document.getElementById('questionText').textContent = 'Quanto misura la parte evidenziata in MILLIMETRI?';
+                        document.getElementById('unitLabel').textContent = 'mm';
+                    } else {
+                        // Chiedi in centimetri (con decimali)
+                        unit = 'cm';
+                        correctAnswer = lengthMm / 10;
+                        document.getElementById('questionText').textContent = 'Quanto misura la parte evidenziata in CENTIMETRI?';
+                        document.getElementById('unitLabel').textContent = 'cm';
+                    }
+                    break;
+            }
+            
+            // Posiziona l'area di misurazione
+            measurementArea.style.left = (startMm * SCALE) + 'px';
+            measurementArea.style.width = (lengthMm * SCALE) + 'px';
+            
+            // Focus sull'input
+            document.getElementById('answerInput').focus();
         }
 
-        //#endregion
+        function parseUserAnswer(inputValue) {
+            // Rimuovi spazi
+            let cleaned = inputValue.trim();
+            
+            // Sostituisci virgola con punto per il parsing
+            cleaned = cleaned.replace(',', '.');
+            
+            // Rimuovi eventuali caratteri non numerici (tranne il punto)
+            cleaned = cleaned.replace(/[^0-9.]/g, '');
+            
+            // Gestisci multipli punti (prendi solo il primo)
+            const parts = cleaned.split('.');
+            if (parts.length > 2) {
+                cleaned = parts[0] + '.' + parts.slice(1).join('');
+            }
+            
+            return parseFloat(cleaned);
+        }
 
-        //#region Verifica Risposta
-        
-        function normalizeAnswer(answer) {
-            return answer
-                .replace(/\s+/g, '')
-                .toLowerCase()
-                .replace(/è/g, 'e');
+        function formatCorrectAnswer(answer) {
+            // Formatta la risposta corretta con virgola per la visualizzazione
+            if (Number.isInteger(answer)) {
+                return answer.toString();
+            } else {
+                return answer.toString().replace('.', ',');
+            }
         }
 
         function checkAnswer() {
-            const userAnswer = document.getElementById('answerInput').value;
-            const feedbackDiv = document.getElementById('feedback');
-            feedbackDiv.style.display = 'block';
-
-            let isCorrect = false;
+            if (!isWaitingForAnswer) return;
             
-            if (currentExercise.mode === 'elencazione') {
-                const userMatch = userAnswer.match(/\{([^}]+)\}/);
-                if (userMatch) {
-                    const userElements = userMatch[1]
-                        .split(',')
-                        .map(e => e.trim().toLowerCase())
-                        .filter(e => e.length > 0);
-                    
-                    const correctElements = currentExercise.elements.map(e => 
-                        e.toString().toLowerCase()
-                    );
-                    
-                    const allPresent = correctElements.every(ce => userElements.includes(ce));
-                    const noExtra = userElements.every(ue => correctElements.includes(ue));
-                    
-                    isCorrect = allPresent && noExtra && userElements.length === correctElements.length;
-                }
-            } else {
-                const normalizedUser = normalizeAnswer(userAnswer);
-                const normalizedCorrect = normalizeAnswer(currentExercise.description);
-                
-                const keywords = normalizedCorrect.split(/\s+/).filter(w => w.length > 2);
-                const hasStructure = /\{x\|x/i.test(userAnswer) && userAnswer.includes('}');
-                
-                const matchedKeywords = keywords.filter(kw => 
-                    normalizedUser.includes(kw)
-                ).length;
-                const keywordScore = matchedKeywords / keywords.length;
-                
-                isCorrect = hasStructure && keywordScore >= 0.7;
+            const inputValue = document.getElementById('answerInput').value;
+            const userAnswer = parseUserAnswer(inputValue);
+            const feedback = document.getElementById('feedback');
+            
+            // Prima nascondi il feedback precedente
+            feedback.style.display = 'none';
+            
+            if (isNaN(userAnswer) || inputValue.trim() === '') {
+                feedback.textContent = '⚠️ Inserisci un numero valido!';
+                feedback.className = 'feedback wrong';
+                feedback.style.display = 'block';
+                return;
             }
-
+            
+            isWaitingForAnswer = false;
+            totalCount++;
+            certSystem.incrementField('domande');
+            
+            // Tolleranza per i decimali (0.01 per permettere piccoli arrotondamenti)
+            const tolerance = 0.01;
+            const isCorrect = Math.abs(userAnswer - correctAnswer) <= tolerance;
+            
             if (isCorrect) {
-                feedbackDiv.className = 'feedback correct';
-                feedbackDiv.textContent = '✅ Corretto! Ottimo lavoro!';
+                correctCount++;
+                certSystem.incrementField('corrette');
+                certSystem.incrementField(`liv${currentLevel}_corrette`);
                 
-                // Aggiorna statistiche
-                certSystem.incrementField('completed');
-                phaseCorrectCount++;
-                document.getElementById('completed').textContent = certSystem.getField('completed');
+                feedback.textContent = '✅ Esatto! Ottimo lavoro!';
+                feedback.className = 'feedback correct';
+                feedback.style.display = 'block';
                 
-                // Se completa fase 3
-                if (difficultyPhase === 'misto' && phaseCorrectCount >= 5) {
-                    certSystem.setField('phase3', 1);
-                }
-                
-                updatePhaseIndicator();
+                // Nuova domanda dopo 2 secondi
+                setTimeout(() => {
+                    newQuestion();
+                }, 2000);
             } else {
-                feedbackDiv.className = 'feedback incorrect';
-                feedbackDiv.innerHTML = `
-                    ❌ Non corretto.<br>
-                    <small>Risposta attesa: ${currentExercise.correctAnswer}</small>
-                `;
-                certSystem.incrementField('errors');
-                document.getElementById('errors').textContent = certSystem.getField('errors');
-            }
-
-            document.getElementById('answerInput').disabled = true;
-            document.getElementById('checkBtn').style.display = 'none';
-            document.getElementById('nextBtn').style.display = 'block';
-        }
-
-        //#endregion
-
-        //#region Utility
-        
-        function showHelp() {
-            const helpContent = document.getElementById('helpContent');
-            certSystem.incrementField('helps');
-            
-            if (currentExercise.helpType === 'numeri_pari') {
-                helpContent.innerHTML = `
-                    <strong>Numeri Pari:</strong> Sono i numeri che si possono dividere per 2 senza resto.<br>
-                    <strong>Esempi:</strong> 2, 4, 6, 8, 10, 12...<br>
-                    <strong>Come riconoscerli?</strong> Terminano con 0, 2, 4, 6 o 8<br>
-                    <strong>Nella descrizione scrivi:</strong> "x è un numero pari..."
-                `;
-            } else if (currentExercise.helpType === 'numeri_dispari') {
-                helpContent.innerHTML = `
-                    <strong>Numeri Dispari:</strong> Sono i numeri che NON si possono dividere per 2 senza resto.<br>
-                    <strong>Esempi:</strong> 1, 3, 5, 7, 9, 11...<br>
-                    <strong>Come riconoscerli?</strong> Terminano con 1, 3, 5, 7 o 9<br>
-                    <strong>Nella descrizione scrivi:</strong> "x è un numero dispari..."
-                `;
-            } else if (currentExercise.helpType === 'multipli') {
-                helpContent.innerHTML = `
-                    <strong>Multipli:</strong> Sono i numeri che si ottengono moltiplicando un numero per 1, 2, 3...<br>
-                    <strong>Esempi multipli di 3:</strong> 3, 6, 9, 12, 15...<br>
-                    <strong>Come riconoscerli?</strong> Sono divisibili per il numero base<br>
-                    <strong>Nella descrizione scrivi:</strong> "x è un multiplo di..."
-                `;
+                certSystem.incrementField('sbagliate');
+                
+                const unit = document.getElementById('unitLabel').textContent;
+                const formattedAnswer = formatCorrectAnswer(correctAnswer);
+                feedback.textContent = `❌ Sbagliato! La risposta corretta era ${formattedAnswer} ${unit}`;
+                feedback.className = 'feedback wrong';
+                feedback.style.display = 'block';
+                
+                // Nuova domanda dopo 3 secondi
+                setTimeout(() => {
+                    newQuestion();
+                }, 3000);
             }
             
-            helpContent.style.display = 'block';
+            updateScore();
         }
 
-        function insertChar(char) {
-            const input = document.getElementById('answerInput');
-            const cursorPos = input.selectionStart;
-            const currentValue = input.value;
+        function updateScore() {
+            document.getElementById('correctScore').textContent = correctCount;
+            document.getElementById('totalScore').textContent = totalCount;
             
-            input.value = currentValue.slice(0, cursorPos) + char + currentValue.slice(cursorPos);
-            input.focus();
-            input.setSelectionRange(cursorPos + char.length, cursorPos + char.length);
+            const percentage = totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0;
+            document.getElementById('percentScore').textContent = percentage + '%';
+            
+            // Aggiorna anche nel sistema di certificazione
+            certSystem.setField('precisione', percentage);
         }
-
-        function nextExercise() {
-            generateExercise();
-        }
-
         //#endregion
 
         //#region Inizializzazione
-        
-        generateExercise();
-
-        // Permetti invio con Enter
-        document.getElementById('answerInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !document.getElementById('answerInput').disabled) {
-                checkAnswer();
-            }
+        window.addEventListener('DOMContentLoaded', () => {
+            // Inizializza righello
+            initRuler();
+            
+            // Inizializza sistema certificazione
+            initCertificationSystem();
+            
+            // Genera prima domanda
+            newQuestion();
+            
+            // Gestione registrazione studente
+            document.getElementById('studentBtn').addEventListener('click', () => {
+                certSystem.promptStudentInfo();
+                updateStudentBadge();
+                renderStats();
+            });
+            
+            // Gestione tasto Enter per confermare risposta
+            document.getElementById('answerInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    checkAnswer();
+                }
+            });
         });
-
-        console.log('App Insiemi Livello 1 - Versione Completa');
-
         //#endregion
     </script>
 </body>
