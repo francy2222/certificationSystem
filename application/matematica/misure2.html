@@ -199,7 +199,7 @@
             flex-wrap: wrap;
         }
 
-        input[type="number"] {
+        input[type="text"] {
             padding: 12px 20px;
             font-size: 20px;
             border: 3px solid #667eea;
@@ -209,7 +209,7 @@
             transition: all 0.3s;
         }
 
-        input[type="number"]:focus {
+        input[type="text"]:focus {
             outline: none;
             border-color: #764ba2;
             box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
@@ -513,7 +513,7 @@
             </div>
             
             <div class="answer-input">
-                <input type="number" id="answerInput" step="0.1" min="0" max="200" placeholder="0">
+                <input type="text" id="answerInput" placeholder="0" autocomplete="off">
                 <span class="unit-label" id="unitLabel">cm</span>
                 <button class="btn btn-success" onclick="checkAnswer()">✅ Verifica</button>
                 <button class="btn btn-warning" onclick="newQuestion()">🔄 Nuova Domanda</button>
@@ -842,18 +842,14 @@
                     correctAnswer = lengthMm / 10;
                     document.getElementById('questionText').textContent = 'Quanto misura la parte evidenziata?';
                     document.getElementById('unitLabel').textContent = 'cm';
-                    document.getElementById('answerInput').step = '1';
                     break;
                     
                 case 2:
-                    // Centimetri con millimetri (0.5 - 9.5 cm)
-                    const cm = Math.floor(Math.random() * 9) + 1;
-                    const mm = Math.random() < 0.5 ? 0 : 5;
-                    lengthMm = cm * 10 + mm;
+                    // Centimetri con millimetri precisi (es: 3,4 cm)
+                    lengthMm = Math.floor(Math.random() * 100) + 1; // 0.1 - 10.0 cm
                     correctAnswer = lengthMm / 10;
                     document.getElementById('questionText').textContent = 'Quanto misura la parte evidenziata? (con decimali)';
                     document.getElementById('unitLabel').textContent = 'cm';
-                    document.getElementById('answerInput').step = '0.1';
                     break;
                     
                 case 3:
@@ -867,14 +863,12 @@
                         correctAnswer = lengthMm;
                         document.getElementById('questionText').textContent = 'Quanto misura la parte evidenziata in MILLIMETRI?';
                         document.getElementById('unitLabel').textContent = 'mm';
-                        document.getElementById('answerInput').step = '1';
                     } else {
-                        // Chiedi in centimetri
+                        // Chiedi in centimetri (con decimali)
                         unit = 'cm';
                         correctAnswer = lengthMm / 10;
                         document.getElementById('questionText').textContent = 'Quanto misura la parte evidenziata in CENTIMETRI?';
                         document.getElementById('unitLabel').textContent = 'cm';
-                        document.getElementById('answerInput').step = '0.1';
                     }
                     break;
             }
@@ -887,13 +881,42 @@
             document.getElementById('answerInput').focus();
         }
 
+        function parseUserAnswer(inputValue) {
+            // Rimuovi spazi
+            let cleaned = inputValue.trim();
+            
+            // Sostituisci virgola con punto per il parsing
+            cleaned = cleaned.replace(',', '.');
+            
+            // Rimuovi eventuali caratteri non numerici (tranne il punto)
+            cleaned = cleaned.replace(/[^0-9.]/g, '');
+            
+            // Gestisci multipli punti (prendi solo il primo)
+            const parts = cleaned.split('.');
+            if (parts.length > 2) {
+                cleaned = parts[0] + '.' + parts.slice(1).join('');
+            }
+            
+            return parseFloat(cleaned);
+        }
+
+        function formatCorrectAnswer(answer) {
+            // Formatta la risposta corretta con virgola per la visualizzazione
+            if (Number.isInteger(answer)) {
+                return answer.toString();
+            } else {
+                return answer.toString().replace('.', ',');
+            }
+        }
+
         function checkAnswer() {
             if (!isWaitingForAnswer) return;
             
-            const userAnswer = parseFloat(document.getElementById('answerInput').value);
+            const inputValue = document.getElementById('answerInput').value;
+            const userAnswer = parseUserAnswer(inputValue);
             const feedback = document.getElementById('feedback');
             
-            if (isNaN(userAnswer)) {
+            if (isNaN(userAnswer) || inputValue.trim() === '') {
                 feedback.textContent = '⚠️ Inserisci un numero valido!';
                 feedback.className = 'feedback wrong';
                 return;
@@ -903,8 +926,8 @@
             totalCount++;
             certSystem.incrementField('domande');
             
-            // Tolleranza per i decimali
-            const tolerance = currentLevel === 1 ? 0 : 0.01;
+            // Tolleranza per i decimali (0.01 per permettere piccoli arrotondamenti)
+            const tolerance = 0.01;
             const isCorrect = Math.abs(userAnswer - correctAnswer) <= tolerance;
             
             if (isCorrect) {
@@ -923,7 +946,8 @@
                 certSystem.incrementField('sbagliate');
                 
                 const unit = document.getElementById('unitLabel').textContent;
-                feedback.textContent = `❌ Sbagliato! La risposta corretta era ${correctAnswer} ${unit}`;
+                const formattedAnswer = formatCorrectAnswer(correctAnswer);
+                feedback.textContent = `❌ Sbagliato! La risposta corretta era ${formattedAnswer} ${unit}`;
                 feedback.className = 'feedback wrong';
                 
                 // Nuova domanda dopo 3 secondi
