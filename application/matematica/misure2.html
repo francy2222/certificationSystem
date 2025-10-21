@@ -85,6 +85,54 @@
             margin-bottom: 30px;
             overflow-x: auto;
             position: relative;
+            transition: transform 0.3s ease;
+        }
+        
+        .zoom-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .zoom-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .zoom-label {
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        
+        .ruler-wrapper {
+            transform-origin: left center;
+            transition: transform 0.3s ease;
         }
 
         #ruler {
@@ -260,21 +308,33 @@
             font-size: 18px;
             font-weight: bold;
             text-align: center;
-            display: none;
+            transition: all 0.3s ease;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { 
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .feedback.correct {
             background: #d4edda;
             color: #155724;
             border: 2px solid #c3e6cb;
-            display: block;
+            display: block !important;
         }
 
         .feedback.wrong {
             background: #f8d7da;
             color: #721c24;
             border: 2px solid #f5c6cb;
-            display: block;
+            display: block !important;
         }
 
         .score {
@@ -501,8 +561,15 @@
 
         <!-- Righello -->
         <div class="ruler-container">
-            <div id="ruler">
-                <div class="measurement-area" id="measurementArea"></div>
+            <div class="zoom-controls">
+                <button class="zoom-btn" onclick="zoomOut()">−</button>
+                <div class="zoom-label" id="zoomLabel">100%</div>
+                <button class="zoom-btn" onclick="zoomIn()">+</button>
+            </div>
+            <div class="ruler-wrapper" id="rulerWrapper">
+                <div id="ruler">
+                    <div class="measurement-area" id="measurementArea"></div>
+                </div>
             </div>
         </div>
 
@@ -579,9 +646,32 @@
         let totalCount = 0;
         let certSystem = null;
         let isWaitingForAnswer = false;
+        let currentZoom = 100;
         
         // Scala: 1mm = 4px (ridotto per far stare meglio il righello)
         const SCALE = 4;
+        //#endregion
+
+        //#region Zoom Functions
+        function zoomIn() {
+            if (currentZoom < 200) {
+                currentZoom += 25;
+                applyZoom();
+            }
+        }
+        
+        function zoomOut() {
+            if (currentZoom > 50) {
+                currentZoom -= 25;
+                applyZoom();
+            }
+        }
+        
+        function applyZoom() {
+            const wrapper = document.getElementById('rulerWrapper');
+            wrapper.style.transform = `scale(${currentZoom / 100})`;
+            document.getElementById('zoomLabel').textContent = currentZoom + '%';
+        }
         //#endregion
 
         //#region Sistema Certificazione
@@ -826,8 +916,12 @@
         function newQuestion() {
             isWaitingForAnswer = true;
             
-            // Reset feedback
-            document.getElementById('feedback').style.display = 'none';
+            // Reset feedback - nascondi completamente
+            const feedback = document.getElementById('feedback');
+            feedback.style.display = 'none';
+            feedback.className = 'feedback';
+            feedback.textContent = '';
+            
             document.getElementById('answerInput').value = '';
             
             const measurementArea = document.getElementById('measurementArea');
@@ -916,9 +1010,13 @@
             const userAnswer = parseUserAnswer(inputValue);
             const feedback = document.getElementById('feedback');
             
+            // Prima nascondi il feedback precedente
+            feedback.style.display = 'none';
+            
             if (isNaN(userAnswer) || inputValue.trim() === '') {
                 feedback.textContent = '⚠️ Inserisci un numero valido!';
                 feedback.className = 'feedback wrong';
+                feedback.style.display = 'block';
                 return;
             }
             
@@ -937,6 +1035,7 @@
                 
                 feedback.textContent = '✅ Esatto! Ottimo lavoro!';
                 feedback.className = 'feedback correct';
+                feedback.style.display = 'block';
                 
                 // Nuova domanda dopo 2 secondi
                 setTimeout(() => {
@@ -949,6 +1048,7 @@
                 const formattedAnswer = formatCorrectAnswer(correctAnswer);
                 feedback.textContent = `❌ Sbagliato! La risposta corretta era ${formattedAnswer} ${unit}`;
                 feedback.className = 'feedback wrong';
+                feedback.style.display = 'block';
                 
                 // Nuova domanda dopo 3 secondi
                 setTimeout(() => {
