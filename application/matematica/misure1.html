@@ -705,14 +705,18 @@
         }
 
         function newQuestion() {
-            if (isAnswering) return;
+            // Rimuovi il controllo che blocca se isAnswering è true
+            // if (isAnswering) return;
+            
+            // Reset lo stato per permettere nuove risposte
+            isAnswering = false;
             
             const highlight = document.getElementById('highlight');
             const feedback = document.getElementById('feedback');
             feedback.textContent = '';
             feedback.className = 'feedback';
             
-            // Reset buttons
+            // Reset buttons - assicurati che siano abilitati
             const buttons = document.querySelectorAll('.btn-answer');
             buttons.forEach(btn => {
                 btn.className = 'btn btn-answer';
