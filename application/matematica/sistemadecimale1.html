@@ -411,8 +411,27 @@
                 
                 onFieldUpdate: () => {
                     certSystem.renderStatsPanel('certificateContainer');
+                },
+                
+                onReset: () => {
+                    // Quando si resetta il certificato, resetta anche l'app
+                    counts = {
+                        unita: 0,
+                        decine: 0,
+                        centinaia: 0,
+                        migliaia: 0
+                    };
+                    updateCounters();
                 }
             });
+
+            // Carica contatori salvati
+            const savedData = certSystem.getData();
+            counts.unita = savedData.unita || 0;
+            counts.decine = savedData.decine || 0;
+            counts.centinaia = savedData.centinaia || 0;
+            counts.migliaia = savedData.migliaia || 0;
+            updateCounters();
 
             // Render pannello completo
             certSystem.renderFullPanel('certificateContainer', {
@@ -490,15 +509,14 @@
         }
 
         function colorCell(gridIndex, cellIndex, type) {
-            const cell = document.querySelector(
-                `[data-grid-index="${gridIndex}"][data-cell-index="${cellIndex}"]`
-            );
+            const cells = document.querySelectorAll('.cell');
+            const targetCell = cells[gridIndex * 100 + cellIndex];
             
-            if (cell) {
+            if (targetCell) {
                 // Rimuovi classi colore precedenti
-                cell.classList.remove('colored-unita', 'colored-decine', 'colored-centinaia', 'colored-migliaia');
+                targetCell.classList.remove('colored-unita', 'colored-decine', 'colored-centinaia', 'colored-migliaia');
                 // Aggiungi nuova classe
-                cell.classList.add(`colored-${type}`);
+                targetCell.classList.add(`colored-${type}`);
             }
         }
         //#endregion
@@ -511,12 +529,11 @@
             }
 
             const lastAction = history.pop();
+            const cells = document.querySelectorAll('.cell');
             
             // Rimuovi colorazioni
             lastAction.cells.forEach(({grid, cell}) => {
-                const cellElement = document.querySelector(
-                    `[data-grid-index="${grid}"][data-cell-index="${cell}"]`
-                );
+                const cellElement = cells[grid * 100 + cell];
                 if (cellElement) {
                     cellElement.classList.remove('colored-unita', 'colored-decine', 'colored-centinaia', 'colored-migliaia');
                 }
