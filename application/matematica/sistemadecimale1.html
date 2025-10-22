@@ -663,22 +663,53 @@
         // Sistema certificazione
         let certSystem = null;
 
-        // Suoni
+        // Suoni - precaricati per evitare ritardi
+        const soundsPath = 'https://certificationsystem.netlify.app/application/sounds/';
         const sounds = {
-            correct: 'https://certificationsystem.netlify.app/application/sounds/Gain Points.mp3',
-            wrong: 'https://certificationsystem.netlify.app/application/sounds/wrong-47985.mp3',
-            levelComplete: 'https://certificationsystem.netlify.app/application/sounds/level-complete-394515.mp3',
-            click: 'https://certificationsystem.netlify.app/application/sounds/click2.mp3'
+            correct: null,
+            wrong: null,
+            levelComplete: null,
+            click: null
         };
+
+        // Precarica i suoni
+        function preloadSounds() {
+            sounds.correct = new Audio(soundsPath + 'Gain Points.mp3');
+            sounds.wrong = new Audio(soundsPath + 'wrong-47985.mp3');
+            sounds.levelComplete = new Audio(soundsPath + 'level-complete-394515.mp3');
+            sounds.click = new Audio(soundsPath + 'click2.mp3');
+            
+            // Imposta volume
+            Object.values(sounds).forEach(audio => {
+                if (audio) audio.volume = 0.3;
+            });
+        }
         //#endregion
 
         //#region Inizializzazione
         function init() {
+            preloadSounds();
             initCertSystem();
             createGrids('demoGrids');
             createGrids('level1Grids');
             createGrids('level2Grids');
             createGrids('level3Grids');
+            
+            // Sblocca audio al primo click dell'utente (richiesto dai browser)
+            document.body.addEventListener('click', unlockAudio, { once: true });
+        }
+
+        function unlockAudio() {
+            // Prova a riprodurre un suono silenzioso per sbloccare l'audio
+            Object.values(sounds).forEach(audio => {
+                if (audio) {
+                    audio.volume = 0;
+                    audio.play().then(() => {
+                        audio.pause();
+                        audio.volume = 0.3;
+                    }).catch(() => {});
+                }
+            });
         }
 
         function createGrids(containerId) {
@@ -1336,9 +1367,15 @@
         }
 
         function playSound(type) {
-            const audio = new Audio(sounds[type]);
-            audio.volume = 0.3;
-            audio.play().catch(e => console.log('Audio play failed:', e));
+            if (sounds[type]) {
+                // Clona l'audio per permettere suoni sovrapposti
+                const audio = sounds[type].cloneNode();
+                audio.volume = 0.3;
+                audio.play().catch(e => {
+                    console.log('Audio play failed:', e);
+                    // Fallback silenzioso - alcuni browser bloccano l'audio
+                });
+            }
         }
         //#endregion
 
