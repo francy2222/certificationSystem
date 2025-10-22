@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valore Posizionale - Unità, Decine, Centinaia, Migliaia</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1em;
+        }
+
+        /* Timer */
+        .timer-display {
+            text-align: center;
+            font-size: 1.5em;
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        /* Controlli Modalità */
+        .mode-controls {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .mode-btn {
+            padding: 20px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border: 3px solid transparent;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        .mode-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+
+        .mode-btn.active {
+            border-color: currentColor;
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .mode-btn.unita {
+            background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
+            color: white;
+        }
+
+        .mode-btn.decine {
+            background: linear-gradient(135deg, #2196f3 0%, #42a5f5 100%);
+            color: white;
+        }
+
+        .mode-btn.centinaia {
+            background: linear-gradient(135deg, #ff9800 0%, #ffa726 100%);
+            color: white;
+        }
+
+        .mode-btn.migliaia {
+            background: linear-gradient(135deg, #f44336 0%, #ef5350 100%);
+            color: white;
+        }
+
+        /* Contatore */
+        .counter-display {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .counter-item {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .counter-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .counter-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .counter-item.unita .counter-value { color: #4caf50; }
+        .counter-item.decine .counter-value { color: #2196f3; }
+        .counter-item.centinaia .counter-value { color: #ff9800; }
+        .counter-item.migliaia .counter-value { color: #f44336; }
+
+        /* Griglia Container per 10 griglie */
+        .grids-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        /* Singola Griglia 10x10 */
+        .grid-wrapper {
+            position: relative;
+        }
+
+        .grid-label {
+            text-align: center;
+            font-size: 0.8em;
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 1px;
+            background: #ddd;
+            padding: 2px;
+            border-radius: 8px;
+            aspect-ratio: 1;
+        }
+
+        .cell {
+            background: white;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            transition: all 0.2s;
+            aspect-ratio: 1;
+        }
+
+        .cell:hover {
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        .cell.colored-unita {
+            background: #4caf50;
+        }
+
+        .cell.colored-decine {
+            background: #2196f3;
+        }
+
+        .cell.colored-centinaia {
+            background: #ff9800;
+        }
+
+        .cell.colored-migliaia {
+            background: #f44336;
+        }
+
+        /* Bottoni azione */
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            font-size: 1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn-reset {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+
+        .btn-undo {
+            background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+            color: #333;
+        }
+
+        /* Certificato */
+        #certificateContainer {
+            margin-top: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .mode-controls {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .grids-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .counter-display {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔢 Valore Posizionale</h1>
+        <p class="subtitle">Unità, Decine, Centinaia, Migliaia</p>
+
+        <!-- Timer -->
+        <div class="timer-display" id="timerDisplay">⏱️ 00:00</div>
+
+        <!-- Controlli Modalità -->
+        <div class="mode-controls">
+            <button class="mode-btn unita active" onclick="selectMode('unita', 1)" data-mode="unita">
+                <div style="font-size: 1.5em;">1️⃣</div>
+                <div>Unità</div>
+                <div style="font-size: 0.9em; margin-top: 5px;">(1 quadratino)</div>
+            </button>
+            <button class="mode-btn decine" onclick="selectMode('decine', 10)" data-mode="decine">
+                <div style="font-size: 1.5em;">🔟</div>
+                <div>Decine</div>
+                <div style="font-size: 0.9em; margin-top: 5px;">(1 riga = 10)</div>
+            </button>
+            <button class="mode-btn centinaia" onclick="selectMode('centinaia', 100)" data-mode="centinaia">
+                <div style="font-size: 1.5em;">💯</div>
+                <div>Centinaia</div>
+                <div style="font-size: 0.9em; margin-top: 5px;">(1 griglia = 100)</div>
+            </button>
+            <button class="mode-btn migliaia" onclick="selectMode('migliaia', 1000)" data-mode="migliaia">
+                <div style="font-size: 1.5em;">🔢</div>
+                <div>Migliaia</div>
+                <div style="font-size: 0.9em; margin-top: 5px;">(10 griglie = 1000)</div>
+            </button>
+        </div>
+
+        <!-- Contatori -->
+        <div class="counter-display">
+            <div class="counter-item unita">
+                <div class="counter-value" id="countUnita">0</div>
+                <div class="counter-label">Unità colorate</div>
+            </div>
+            <div class="counter-item decine">
+                <div class="counter-value" id="countDecine">0</div>
+                <div class="counter-label">Decine colorate</div>
+            </div>
+            <div class="counter-item centinaia">
+                <div class="counter-value" id="countCentinaia">0</div>
+                <div class="counter-label">Centinaia colorate</div>
+            </div>
+            <div class="counter-item migliaia">
+                <div class="counter-value" id="countMigliaia">0</div>
+                <div class="counter-label">Migliaia colorate</div>
+            </div>
+        </div>
+
+        <!-- Griglie (10 griglie per rappresentare le migliaia) -->
+        <div class="grids-container" id="gridsContainer"></div>
+
+        <!-- Bottoni Azione -->
+        <div class="action-buttons">
+            <button class="btn btn-undo" onclick="undo()">↩️ Annulla Ultima</button>
+            <button class="btn btn-reset" onclick="resetGrid()">🔄 Reset Totale</button>
+        </div>
+
+        <!-- Certificato -->
+        <div id="certificateContainer"></div>
+    </div>
+
+    <!-- Sistema Certificazione -->
+    <script src="https://certificationsystem.netlify.app/certification-system.js"></script>
+
+    <script>
+        //#region Variabili Globali
+        let currentMode = 'unita';
+        let currentValue = 1;
+        let history = []; // Per undo
+        let counts = {
+            unita: 0,
+            decine: 0,
+            centinaia: 0,
+            migliaia: 0
+        };
+        
+        let certSystem = null;
+        //#endregion
+
+        //#region Inizializzazione
+        function init() {
+            // Crea 10 griglie 10x10
+            const container = document.getElementById('gridsContainer');
+            
+            for (let gridNum = 0; gridNum < 10; gridNum++) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'grid-wrapper';
+                
+                const label = document.createElement('div');
+                label.className = 'grid-label';
+                label.textContent = `Griglia ${gridNum + 1}`;
+                wrapper.appendChild(label);
+                
+                const grid = document.createElement('div');
+                grid.className = 'grid';
+                grid.dataset.gridIndex = gridNum;
+                
+                // Crea 100 celle per griglia
+                for (let i = 0; i < 100; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.gridIndex = gridNum;
+                    cell.dataset.cellIndex = i;
+                    cell.dataset.row = Math.floor(i / 10);
+                    cell.dataset.col = i % 10;
+                    cell.onclick = () => handleCellClick(gridNum, i);
+                    grid.appendChild(cell);
+                }
+                
+                wrapper.appendChild(grid);
+                container.appendChild(wrapper);
+            }
+
+            // Inizializza sistema certificazione
+            initCertSystem();
+        }
+
+        function initCertSystem() {
+            certSystem = new CertificationSystem({
+                appName: 'Valore Posizionale',
+                appVersion: '1.0.0',
+                storageKey: 'valore_posizionale_v1',
+                certUrl: 'https://certificationsystem.netlify.app/',
+                trackFocus: false,
+                
+                fields: [
+                    { key: 'unita', label: 'Unità Colorate', showZero: true },
+                    { key: 'decine', label: 'Decine Colorate', showZero: true },
+                    { key: 'centinaia', label: 'Centinaia Colorate', showZero: true },
+                    { key: 'migliaia', label: 'Migliaia Colorate', showZero: true },
+                    { key: 'actions', label: 'Azioni Totali', showZero: true }
+                ],
+                
+                onTimerUpdate: (time) => {
+                    const minutes = Math.floor(time / 60);
+                    const seconds = time % 60;
+                    document.getElementById('timerDisplay').textContent = 
+                        `⏱️ ${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+                },
+                
+                onFieldUpdate: () => {
+                    certSystem.renderStatsPanel('certificateContainer');
+                }
+            });
+
+            // Render pannello completo
+            certSystem.renderFullPanel('certificateContainer', {
+                collapsible: true,
+                showStudentControls: true,
+                showClassroomToggle: false,
+                showVerificationToggle: false
+            });
+        }
+        //#endregion
+
+        //#region Selezione Modalità
+        function selectMode(mode, value) {
+            currentMode = mode;
+            currentValue = value;
+            
+            // Aggiorna stili bottoni
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+        }
+        //#endregion
+
+        //#region Gestione Click Celle
+        function handleCellClick(gridIndex, cellIndex) {
+            const action = {
+                mode: currentMode,
+                cells: []
+            };
+
+            switch(currentMode) {
+                case 'unita':
+                    colorCell(gridIndex, cellIndex, 'unita');
+                    action.cells.push({grid: gridIndex, cell: cellIndex});
+                    counts.unita++;
+                    certSystem.incrementField('unita');
+                    break;
+
+                case 'decine':
+                    const row = Math.floor(cellIndex / 10);
+                    for (let col = 0; col < 10; col++) {
+                        const targetCell = row * 10 + col;
+                        colorCell(gridIndex, targetCell, 'decine');
+                        action.cells.push({grid: gridIndex, cell: targetCell});
+                    }
+                    counts.decine++;
+                    certSystem.incrementField('decine');
+                    break;
+
+                case 'centinaia':
+                    for (let i = 0; i < 100; i++) {
+                        colorCell(gridIndex, i, 'centinaia');
+                        action.cells.push({grid: gridIndex, cell: i});
+                    }
+                    counts.centinaia++;
+                    certSystem.incrementField('centinaia');
+                    break;
+
+                case 'migliaia':
+                    for (let g = 0; g < 10; g++) {
+                        for (let i = 0; i < 100; i++) {
+                            colorCell(g, i, 'migliaia');
+                            action.cells.push({grid: g, cell: i});
+                        }
+                    }
+                    counts.migliaia++;
+                    certSystem.incrementField('migliaia');
+                    break;
+            }
+
+            history.push(action);
+            certSystem.incrementField('actions');
+            updateCounters();
+        }
+
+        function colorCell(gridIndex, cellIndex, type) {
+            const cell = document.querySelector(
+                `[data-grid-index="${gridIndex}"][data-cell-index="${cellIndex}"]`
+            );
+            
+            if (cell) {
+                // Rimuovi classi colore precedenti
+                cell.classList.remove('colored-unita', 'colored-decine', 'colored-centinaia', 'colored-migliaia');
+                // Aggiungi nuova classe
+                cell.classList.add(`colored-${type}`);
+            }
+        }
+        //#endregion
+
+        //#region Undo e Reset
+        function undo() {
+            if (history.length === 0) {
+                alert('Nessuna azione da annullare!');
+                return;
+            }
+
+            const lastAction = history.pop();
+            
+            // Rimuovi colorazioni
+            lastAction.cells.forEach(({grid, cell}) => {
+                const cellElement = document.querySelector(
+                    `[data-grid-index="${grid}"][data-cell-index="${cell}"]`
+                );
+                if (cellElement) {
+                    cellElement.classList.remove('colored-unita', 'colored-decine', 'colored-centinaia', 'colored-migliaia');
+                }
+            });
+
+            // Aggiorna contatori
+            counts[lastAction.mode]--;
+            updateCounters();
+        }
+
+        function resetGrid() {
+            if (!confirm('Vuoi davvero resettare tutta la griglia?')) return;
+
+            // Rimuovi tutti i colori
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.classList.remove('colored-unita', 'colored-decine', 'colored-centinaia', 'colored-migliaia');
+            });
+
+            // Reset contatori
+            counts = {
+                unita: 0,
+                decine: 0,
+                centinaia: 0,
+                migliaia: 0
+            };
+            history = [];
+            
+            updateCounters();
+        }
+        //#endregion
+
+        //#region Aggiornamento UI
+        function updateCounters() {
+            document.getElementById('countUnita').textContent = counts.unita;
+            document.getElementById('countDecine').textContent = counts.decine;
+            document.getElementById('countCentinaia').textContent = counts.centinaia;
+            document.getElementById('countMigliaia').textContent = counts.migliaia;
+        }
+        //#endregion
+
+        // Avvio
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
