@@ -473,7 +473,7 @@
         //#endregion
 
         //#region Gestione Livelli
-        function initLevel(level) {
+        function initLevel(level, resetSequence = true) {
             currentLevel = level;
             currentQuestionIndex = 0;
             correctAnswers = 0;
@@ -483,8 +483,11 @@
             document.getElementById('levelTitle').textContent = levelData.title;
             document.getElementById('levelDescription').textContent = levelData.description;
 
-            // Randomizza le domande
-            questionsData = [...levelData.data].sort(() => Math.random() - 0.5);
+            // Randomizza le domande SOLO al primo avvio del livello
+            if (resetSequence) {
+                questionsData = [...levelData.data].sort(() => Math.random() - 0.5);
+            }
+            // Altrimenti mantiene la sequenza esistente per permettere ripetizione
 
             updateStats();
             showQuestion();
@@ -598,9 +601,9 @@
 
                 if (errorCount >= levels[currentLevel].maxErrors) {
                     setTimeout(() => {
-                        feedbackEl.textContent = '😓 Hai fatto 3 errori! Riprova il livello.';
+                        feedbackEl.textContent = '😓 Hai fatto 3 errori! Riprova il livello con la stessa sequenza.';
                         playSound('restart');
-                        setTimeout(() => initLevel(currentLevel), 2000);
+                        setTimeout(() => initLevel(currentLevel, false), 2000); // false = mantieni sequenza
                     }, 1500);
                 } else {
                     setTimeout(() => {
@@ -640,7 +643,7 @@
             if (currentLevel < 6) {
                 setTimeout(() => {
                     if (confirm(`Vuoi passare al livello ${currentLevel + 1}?`)) {
-                        initLevel(currentLevel + 1);
+                        initLevel(currentLevel + 1, true); // true = nuova sequenza randomizzata
                     }
                 }, 2000);
             } else {
@@ -692,15 +695,15 @@
 
         //#region Event Listeners
         document.getElementById('restartBtn').addEventListener('click', () => {
-            if (confirm('Vuoi ricominciare questo livello?')) {
-                initLevel(currentLevel);
+            if (confirm('Vuoi ricominciare questo livello con la stessa sequenza?')) {
+                initLevel(currentLevel, false); // false = mantieni la stessa sequenza
             }
         });
         //#endregion
 
         //#region Inizializzazione
         initTTS();
-        initLevel(1);
+        initLevel(1, true); // true = crea nuova sequenza randomizzata all'inizio
         //#endregion
     </script>
 </body>
