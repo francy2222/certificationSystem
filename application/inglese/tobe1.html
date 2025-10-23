@@ -55,6 +55,38 @@
             margin-bottom: 10px;
         }
 
+        .level-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .level-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+            min-width: 80px;
+        }
+
+        .level-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .level-btn.active {
+            background: white;
+            color: #667eea;
+            border-color: white;
+        }
+
         .stats {
             display: flex;
             justify-content: space-around;
@@ -290,6 +322,14 @@
                     <div class="stat-label">Progresso</div>
                 </div>
             </div>
+            <div class="level-selector">
+                <button class="level-btn active" onclick="selectLevel(1)">Liv. 1</button>
+                <button class="level-btn" onclick="selectLevel(2)">Liv. 2</button>
+                <button class="level-btn" onclick="selectLevel(3)">Liv. 3</button>
+                <button class="level-btn" onclick="selectLevel(4)">Liv. 4</button>
+                <button class="level-btn" onclick="selectLevel(5)">Liv. 5</button>
+                <button class="level-btn" onclick="selectLevel(6)">Liv. 6</button>
+            </div>
         </div>
 
         <div class="question-area" id="questionArea">
@@ -313,7 +353,7 @@
             1: {
                 title: "Livello 1: Pronomi Personali",
                 description: "Abbina il pronome italiano a quello inglese",
-                maxErrors: 3,
+                maxErrors: 1,
                 data: [
                     { question: "io", answer: "I", lang: "it" },
                     { question: "tu", answer: "you", lang: "it" },
@@ -328,7 +368,7 @@
             2: {
                 title: "Livello 2: Pronomi + Verbi Base",
                 description: "Abbina pronomi e forme base del verbo essere",
-                maxErrors: 3,
+                maxErrors: 1,
                 data: [
                     { question: "io", answer: "I", lang: "it" },
                     { question: "tu", answer: "you", lang: "it" },
@@ -348,7 +388,7 @@
             3: {
                 title: "Livello 3: Verbo Essere Completo",
                 description: "Abbina le forme complete del verbo essere",
-                maxErrors: 3,
+                maxErrors: 1,
                 data: [
                     { question: "io sono", answer: "I am", lang: "it" },
                     { question: "tu sei", answer: "you are", lang: "it" },
@@ -363,7 +403,7 @@
             4: {
                 title: "Livello 4: Forme Abbreviate",
                 description: "Abbina le forme contratte del verbo essere",
-                maxErrors: 3,
+                maxErrors: 1,
                 data: [
                     { question: "io sono", answer: "I'm", lang: "it" },
                     { question: "tu sei", answer: "you're", lang: "it" },
@@ -378,7 +418,7 @@
             5: {
                 title: "Livello 5: Forme Negative",
                 description: "Abbina le forme negative del verbo essere",
-                maxErrors: 3,
+                maxErrors: 1,
                 data: [
                     { question: "io non sono", answer: "I am not", lang: "it" },
                     { question: "tu non sei", answer: "you are not", lang: "it" },
@@ -397,7 +437,7 @@
             6: {
                 title: "Livello Extra: Quiz Misto",
                 description: "Indovina la traduzione corretta (domanda in inglese)",
-                maxErrors: 3,
+                maxErrors: 1,
                 isQuiz: true,
                 data: [
                     { question: "I", answers: ["io", "tu", "lui", "noi"], correct: "io" },
@@ -473,6 +513,16 @@
         //#endregion
 
         //#region Gestione Livelli
+        function selectLevel(level) {
+            if (confirm(`Vuoi passare al livello ${level}? Il progresso attuale verrà perso.`)) {
+                // Aggiorna pulsanti livelli
+                document.querySelectorAll('.level-btn').forEach((btn, index) => {
+                    btn.classList.toggle('active', index + 1 === level);
+                });
+                initLevel(level, true);
+            }
+        }
+
         function initLevel(level, resetSequence = true) {
             currentLevel = level;
             currentQuestionIndex = 0;
@@ -601,7 +651,7 @@
 
                 if (errorCount >= levels[currentLevel].maxErrors) {
                     setTimeout(() => {
-                        feedbackEl.textContent = '😓 Hai fatto 3 errori! Riprova il livello con la stessa sequenza.';
+                        feedbackEl.textContent = '😓 Hai fatto un errore! Riprova il livello con la stessa sequenza.';
                         playSound('restart');
                         setTimeout(() => initLevel(currentLevel, false), 2000); // false = mantieni sequenza
                     }, 1500);
@@ -643,6 +693,10 @@
             if (currentLevel < 6) {
                 setTimeout(() => {
                     if (confirm(`Vuoi passare al livello ${currentLevel + 1}?`)) {
+                        // Aggiorna pulsanti livelli
+                        document.querySelectorAll('.level-btn').forEach((btn, index) => {
+                            btn.classList.toggle('active', index + 1 === currentLevel + 1);
+                        });
                         initLevel(currentLevel + 1, true); // true = nuova sequenza randomizzata
                     }
                 }, 2000);
