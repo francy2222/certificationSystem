@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pronomi e Verbo Essere - Inglese</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .level-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .level-info h2 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .question-area {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            min-height: 200px;
+        }
+
+        .question {
+            font-size: 1.8em;
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .tts-icon {
+            display: inline-block;
+            margin-left: 15px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: transform 0.2s;
+        }
+
+        .tts-icon:hover {
+            transform: scale(1.2);
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .option-btn {
+            background: white;
+            border: 3px solid #667eea;
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 1.3em;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .option-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .option-btn.correct {
+            background: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+
+        .option-btn.wrong {
+            background: #dc3545;
+            border-color: #dc3545;
+            color: white;
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .feedback {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .feedback.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .feedback.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .level-complete {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .level-complete h2 {
+            color: #28a745;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .tts-controls {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 10px;
+        }
+
+        .tts-toggle {
+            font-size: 1.1em;
+            cursor: pointer;
+            padding: 10px 20px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .tts-toggle:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .tts-toggle.active {
+            background: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .shake {
+            animation: shake 0.4s;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .pulse {
+            animation: pulse 0.6s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🇬🇧 Pronomi e Verbo Essere</h1>
+        </div>
+
+        <div class="tts-controls">
+            <button class="tts-toggle" id="ttsToggle">
+                🔇 Attiva Sintesi Vocale
+            </button>
+        </div>
+
+        <div class="level-info">
+            <h2 id="levelTitle">Livello 1: Pronomi Personali</h2>
+            <p id="levelDescription">Abbina il pronome italiano a quello inglese</p>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value" id="correctCount">0</div>
+                    <div class="stat-label">Corrette</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="errorCount">0</div>
+                    <div class="stat-label">Errori</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="progressCount">0/0</div>
+                    <div class="stat-label">Progresso</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="question-area" id="questionArea">
+            <div class="question" id="question">
+                Caricamento...
+            </div>
+            <div class="options" id="options"></div>
+        </div>
+
+        <div id="feedback"></div>
+
+        <div class="controls">
+            <button class="btn btn-secondary" id="restartBtn">🔄 Ricomincia Livello</button>
+            <button class="btn btn-primary" id="certBtn" style="display:none;">📜 Genera Certificato</button>
+        </div>
+    </div>
+
+    <script>
+        //#region Configurazione Livelli
+        const levels = {
+            1: {
+                title: "Livello 1: Pronomi Personali",
+                description: "Abbina il pronome italiano a quello inglese",
+                maxErrors: 3,
+                data: [
+                    { question: "io", answer: "I", lang: "it" },
+                    { question: "tu", answer: "you", lang: "it" },
+                    { question: "lui", answer: "he", lang: "it" },
+                    { question: "lei", answer: "she", lang: "it" },
+                    { question: "esso/essa", answer: "it", lang: "it" },
+                    { question: "noi", answer: "we", lang: "it" },
+                    { question: "voi", answer: "you", lang: "it" },
+                    { question: "loro", answer: "they", lang: "it" }
+                ]
+            },
+            2: {
+                title: "Livello 2: Pronomi + Verbi Base",
+                description: "Abbina pronomi e forme base del verbo essere",
+                maxErrors: 3,
+                data: [
+                    { question: "io", answer: "I", lang: "it" },
+                    { question: "tu", answer: "you", lang: "it" },
+                    { question: "lui", answer: "he", lang: "it" },
+                    { question: "lei", answer: "she", lang: "it" },
+                    { question: "esso/essa", answer: "it", lang: "it" },
+                    { question: "noi", answer: "we", lang: "it" },
+                    { question: "voi", answer: "you", lang: "it" },
+                    { question: "loro", answer: "they", lang: "it" },
+                    { question: "è", answer: "is", lang: "it" },
+                    { question: "sono (io)", answer: "am", lang: "it" },
+                    { question: "sei / siamo / siete / sono", answer: "are", lang: "it" },
+                    { question: "non", answer: "not", lang: "it" },
+                    { question: "non (forma contratta)", answer: "n't", lang: "it" }
+                ]
+            },
+            3: {
+                title: "Livello 3: Verbo Essere Completo",
+                description: "Abbina le forme complete del verbo essere",
+                maxErrors: 3,
+                data: [
+                    { question: "io sono", answer: "I am", lang: "it" },
+                    { question: "tu sei", answer: "you are", lang: "it" },
+                    { question: "lui è", answer: "he is", lang: "it" },
+                    { question: "lei è", answer: "she is", lang: "it" },
+                    { question: "esso/essa è", answer: "it is", lang: "it" },
+                    { question: "noi siamo", answer: "we are", lang: "it" },
+                    { question: "voi siete", answer: "you are", lang: "it" },
+                    { question: "loro sono", answer: "they are", lang: "it" }
+                ]
+            },
+            4: {
+                title: "Livello 4: Forme Abbreviate",
+                description: "Abbina le forme contratte del verbo essere",
+                maxErrors: 3,
+                data: [
+                    { question: "io sono", answer: "I'm", lang: "it" },
+                    { question: "tu sei", answer: "you're", lang: "it" },
+                    { question: "lui è", answer: "he's", lang: "it" },
+                    { question: "lei è", answer: "she's", lang: "it" },
+                    { question: "esso/essa è", answer: "it's", lang: "it" },
+                    { question: "noi siamo", answer: "we're", lang: "it" },
+                    { question: "voi siete", answer: "you're", lang: "it" },
+                    { question: "loro sono", answer: "they're", lang: "it" }
+                ]
+            },
+            5: {
+                title: "Livello 5: Forme Negative",
+                description: "Abbina le forme negative del verbo essere",
+                maxErrors: 3,
+                data: [
+                    { question: "io non sono", answer: "I am not", lang: "it" },
+                    { question: "tu non sei", answer: "you are not", lang: "it" },
+                    { question: "lui non è", answer: "he is not", lang: "it" },
+                    { question: "lei non è", answer: "she is not", lang: "it" },
+                    { question: "esso/essa non è", answer: "it is not", lang: "it" },
+                    { question: "noi non siamo", answer: "we are not", lang: "it" },
+                    { question: "voi non siete", answer: "you are not", lang: "it" },
+                    { question: "loro non sono", answer: "they are not", lang: "it" },
+                    { question: "io non sono (forma contratta)", answer: "I'm not", lang: "it" },
+                    { question: "tu non sei (forma contratta)", answer: "you aren't", lang: "it" },
+                    { question: "lui non è (forma contratta)", answer: "he isn't", lang: "it" },
+                    { question: "lei non è (forma contratta)", answer: "she isn't", lang: "it" }
+                ]
+            },
+            6: {
+                title: "Livello Extra: Quiz Misto",
+                description: "Indovina la traduzione corretta (domanda in inglese)",
+                maxErrors: 3,
+                isQuiz: true,
+                data: [
+                    { question: "I", answers: ["io", "tu", "lui", "noi"], correct: "io" },
+                    { question: "you", answers: ["io", "tu", "lei", "loro"], correct: "tu" },
+                    { question: "he", answers: ["lei", "lui", "esso", "io"], correct: "lui" },
+                    { question: "she", answers: ["lui", "lei", "esso", "noi"], correct: "lei" },
+                    { question: "it", answers: ["io", "tu", "esso/essa", "loro"], correct: "esso/essa" },
+                    { question: "we", answers: ["noi", "voi", "loro", "io"], correct: "noi" },
+                    { question: "they", answers: ["noi", "voi", "loro", "tu"], correct: "loro" },
+                    { question: "I'm", answers: ["io sono", "tu sei", "lui è", "non"], correct: "io sono" },
+                    { question: "you're", answers: ["io sono", "tu sei", "lui è", "noi siamo"], correct: "tu sei" },
+                    { question: "he's", answers: ["tu sei", "lui è", "lei è", "noi siamo"], correct: "lui è" },
+                    { question: "she's", answers: ["lui è", "lei è", "esso è", "voi siete"], correct: "lei è" },
+                    { question: "we're", answers: ["io sono", "tu sei", "noi siamo", "loro sono"], correct: "noi siamo" },
+                    { question: "they're", answers: ["voi siete", "loro sono", "noi siamo", "tu sei"], correct: "loro sono" },
+                    { question: "isn't", answers: ["non è", "non sono", "sei", "sono"], correct: "non è" },
+                    { question: "aren't", answers: ["non è", "non sei/siamo/siete/sono", "è", "sono"], correct: "non sei/siamo/siete/sono" },
+                    { question: "I am not", answers: ["io non sono", "tu non sei", "lui non è", "non"], correct: "io non sono" },
+                    { question: "is", answers: ["sono", "è", "sei", "non"], correct: "è" },
+                    { question: "am", answers: ["sono (io)", "sei", "è", "non"], correct: "sono (io)" },
+                    { question: "are", answers: ["è", "sono (io)", "sei/siamo/siete/sono", "non"], correct: "sei/siamo/siete/sono" },
+                    { question: "not", answers: ["non", "sì", "forse", "mai"], correct: "non" }
+                ]
+            }
+        };
+        //#endregion
+
+        //#region Variabili Globali
+        let currentLevel = 1;
+        let currentQuestionIndex = 0;
+        let correctAnswers = 0;
+        let errorCount = 0;
+        let questionsData = [];
+        let ttsEnabled = false;
+        let ttsVoiceIT = null;
+        let ttsVoiceEN = null;
+        let synthesis = window.speechSynthesis;
+        //#endregion
+
+        //#region TTS - Sintesi Vocale
+        function initTTS() {
+            const loadVoices = () => {
+                const voices = synthesis.getVoices();
+                ttsVoiceIT = voices.find(v => v.lang.includes('it-IT') && v.name.includes('Google'));
+                if (!ttsVoiceIT) ttsVoiceIT = voices.find(v => v.lang.includes('it'));
+                
+                ttsVoiceEN = voices.find(v => v.lang.includes('en-GB') && v.name.includes('Google'));
+                if (!ttsVoiceEN) ttsVoiceEN = voices.find(v => v.lang.includes('en-GB'));
+                if (!ttsVoiceEN) ttsVoiceEN = voices.find(v => v.lang.includes('en'));
+            };
+
+            loadVoices();
+            if (synthesis.onvoiceschanged !== undefined) {
+                synthesis.onvoiceschanged = loadVoices;
+            }
+        }
+
+        function speak(text, lang = 'it') {
+            if (!ttsEnabled) return;
+            
+            synthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.voice = lang === 'it' ? ttsVoiceIT : ttsVoiceEN;
+            utterance.rate = 0.9;
+            synthesis.speak(utterance);
+        }
+
+        document.getElementById('ttsToggle').addEventListener('click', function() {
+            ttsEnabled = !ttsEnabled;
+            this.textContent = ttsEnabled ? '🔊 Sintesi Vocale Attiva' : '🔇 Attiva Sintesi Vocale';
+            this.classList.toggle('active');
+        });
+        //#endregion
+
+        //#region Gestione Livelli
+        function initLevel(level) {
+            currentLevel = level;
+            currentQuestionIndex = 0;
+            correctAnswers = 0;
+            errorCount = 0;
+
+            const levelData = levels[level];
+            document.getElementById('levelTitle').textContent = levelData.title;
+            document.getElementById('levelDescription').textContent = levelData.description;
+
+            // Randomizza le domande
+            questionsData = [...levelData.data].sort(() => Math.random() - 0.5);
+
+            updateStats();
+            showQuestion();
+        }
+
+        function updateStats() {
+            document.getElementById('correctCount').textContent = correctAnswers;
+            document.getElementById('errorCount').textContent = errorCount;
+            document.getElementById('progressCount').textContent = 
+                `${currentQuestionIndex}/${questionsData.length}`;
+        }
+
+        function showQuestion() {
+            const levelData = levels[currentLevel];
+            const questionData = questionsData[currentQuestionIndex];
+            const questionEl = document.getElementById('question');
+            const optionsEl = document.getElementById('options');
+            const feedbackEl = document.getElementById('feedback');
+
+            feedbackEl.innerHTML = '';
+            optionsEl.innerHTML = '';
+
+            if (levelData.isQuiz) {
+                // Livello 6: Quiz con scelta multipla
+                questionEl.innerHTML = `${questionData.question} <span class="tts-icon" onclick="speak('${questionData.question}', 'en')">🔊</span>`;
+                
+                const shuffledAnswers = [...questionData.answers].sort(() => Math.random() - 0.5);
+                shuffledAnswers.forEach(answer => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn';
+                    btn.textContent = answer;
+                    btn.onclick = () => checkQuizAnswer(answer, questionData.correct);
+                    optionsEl.appendChild(btn);
+                });
+            } else {
+                // Livelli 1-5: Abbinamento
+                questionEl.innerHTML = `${questionData.question} <span class="tts-icon" onclick="speak('${questionData.question}', '${questionData.lang}')">🔊</span>`;
+                
+                // Genera opzioni (risposta corretta + 3 distrattori)
+                const options = generateOptions(questionData.answer);
+                options.forEach(option => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn';
+                    btn.textContent = option;
+                    btn.onclick = () => checkAnswer(option, questionData.answer);
+                    optionsEl.appendChild(btn);
+                });
+            }
+
+            if (ttsEnabled) {
+                setTimeout(() => speak(questionData.question, levelData.isQuiz ? 'en' : questionData.lang), 300);
+            }
+        }
+
+        function generateOptions(correctAnswer) {
+            const levelData = levels[currentLevel];
+            const allAnswers = levelData.data.map(d => d.answer).filter(a => a !== correctAnswer);
+            
+            // Prendi 3 risposte casuali diverse
+            const distractors = [];
+            while (distractors.length < 3 && allAnswers.length > 0) {
+                const index = Math.floor(Math.random() * allAnswers.length);
+                distractors.push(allAnswers[index]);
+                allAnswers.splice(index, 1);
+            }
+
+            const options = [correctAnswer, ...distractors];
+            return options.sort(() => Math.random() - 0.5);
+        }
+
+        function checkAnswer(selected, correct) {
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(btn => btn.disabled = true);
+
+            const feedbackEl = document.getElementById('feedback');
+            
+            if (selected === correct) {
+                correctAnswers++;
+                buttons.forEach(btn => {
+                    if (btn.textContent === correct) {
+                        btn.classList.add('correct', 'pulse');
+                    }
+                });
+                feedbackEl.className = 'feedback success';
+                feedbackEl.textContent = '✅ Corretto!';
+                playSound('correct');
+                speak('Corretto', 'it');
+
+                setTimeout(() => {
+                    currentQuestionIndex++;
+                    if (currentQuestionIndex >= questionsData.length) {
+                        levelComplete();
+                    } else {
+                        showQuestion();
+                    }
+                }, 1500);
+            } else {
+                errorCount++;
+                buttons.forEach(btn => {
+                    if (btn.textContent === selected) {
+                        btn.classList.add('wrong', 'shake');
+                    }
+                    if (btn.textContent === correct) {
+                        btn.classList.add('correct');
+                    }
+                });
+                feedbackEl.className = 'feedback error';
+                feedbackEl.textContent = `❌ Sbagliato! La risposta corretta è: ${correct}`;
+                playSound('wrong');
+                speak('Sbagliato', 'it');
+
+                if (errorCount >= levels[currentLevel].maxErrors) {
+                    setTimeout(() => {
+                        feedbackEl.textContent = '😓 Hai fatto 3 errori! Riprova il livello.';
+                        playSound('restart');
+                        setTimeout(() => initLevel(currentLevel), 2000);
+                    }, 1500);
+                } else {
+                    setTimeout(() => {
+                        currentQuestionIndex++;
+                        if (currentQuestionIndex >= questionsData.length) {
+                            levelComplete();
+                        } else {
+                            showQuestion();
+                        }
+                    }, 2000);
+                }
+            }
+
+            updateStats();
+        }
+
+        function checkQuizAnswer(selected, correct) {
+            checkAnswer(selected, correct);
+        }
+
+        function levelComplete() {
+            const questionArea = document.getElementById('questionArea');
+            playSound('levelComplete');
+            
+            questionArea.innerHTML = `
+                <div class="level-complete">
+                    <h2>🎉 Livello ${currentLevel} Completato!</h2>
+                    <p style="font-size: 1.3em; margin-top: 20px;">
+                        Risposte corrette: <strong>${correctAnswers}/${questionsData.length}</strong><br>
+                        Errori: <strong>${errorCount}</strong>
+                    </p>
+                </div>
+            `;
+
+            speak(`Livello ${currentLevel} completato! Ottimo lavoro!`, 'it');
+
+            if (currentLevel < 6) {
+                setTimeout(() => {
+                    if (confirm(`Vuoi passare al livello ${currentLevel + 1}?`)) {
+                        initLevel(currentLevel + 1);
+                    }
+                }, 2000);
+            } else {
+                document.getElementById('certBtn').style.display = 'block';
+            }
+        }
+        //#endregion
+
+        //#region Audio
+        function playSound(type) {
+            // Placeholder per suoni
+            const sounds = {
+                correct: 'https://certificationsystem.netlify.app/application/certificationSystem/application/sounds/Gain%20Points.mp3',
+                wrong: 'https://certificationsystem.netlify.app/application/certificationSystem/application/sounds/wrong-47985.mp3',
+                levelComplete: 'https://certificationsystem.netlify.app/application/certificationSystem/application/sounds/level-complete-394515.mp3',
+                restart: 'https://certificationsystem.netlify.app/application/certificationSystem/application/sounds/Jump.mp3'
+            };
+
+            if (sounds[type]) {
+                const audio = new Audio(sounds[type]);
+                audio.volume = 0.5;
+                audio.play().catch(e => console.log('Audio playback failed:', e));
+            }
+        }
+        //#endregion
+
+        //#region Sistema Certificazione
+        function generateCertificate() {
+            const totalQuestions = Object.values(levels).reduce((sum, level) => sum + level.data.length, 0);
+            const studentName = prompt('Inserisci il tuo nome per il certificato:') || 'Studente';
+            
+            const data = {
+                app: 'Pronomi e Verbo Essere Inglese',
+                student: studentName,
+                date: new Date().toLocaleDateString('it-IT'),
+                level: `Tutti i 6 livelli completati`,
+                score: `${correctAnswers} risposte corrette`,
+                time: new Date().toLocaleTimeString('it-IT')
+            };
+
+            const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
+            const certUrl = `https://certificationsystem.netlify.app/application/certificationSystem/application/certificato.html?data=${encoded}`;
+            
+            window.open(certUrl, '_blank');
+        }
+
+        document.getElementById('certBtn').addEventListener('click', generateCertificate);
+        //#endregion
+
+        //#region Event Listeners
+        document.getElementById('restartBtn').addEventListener('click', () => {
+            if (confirm('Vuoi ricominciare questo livello?')) {
+                initLevel(currentLevel);
+            }
+        });
+        //#endregion
+
+        //#region Inizializzazione
+        initTTS();
+        initLevel(1);
+        //#endregion
+    </script>
+</body>
+</html>
