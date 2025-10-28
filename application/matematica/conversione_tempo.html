@@ -476,9 +476,9 @@
             { left: '1 giorno', right: '24 ore' },
             { left: '1 ora', right: '60 minuti' },
             { left: '1 minuto', right: '60 secondi' },
-            { left: '1 secondo', right: '10 ds' },
-            { left: '1 secondo', right: '100 cs' },
-            { left: '1 secondo', right: '1000 ms' }
+            { left: '10 decimi (ds)', right: '1 secondo' },
+            { left: '100 centesimi (cs)', right: '1 secondo' },
+            { left: '1000 millisecondi (ms)', right: '1 secondo' }
         ];
 
         const conversionUnits = [
@@ -714,8 +714,19 @@
             const fromUnit = conversionUnits.find(u => u.name === currentExercise.from);
             const toUnit = conversionUnits.find(u => u.name === currentExercise.to);
             
-            document.getElementById('exerciseText').textContent = 
-                `Converti: ${currentExercise.value} ${fromUnit.label} = ? ${toUnit.label}`;
+            // Nomi completi delle unità
+            const unitNames = {
+                'g': 'giorni',
+                'h': 'ore',
+                'm': 'minuti',
+                's': 'secondi',
+                'ds': 'decimi di secondo',
+                'cs': 'centesimi di secondo',
+                'ms': 'millisecondi'
+            };
+            
+            document.getElementById('exerciseText').innerHTML = 
+                `Converti:<br>${currentExercise.value} ${unitNames[currentExercise.from]} (${currentExercise.from}) = ? ${unitNames[currentExercise.to]} (${currentExercise.to})`;
 
             initUnitsSelection();
         }
