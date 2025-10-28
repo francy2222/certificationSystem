@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -954,15 +953,32 @@
         }
 
         function updateCalcDisplay() {
-            let display = `${currentExercise.value}`;
-            calculationSteps.forEach(step => {
-                if (step.type === 'multiply') {
-                    display += ` × ${step.value}`;
-                } else {
-                    display += ` ÷ ${step.value}`;
-                }
-            });
-            display += ` = ${currentValue}`;
+            // Nomi delle unità
+            const unitNames = {
+                'g': 'giorni',
+                'h': 'ore',
+                'm': 'minuti',
+                's': 'secondi',
+                'ds': 'decimi',
+                'cs': 'centesimi',
+                'ms': 'millisecondi'
+            };
+            
+            let display = `${currentExercise.value} ${unitNames[currentExercise.from]}`;
+            
+            if (calculationSteps.length === 0) {
+                display += ' = ________';
+            } else {
+                calculationSteps.forEach(step => {
+                    if (step.type === 'multiply') {
+                        display += ` × ${step.value}`;
+                    } else {
+                        display += ` ÷ ${step.value}`;
+                    }
+                });
+                display += ` = ${currentValue} ${unitNames[currentExercise.to]}`;
+            }
+            
             document.getElementById('calcDisplay').textContent = display;
         }
 
