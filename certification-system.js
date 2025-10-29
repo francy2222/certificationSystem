@@ -1,57 +1,38 @@
 /**
- * SISTEMA DI CERTIFICAZIONE MODULARE v4.1
+ * SISTEMA DI CERTIFICAZIONE MODULARE v4.1 - AUTO-ISOLAMENTO
  * Autore: Flejta & Claude
  * Licenza: MIT
  * Versione: 4.1.0
  * 
  * Changelog v4.1:
- * - Sistema ibrido: retrocompatibilità totale + isolamento opzionale
- * - Storage isolato per percorso URL (default per nuove app)
- * - Parametro legacyMode per app esistenti
- * - Auto-detect app legacy tramite versione
- * - Namespace intelligente basato su URL
+ * - ISOLAMENTO AUTOMATICO per ogni app basato su URL
+ * - Risolve problema storage condiviso senza modifiche alle app
+ * - Ogni app ha automaticamente il suo storage separato
+ * - Namespace generato dal percorso URL dell'app
  */
 
 class CertificationSystem {
     constructor(config) {
-        //#region Determinazione Modalità Legacy/Isolata
-        // SISTEMA IBRIDO: Determina automaticamente se usare modalità legacy o isolata
+        //#region Generazione Namespace Automatico
+        // SEMPRE genera namespace univoco basato sull'URL
+        // Così ogni app ha automaticamente storage isolato
+        this.appNamespace = this.generateAppNamespace(config);
         
-        // 1. Se esplicitamente specificato legacyMode, rispettalo
-        // 2. Se appVersion < 4.0, usa legacy mode per retrocompatibilità
-        // 3. Se isolateStorage è esplicitamente false, usa legacy mode
-        // 4. Altrimenti usa storage isolato (nuovo comportamento)
-        
-        const isLegacyVersion = config.appVersion && 
-            parseFloat(config.appVersion.split('.')[0]) < 4;
-        
-        const useLegacyMode = config.legacyMode === true || 
-                             isLegacyVersion || 
-                             config.isolateStorage === false;
-        
-        // Genera namespace solo se NON siamo in legacy mode
-        this.appNamespace = useLegacyMode ? '' : this.generateAppNamespace(config);
-        
-        // Log per debug
-        if (config.debug) {
-            console.log('CertificationSystem v4.1 - Modalità:', 
-                useLegacyMode ? 'LEGACY (storage condiviso)' : 'ISOLATA (storage per app)',
-                '\nNamespace:', this.appNamespace || 'nessuno (legacy)',
-                '\nStorageKey finale:', this.appNamespace ? 
-                    `${this.appNamespace}_${config.storageKey || 'cert_data'}` : 
-                    (config.storageKey || 'cert_data')
-            );
+        // Log per debug (può essere rimosso in produzione)
+        if (config.debug || window.location.hostname === 'localhost') {
+            console.log('🔒 CertificationSystem v4.1 - Storage Auto-Isolato');
+            console.log('📍 URL:', window.location.pathname);
+            console.log('🏷️ Namespace:', this.appNamespace);
+            console.log('💾 Storage Key:', `${this.appNamespace}_${config.storageKey || 'cert_data'}`);
         }
         //#endregion
         
         this.config = {
             appName: config.appName || 'App',
             appVersion: config.appVersion || '4.1.0',
-            // Storage key: con namespace se isolato, senza se legacy
-            storageKey: this.appNamespace ? 
-                `${this.appNamespace}_${config.storageKey || 'cert_data'}` : 
-                (config.storageKey || 'cert_data'),
-            originalStorageKey: config.storageKey || 'cert_data', // Mantieni riferimento originale
+            // Storage key SEMPRE con namespace per isolamento automatico
+            storageKey: `${this.appNamespace}_${config.storageKey || 'cert_data'}`,
+            originalStorageKey: config.storageKey || 'cert_data', // Per riferimento
             appUrl: window.location.href,
             appPath: window.location.pathname,
             certUrl: config.certUrl || 'https://certificationsystem.netlify.app/',
@@ -62,21 +43,12 @@ class CertificationSystem {
             verificationMode: false,
             suspiciousResizeThreshold: config.suspiciousResizeThreshold || 100,
             requireFullscreen: config.requireFullscreen || false,
-            legacyMode: useLegacyMode,
-            isolateStorage: !useLegacyMode,
             debug: config.debug || false,
             ...config
         };
         
-        //#region Migrazione Dati Legacy (opzionale)
-        // Se richiesto, migra i dati da storage legacy a isolato
-        if (config.migrateLegacyData && !useLegacyMode) {
-            this.migrateLegacyData(config.storageKey || 'cert_data');
-        }
-        //#endregion
-        
         //#region Inizializzazione e Recupero Stato
-        // Carica info studente
+        // Carica info studente (rimane globale per tutte le app)
         this.studentInfo = this.loadStudentInfo();
         
         // IMPORTANTE: Recupera modalità persistenti PRIMA di caricare i dati
@@ -104,76 +76,60 @@ class CertificationSystem {
 
     //#region Namespace Management per Isolamento Storage
     generateAppNamespace(config) {
-        // Metodo 1: Se viene fornito un appId esplicito, usalo
+        // Se viene fornito un appId esplicito, usalo
         if (config.appId) {
             return config.appId;
         }
         
-        // Metodo 2: Genera namespace dal percorso dell'URL
+        // Genera namespace dal percorso URL
         const path = window.location.pathname;
         
-        // Gestione path speciali per certificationsystem.netlify.app
-        // Esempi:
-        // /application/matematica/frazioni.html -> matematica_frazioni
-        // /application/certificationSystem/application/grammatica/verbi.html -> grammatica_verbi
-        // /test/app.html -> test_app
-        
-        // Rimuovi parti comuni del path
-        const pathCleaned = path
-            .replace(/\/application\/certificationSystem/g, '')
+        // Gestione path per certificationsystem.netlify.app
+        // Rimuovi parti comuni e ripetitive
+        const cleanPath = path
+            .replace(/\/application\/certificationSystem/g, '') 
             .replace(/\/application/g, '');
         
-        // Estrai le parti significative
-        const pathParts = pathCleaned.split('/').filter(p => p);
+        // Dividi il path in parti
+        const pathParts = cleanPath.split('/').filter(p => p);
         
         // Se siamo nella root o c'è solo un file, usa appName
-        if (pathParts.length <= 1) {
-            return (config.appName || 'app').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+        if (pathParts.length === 0) {
+            return (config.appName || 'app').toLowerCase().replace(/[^a-z0-9]/g, '_');
         }
         
-        // Prendi cartella + nome file (senza estensione)
-        const folder = pathParts[pathParts.length - 2] || '';
-        const file = (pathParts[pathParts.length - 1] || '').replace(/\.html?$/i, '');
+        // Strategia: usa le ultime 2-3 parti significative del path
+        let namespace = '';
         
-        // Combina folder e file per namespace unico
-        let namespace = folder;
-        if (file && file !== 'index') {
-            namespace += '_' + file;
+        if (pathParts.length === 1) {
+            // Solo un file nella root
+            namespace = pathParts[0].replace(/\.html?$/i, '');
+        } else {
+            // Prendi cartella + file
+            const folder = pathParts[pathParts.length - 2] || '';
+            const file = (pathParts[pathParts.length - 1] || '').replace(/\.html?$/i, '');
+            
+            // Se il file si chiama index, usa solo la cartella
+            if (file === 'index') {
+                namespace = folder;
+            } else {
+                // Combina folder_file per namespace univoco
+                namespace = folder ? `${folder}_${file}` : file;
+            }
         }
         
-        // Pulisci e rendi sicuro il namespace
-        namespace = namespace.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+        // Pulisci il namespace (solo lettere, numeri e underscore)
+        namespace = namespace.toLowerCase().replace(/[^a-z0-9_]/g, '_');
         
-        // Se ancora vuoto, fallback su appName
+        // Rimuovi underscore multipli
+        namespace = namespace.replace(/_+/g, '_').replace(/^_|_$/g, '');
+        
+        // Se ancora vuoto, usa appName come fallback
         if (!namespace) {
-            namespace = (config.appName || 'app').replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+            namespace = (config.appName || 'app').toLowerCase().replace(/[^a-z0-9]/g, '_');
         }
         
         return namespace;
-    }
-    
-    migrateLegacyData(legacyKey) {
-        // Tentativo di migrazione da storage legacy a isolato
-        const legacyData = localStorage.getItem(legacyKey);
-        const newKey = this.config.storageKey;
-        
-        if (legacyData && !localStorage.getItem(newKey)) {
-            try {
-                const parsed = JSON.parse(legacyData);
-                
-                // Verifica che i dati siano compatibili con questa app
-                // Controlla appName se disponibile nei metadati
-                if (parsed._meta && parsed._meta.appName === this.config.appName) {
-                    console.log('Migrazione dati legacy per:', this.config.appName);
-                    localStorage.setItem(newKey, legacyData);
-                    
-                    // Opzionale: rimuovi dati legacy dopo migrazione
-                    // localStorage.removeItem(legacyKey);
-                }
-            } catch (e) {
-                console.error('Errore migrazione dati legacy:', e);
-            }
-        }
     }
     //#endregion
 
@@ -212,21 +168,25 @@ class CertificationSystem {
                 // Recupera modalità indipendentemente
                 if (modes.verificationMode) {
                     this.config.verificationMode = true;
-                    console.log('Modalità Verifica recuperata dopo refresh/riapertura');
+                    if (this.config.debug) {
+                        console.log('Modalità Verifica recuperata dopo refresh/riapertura');
+                    }
                 }
                 
                 if (modes.classroomMode) {
                     this.config.classroomMode = true;
-                    console.log('Modalità Lavoro in Classe recuperata dopo refresh/riapertura');
+                    if (this.config.debug) {
+                        console.log('Modalità Lavoro in Classe recuperata dopo refresh/riapertura');
+                    }
                 }
                 
                 // Registra il recupero
                 if (modes.lastClosed) {
                     const reopenTime = Date.now() - modes.lastClosed;
                     if (reopenTime < 60000) { // Meno di 1 minuto
-                        console.log('Probabile refresh della pagina');
+                        if (this.config.debug) console.log('Probabile refresh della pagina');
                     } else {
-                        console.log('Pagina riaperta dopo chiusura');
+                        if (this.config.debug) console.log('Pagina riaperta dopo chiusura');
                     }
                 }
             } catch (e) {
@@ -748,7 +708,6 @@ class CertificationSystem {
                 appUrl: this.config.appUrl,
                 appPath: this.config.appPath,
                 namespace: this.appNamespace,
-                legacyMode: this.config.legacyMode,
                 startTime: Date.now(),
                 lastUpdate: Date.now()
             },
@@ -786,7 +745,6 @@ class CertificationSystem {
                 appUrl: this.config.appUrl,
                 appPath: this.config.appPath,
                 namespace: this.appNamespace,
-                legacyMode: this.config.legacyMode,
                 startTime: Date.now() - (oldData.t || 0) * 1000,
                 lastUpdate: Date.now()
             },
@@ -1029,7 +987,6 @@ class CertificationSystem {
                 appUrl: this.config.appUrl,
                 appPath: this.config.appPath,
                 namespace: this.appNamespace,
-                legacyMode: this.config.legacyMode,
                 generated: Date.now(),
                 startTime: this.data._verificationSession?.startTime || 
                           this.data._session?.startTime || 
@@ -1140,7 +1097,7 @@ class CertificationSystem {
             ...options
         };
 
-        // CSS aggiornato per modalità verifica
+        // CSS per il pannello
         if (!document.getElementById('cert-system-styles')) {
             const style = document.createElement('style');
             style.id = 'cert-system-styles';
@@ -1155,17 +1112,6 @@ class CertificationSystem {
                 .cert-panel.verification-mode {
                     background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);
                     animation: pulse-border 2s infinite;
-                }
-                .cert-legacy-badge {
-                    position: absolute;
-                    top: 10px;
-                    right: 10px;
-                    background: #ffc107;
-                    color: #000;
-                    padding: 5px 10px;
-                    border-radius: 5px;
-                    font-size: 0.8em;
-                    font-weight: bold;
                 }
                 @keyframes pulse-border {
                     0%, 100% { box-shadow: 0 0 20px rgba(244, 67, 54, 0.5); }
@@ -1206,7 +1152,32 @@ class CertificationSystem {
                     padding: 0 20px;
                     opacity: 0;
                 }
-                /* Resto del CSS uguale... */
+                .cert-stats {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                    gap: 15px;
+                    margin-top: 20px;
+                }
+                .cert-stat {
+                    background: rgba(255,255,255,0.2);
+                    padding: 15px;
+                    border-radius: 8px;
+                    text-align: center;
+                    transition: all 0.3s;
+                }
+                .cert-stat:hover {
+                    background: rgba(255,255,255,0.3);
+                    transform: translateY(-2px);
+                }
+                .cert-stat-value {
+                    font-size: 1.8em;
+                    font-weight: bold;
+                    margin-bottom: 5px;
+                }
+                .cert-stat-label {
+                    font-size: 0.9em;
+                    opacity: 0.9;
+                }
             `;
             document.head.appendChild(style);
         }
@@ -1214,11 +1185,9 @@ class CertificationSystem {
         // Genera HTML del pannello
         const isVerification = this.config.verificationMode;
         const isClassroom = this.config.classroomMode;
-        const isLegacy = this.config.legacyMode;
         
         let html = `
-            <div class="cert-panel ${isVerification ? 'verification-mode' : ''} ${container.dataset.collapsed === 'true' ? 'collapsed' : ''}" id="${containerId}-panel">
-                ${isLegacy ? '<div class="cert-legacy-badge">LEGACY MODE</div>' : ''}
+            <div class="cert-panel ${isVerification ? 'verification-mode' : ''}" id="${containerId}-panel">
                 <div class="cert-panel-header" ${config.collapsible ? `onclick="certSystemTogglePanel('${containerId}')"` : ''}>
                     <span class="cert-panel-title">
                         ${isVerification ? '🔒 MODALITÀ VERIFICA ATTIVA' : '📜 Certificato di Completamento'}
@@ -1228,21 +1197,22 @@ class CertificationSystem {
                 <div class="cert-panel-content">
         `;
 
-        // Info modalità storage
+        // Info debug se attivo
         if (this.config.debug) {
             html += `
                 <div style="background: rgba(0,0,0,0.2); padding: 10px; margin-bottom: 15px; border-radius: 5px; font-size: 0.9em;">
                     <strong>Debug Info:</strong><br>
                     App: ${this.config.appName} v${this.config.appVersion}<br>
-                    Storage: ${this.config.legacyMode ? 'LEGACY (condiviso)' : 'ISOLATO'}<br>
-                    ${this.appNamespace ? `Namespace: ${this.appNamespace}<br>` : ''}
+                    Namespace: ${this.appNamespace}<br>
                     StorageKey: ${this.config.storageKey}
                 </div>
             `;
         }
 
-        // Resto del codice HTML uguale alla versione 4.0...
-        // [Continua con il resto del renderFullPanel come nella v4.0]
+        // Resto del pannello...
+        html += '<div class="cert-stats" id="' + containerId + '-stats"></div>';
+        
+        html += '</div></div>';
         
         container.innerHTML = html;
         
@@ -1250,20 +1220,120 @@ class CertificationSystem {
         this.renderStatsPanel(containerId + '-stats');
 
         // Setup funzioni globali
-        this.setupGlobalFunctions(containerId, options);
+        if (!window.certSystemTogglePanel) {
+            window.certSystemTogglePanel = (id) => {
+                const panel = document.getElementById(id + '-panel');
+                if (panel) {
+                    panel.classList.toggle('collapsed');
+                }
+            };
+        }
     }
 
-    // Resto dei metodi UI uguali alla v4.0...
     renderStatsPanel(containerId) {
-        // [Codice uguale alla v4.0]
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        let statsHTML = '';
+
+        // Info studente
+        if (this.studentInfo && this.studentInfo.nome) {
+            statsHTML += `
+                <div class="cert-stat" style="grid-column: span 2; background: rgba(76,175,80,0.2);">
+                    <div class="cert-stat-value" style="font-size: 1.2em;">
+                        👤 ${this.studentInfo.nome} ${this.studentInfo.cognome}
+                    </div>
+                    <div>Classe: ${this.studentInfo.classe || 'N/D'}</div>
+                </div>
+            `;
+        }
+
+        // Tempo totale
+        statsHTML += `
+            <div class="cert-stat">
+                <div class="cert-stat-value">${this.getFormattedTime(this.data._values.t || 0)}</div>
+                <div class="cert-stat-label">Tempo Totale</div>
+            </div>
+        `;
+
+        // Campi personalizzati
+        this.config.fields.forEach(field => {
+            if (field.type === 'text') return;
+            
+            const value = this.data._values[field.key] || 0;
+            let displayValue = value;
+            
+            if (field.showZero === false && value === 0) {
+                displayValue = '-';
+            } else if (field.type === 'percentage' && value !== 0) {
+                displayValue = value + '%';
+            } else if (field.type === 'time') {
+                displayValue = this.getFormattedTime(value);
+            }
+            
+            statsHTML += `
+                <div class="cert-stat">
+                    <div class="cert-stat-value">${displayValue}</div>
+                    <div class="cert-stat-label">${field.label}</div>
+                </div>
+            `;
+        });
+
+        // Focus tracking
+        if (this.config.trackFocus || this.config.classroomMode || this.config.verificationMode) {
+            const focusCount = this.data._values.fl || 0;
+            const focusTime = this.data._values.flt || 0;
+            
+            const warningStyle = focusCount > 2 ? 
+                'background: rgba(244,67,54,0.2); border: 2px solid #f44336;' : '';
+            
+            statsHTML += `
+                <div class="cert-stat" style="${warningStyle}">
+                    <div class="cert-stat-value">${focusCount}</div>
+                    <div class="cert-stat-label">Focus Perso</div>
+                </div>
+                <div class="cert-stat" style="${warningStyle}">
+                    <div class="cert-stat-value">${this.getFormattedTime(focusTime)}</div>
+                    <div class="cert-stat-label">Tempo Fuori Focus</div>
+                </div>
+            `;
+        }
+
+        container.innerHTML = statsHTML;
     }
 
     setupButtons(generateBtnId, copyBtnId, resetBtnId, linkContainerId, studentBtnId) {
-        // [Codice uguale alla v4.0]
-    }
+        const generateBtn = document.getElementById(generateBtnId);
+        const copyBtn = document.getElementById(copyBtnId);
+        const resetBtn = document.getElementById(resetBtnId);
+        const linkContainer = document.getElementById(linkContainerId);
+        const studentBtn = document.getElementById(studentBtnId);
 
-    setupGlobalFunctions(containerId, options) {
-        // [Codice uguale alla v4.0]
+        if (generateBtn) {
+            generateBtn.addEventListener('click', () => {
+                const link = this.generateCertLink();
+                const linkDisplay = linkContainer.querySelector('.cert-link');
+                if (linkDisplay) {
+                    linkDisplay.textContent = link;
+                }
+                linkContainer.style.display = 'block';
+            });
+        }
+
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => this.copyCertLink());
+        }
+
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => this.resetData());
+        }
+
+        if (studentBtn) {
+            studentBtn.addEventListener('click', () => {
+                this.promptStudentInfo();
+                this.renderStatsPanel(document.querySelector('[id*="certStats"]')?.id || 'certStatsContainer');
+            });
+        }
     }
     //#endregion
 }
