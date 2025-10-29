@@ -1,5 +1,19 @@
 # 📚 Sistema di Certificazione per App Didattiche
 
+> ⚠️ **v4.1 - IMPORTANTE**: Storage automaticamente isolato per ogni app. Ogni applicazione ora mantiene i propri dati separati.
+
+## 🆕 Novità v4.1 (Gennaio 2025)
+- **✅ RISOLTO IL PROBLEMA STORAGE CONDIVISO**
+- **🔒 Isolamento automatico** per ogni app basato su URL
+- **📦 Zero modifiche richieste** alle app esistenti
+- **🔄 Gli studenti ripartono da zero** (dati precedenti non migrati)
+
+## ⚠️ Nota per Aggiornamento
+Sostituendo il file `certification-system.js` con la v4.1:
+- Ogni app avrà automaticamente storage separato
+- I dati precedenti non saranno più accessibili
+- Gli studenti dovranno ricominciare le statistiche
+
 Sistema modulare e riutilizzabile per tracciare e certificare l'attività degli studenti nelle applicazioni didattiche.
 
 **🌐 Live Demo:** https://certificationsystem.netlify.app/
