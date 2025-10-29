@@ -281,6 +281,30 @@ Crea un pannello certificato completo con UI integrata.
 ```javascript
 certSystem.renderFullPanel('certificateContainer', {
     collapsible: true,
+
+## 🔒 Storage Isolato (v4.1+)
+
+### Come Funziona
+Il sistema genera automaticamente un namespace unico per ogni app basato sull'URL:
+- `/application/matematica/frazioni.html` → namespace: `matematica_frazioni`
+- Storage finale: `matematica_frazioni_tuoStorageKey`
+
+### Debug Mode
+```javascript
+const certSystem = new CertificationSystem({
+    appName: 'Nome App',
+    debug: true,  // Mostra info namespace in console
+    // ...
+});
+```
+
+### Namespace Personalizzato (Opzionale)
+```javascript
+const certSystem = new CertificationSystem({
+    appName: 'Nome App',
+    appId: 'custom_namespace',  // Forza un namespace specifico
+    // ...
+});
     showStudentControls: true,
     showClassroomToggle: true
 });
