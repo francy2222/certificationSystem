@@ -1178,6 +1178,28 @@ class CertificationSystem {
                     font-size: 0.9em;
                     opacity: 0.9;
                 }
+                .cert-btn {
+                    padding: 10px 20px;
+                    background: rgba(255,255,255,0.2);
+                    color: white;
+                    border: 2px solid rgba(255,255,255,0.3);
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    transition: all 0.3s;
+                }
+                .cert-btn:hover {
+                    background: rgba(255,255,255,0.3);
+                    transform: translateY(-2px);
+                }
+                .cert-btn-primary {
+                    background: rgba(255,255,255,0.9);
+                    color: #667eea;
+                }
+                .cert-btn-danger {
+                    background: #f44336;
+                    border-color: #f44336;
+                }
             `;
             document.head.appendChild(style);
         }
@@ -1212,6 +1234,32 @@ class CertificationSystem {
         // Resto del pannello...
         html += '<div class="cert-stats" id="' + containerId + '-stats"></div>';
         
+        // Bottoni azione
+        html += `
+            <div style="display: flex; justify-content: center; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                <button class="cert-btn cert-btn-primary" onclick="certSystemGenerateLink('${this.config.storageKey}', '${containerId}')">
+                    📋 Genera Certificato
+                </button>
+                <button class="cert-btn cert-btn-danger" onclick="certSystemResetData('${this.config.storageKey}')">
+                    🔄 Reset Dati
+                </button>
+            </div>
+        `;
+        
+        // Container per link generato
+        html += `
+            <div id="${containerId}-link" style="display: none; margin-top: 20px;">
+                <p style="text-align: center;">Link certificato:</p>
+                <div style="background: white; color: #667eea; padding: 15px; border-radius: 8px; 
+                            word-break: break-all; font-family: monospace; margin: 10px 0;">
+                    <span id="${containerId}-link-text"></span>
+                </div>
+                <div style="text-align: center;">
+                    <button class="cert-btn" onclick="certSystemCopyLink('${containerId}')">📋 Copia Link</button>
+                </div>
+            </div>
+        `;
+        
         html += '</div></div>';
         
         container.innerHTML = html;
@@ -1225,6 +1273,45 @@ class CertificationSystem {
                 const panel = document.getElementById(id + '-panel');
                 if (panel) {
                     panel.classList.toggle('collapsed');
+                }
+            };
+            
+            // Mantieni riferimento all'istanza per le funzioni globali
+            if (!window.certSystemInstances) {
+                window.certSystemInstances = {};
+            }
+            window.certSystemInstances[this.config.storageKey] = this;
+            
+            window.certSystemGenerateLink = (storageKey, containerId) => {
+                const instance = window.certSystemInstances[storageKey];
+                if (instance) {
+                    const link = instance.generateCertLink();
+                    const linkContainer = document.getElementById(containerId + '-link');
+                    const linkText = document.getElementById(containerId + '-link-text');
+                    if (linkContainer && linkText) {
+                        linkText.textContent = link;
+                        linkContainer.style.display = 'block';
+                    }
+                }
+            };
+            
+            window.certSystemCopyLink = (containerId) => {
+                const linkText = document.getElementById(containerId + '-link-text');
+                if (linkText) {
+                    const link = linkText.textContent;
+                    navigator.clipboard.writeText(link).then(() => {
+                        alert('Link certificato copiato! Ora puoi inviarlo al docente.');
+                    }).catch(err => {
+                        console.error('Errore copia:', err);
+                        alert('Impossibile copiare automaticamente. Seleziona e copia manualmente.');
+                    });
+                }
+            };
+            
+            window.certSystemResetData = (storageKey) => {
+                const instance = window.certSystemInstances[storageKey];
+                if (instance) {
+                    instance.resetData();
                 }
             };
         }
