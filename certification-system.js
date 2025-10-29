@@ -810,12 +810,59 @@ class CertificationSystem {
         
         this.saveData();
         
-        // Aggiorna pannello
-        this.renderStatsPanel(document.querySelector('[id*="certStats"]')?.id || 'certStatsContainer');
+        // Aggiorna TUTTE le UI possibili
         
+        // 1. Aggiorna pannello statistiche se esiste
+        const statsPanels = document.querySelectorAll('[id*="Stats"], [id$="-stats"]');
+        statsPanels.forEach(panel => {
+            if (panel && panel.id) {
+                this.renderStatsPanel(panel.id);
+            }
+        });
+        
+        // 2. Nascondi link certificato se visibile
+        const linkContainers = document.querySelectorAll('[id*="link"][id*="Container"], [id$="-link"]');
+        linkContainers.forEach(container => {
+            if (container) {
+                container.style.display = 'none';
+            }
+        });
+        
+        // 3. Reset timer display se esiste
+        if (this.config.onTimerUpdate) {
+            this.config.onTimerUpdate(0);
+        }
+        
+        // 4. Aggiorna tutti i campi visualizzati
+        this.config.fields.forEach(field => {
+            if (this.config.onFieldUpdate) {
+                this.config.onFieldUpdate(field.key, 0);
+            }
+        });
+        
+        // 5. Callback personalizzato dell'app
         if (this.config.onReset) {
             this.config.onReset();
         }
+        
+        // 6. Se esiste un pannello completo, ri-renderizzalo
+        const fullPanels = document.querySelectorAll('.cert-panel');
+        fullPanels.forEach(panel => {
+            const containerId = panel.id ? panel.id.replace('-panel', '') : null;
+            if (containerId) {
+                const container = document.getElementById(containerId);
+                if (container) {
+                    // Mantieni stato collapsed se presente
+                    const wasCollapsed = panel.classList.contains('collapsed');
+                    this.renderFullPanel(containerId);
+                    if (wasCollapsed) {
+                        setTimeout(() => {
+                            panel.classList.add('collapsed');
+                        }, 10);
+                    }
+                }
+            }
+        });
     }
     //#endregion
 
