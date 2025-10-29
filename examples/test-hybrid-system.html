@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Sistema Ibrido v4.1</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        .app-box {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .app-box h2 {
+            margin-top: 0;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+        .legacy-mode {
+            border: 3px solid #ffc107;
+        }
+        .legacy-mode h2 {
+            color: #f57c00;
+            border-color: #ffc107;
+        }
+        .isolated-mode {
+            border: 3px solid #4caf50;
+        }
+        .isolated-mode h2 {
+            color: #2e7d32;
+            border-color: #4caf50;
+        }
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .badge-legacy {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .badge-isolated {
+            background: #d4edda;
+            color: #155724;
+        }
+        .info-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        .info-box strong {
+            color: #667eea;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f1f3f5;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Sistema Certificazione Ibrido v4.1</h1>
+    
+    <div class="container">
+        <!-- App Legacy Mode -->
+        <div class="app-box legacy-mode">
+            <h2>📦 App Legacy (Storage Condiviso)</h2>
+            <div class="badge badge-legacy">LEGACY MODE</div>
+            
+            <div class="info-box">
+                <strong>Configurazione:</strong><br>
+                appName: "Quiz Matematica"<br>
+                appVersion: "2.5.0" (< 4.0)<br>
+                legacyMode: automatico<br>
+                storageKey: "quiz_data"<br>
+                <strong>Storage finale:</strong> quiz_data
+            </div>
+            
+            <div class="warning">
+                ⚠️ Questa app usa lo storage CONDIVISO del dominio. 
+                I dati sono cumulativi tra tutte le app legacy!
+            </div>
+            
+            <div class="stats" id="legacyStats">
+                <div class="stat-card">
+                    <div class="stat-value" id="legacyTime">0s</div>
+                    <div class="stat-label">Tempo</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="legacyScore">0</div>
+                    <div class="stat-label">Punteggio</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="legacyExercises">0</div>
+                    <div class="stat-label">Esercizi</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="legacyErrors">0</div>
+                    <div class="stat-label">Errori</div>
+                </div>
+            </div>
+            
+            <div>
+                <button onclick="legacyAddExercise()">➕ Aggiungi Esercizio</button>
+                <button onclick="legacyAddError()">❌ Aggiungi Errore</button>
+                <button onclick="legacyGenerateCert()">📜 Genera Certificato</button>
+                <button onclick="legacyReset()">🔄 Reset</button>
+            </div>
+            
+            <div id="legacyCert" style="margin-top: 20px; display: none;">
+                <div class="info-box" style="word-break: break-all;">
+                    <strong>Link Certificato:</strong><br>
+                    <span id="legacyCertLink"></span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- App Isolated Mode -->
+        <div class="app-box isolated-mode">
+            <h2>🔒 App Nuova (Storage Isolato)</h2>
+            <div class="badge badge-isolated">ISOLATED MODE</div>
+            
+            <div class="info-box">
+                <strong>Configurazione:</strong><br>
+                appName: "Grammatica Italiana"<br>
+                appVersion: "4.1.0" (>= 4.0)<br>
+                isolateStorage: automatico<br>
+                storageKey: "grammar_data"<br>
+                <strong>Namespace:</strong> <span id="isolatedNamespace">...</span><br>
+                <strong>Storage finale:</strong> <span id="isolatedFullKey">...</span>
+            </div>
+            
+            <div class="warning" style="background: #d4edda; border-color: #4caf50;">
+                ✅ Questa app usa storage ISOLATO. 
+                I dati sono separati da tutte le altre app!
+            </div>
+            
+            <div class="stats" id="isolatedStats">
+                <div class="stat-card">
+                    <div class="stat-value" id="isolatedTime">0s</div>
+                    <div class="stat-label">Tempo</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="isolatedScore">0</div>
+                    <div class="stat-label">Punteggio</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="isolatedExercises">0</div>
+                    <div class="stat-label">Esercizi</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="isolatedErrors">0</div>
+                    <div class="stat-label">Errori</div>
+                </div>
+            </div>
+            
+            <div>
+                <button onclick="isolatedAddExercise()">➕ Aggiungi Esercizio</button>
+                <button onclick="isolatedAddError()">❌ Aggiungi Errore</button>
+                <button onclick="isolatedGenerateCert()">📜 Genera Certificato</button>
+                <button onclick="isolatedReset()">🔄 Reset</button>
+            </div>
+            
+            <div id="isolatedCert" style="margin-top: 20px; display: none;">
+                <div class="info-box" style="word-break: break-all;">
+                    <strong>Link Certificato:</strong><br>
+                    <span id="isolatedCertLink"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div style="background: white; padding: 20px; border-radius: 15px; margin-top: 30px;">
+        <h3>📊 Storage Inspector</h3>
+        <div class="info-box" id="storageInspector">
+            <strong>Contenuto localStorage:</strong><br>
+            <div id="storageContent"></div>
+        </div>
+        <button onclick="inspectStorage()">🔍 Ispeziona Storage</button>
+        <button onclick="clearAllStorage()">⚠️ Pulisci TUTTO lo Storage</button>
+    </div>
+
+    <!-- Includi il sistema certificazione v4.1 -->
+    <script src="certification-system.js"></script>
+    
+    <script>
+        // SISTEMA LEGACY (Storage Condiviso)
+        const legacyCert = new CertificationSystem({
+            appName: 'Quiz Matematica',
+            appVersion: '2.5.0',  // < 4.0 = legacy automatico
+            storageKey: 'quiz_data',
+            certUrl: 'https://certificationsystem.netlify.app/',
+            debug: true,
+            fields: [
+                { key: 'exercises', label: 'Esercizi Completati', showZero: false },
+                { key: 'errors', label: 'Errori', showZero: true },
+                { key: 'score', label: 'Punteggio', showZero: true }
+            ],
+            onTimerUpdate: (time) => {
+                document.getElementById('legacyTime').textContent = 
+                    legacyCert.getFormattedTime(time);
+            },
+            onFieldUpdate: () => updateLegacyStats()
+        });
+        
+        // SISTEMA ISOLATO (Storage per App)
+        const isolatedCert = new CertificationSystem({
+            appName: 'Grammatica Italiana',
+            appVersion: '4.1.0',  // >= 4.0 = isolato automatico
+            storageKey: 'grammar_data',
+            certUrl: 'https://certificationsystem.netlify.app/',
+            debug: true,
+            fields: [
+                { key: 'exercises', label: 'Esercizi Completati', showZero: false },
+                { key: 'errors', label: 'Errori', showZero: true },
+                { key: 'score', label: 'Punteggio', showZero: true }
+            ],
+            onTimerUpdate: (time) => {
+                document.getElementById('isolatedTime').textContent = 
+                    isolatedCert.getFormattedTime(time);
+            },
+            onFieldUpdate: () => updateIsolatedStats()
+        });
+        
+        // Mostra namespace e storage key per app isolata
+        document.getElementById('isolatedNamespace').textContent = 
+            isolatedCert.appNamespace || 'nessuno';
+        document.getElementById('isolatedFullKey').textContent = 
+            isolatedCert.config.storageKey;
+        
+        // Funzioni Legacy
+        function updateLegacyStats() {
+            const data = legacyCert.getData();
+            document.getElementById('legacyScore').textContent = data.score || 0;
+            document.getElementById('legacyExercises').textContent = data.exercises || 0;
+            document.getElementById('legacyErrors').textContent = data.errors || 0;
+        }
+        
+        function legacyAddExercise() {
+            legacyCert.incrementField('exercises');
+            legacyCert.incrementField('score', 10);
+        }
+        
+        function legacyAddError() {
+            legacyCert.incrementField('errors');
+            legacyCert.incrementField('score', -5);
+        }
+        
+        function legacyGenerateCert() {
+            const link = legacyCert.generateCertLink();
+            document.getElementById('legacyCertLink').textContent = link;
+            document.getElementById('legacyCert').style.display = 'block';
+        }
+        
+        function legacyReset() {
+            if (confirm('Reset dati app legacy?')) {
+                legacyCert.resetData();
+                updateLegacyStats();
+                document.getElementById('legacyCert').style.display = 'none';
+            }
+        }
+        
+        // Funzioni Isolated
+        function updateIsolatedStats() {
+            const data = isolatedCert.getData();
+            document.getElementById('isolatedScore').textContent = data.score || 0;
+            document.getElementById('isolatedExercises').textContent = data.exercises || 0;
+            document.getElementById('isolatedErrors').textContent = data.errors || 0;
+        }
+        
+        function isolatedAddExercise() {
+            isolatedCert.incrementField('exercises');
+            isolatedCert.incrementField('score', 10);
+        }
+        
+        function isolatedAddError() {
+            isolatedCert.incrementField('errors');
+            isolatedCert.incrementField('score', -5);
+        }
+        
+        function isolatedGenerateCert() {
+            const link = isolatedCert.generateCertLink();
+            document.getElementById('isolatedCertLink').textContent = link;
+            document.getElementById('isolatedCert').style.display = 'block';
+        }
+        
+        function isolatedReset() {
+            if (confirm('Reset dati app isolata?')) {
+                isolatedCert.resetData();
+                updateIsolatedStats();
+                document.getElementById('isolatedCert').style.display = 'none';
+            }
+        }
+        
+        // Storage Inspector
+        function inspectStorage() {
+            const content = document.getElementById('storageContent');
+            content.innerHTML = '';
+            
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                
+                // Evidenzia le chiavi del nostro sistema
+                let style = '';
+                if (key.includes('quiz_data')) style = 'color: #f57c00;';
+                if (key.includes(isolatedCert.appNamespace)) style = 'color: #2e7d32;';
+                
+                content.innerHTML += `<div style="${style}">
+                    <strong>${key}:</strong> ${value.substring(0, 100)}${value.length > 100 ? '...' : ''}
+                </div><br>`;
+            }
+            
+            if (localStorage.length === 0) {
+                content.innerHTML = '<em>localStorage vuoto</em>';
+            }
+        }
+        
+        function clearAllStorage() {
+            if (confirm('⚠️ ATTENZIONE: Questo cancellerà TUTTI i dati localStorage!\n\nContinuare?')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+        
+        // Init
+        updateLegacyStats();
+        updateIsolatedStats();
+        inspectStorage();
+    </script>
+</body>
+</html>
