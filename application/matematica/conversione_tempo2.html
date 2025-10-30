@@ -481,107 +481,9 @@
             color: white;
         }
 
-        /* Livello 3 - Selezione interattiva */
-        .schema-unita.clickable {
-            cursor: pointer;
-        }
-
-        .schema-unita.clickable:hover {
-            background: rgba(255,255,255,0.2);
-            transform: translateY(-2px);
-        }
-
-        .schema-unita.selected-from {
-            background: rgba(255,165,0,0.4);
-            border-color: #ffa500;
-            animation: pulse-from 1s infinite;
-        }
-
-        .schema-unita.selected-to {
-            background: rgba(138,43,226,0.4);
-            border-color: #8a2be2;
-            animation: pulse-to 1s infinite;
-        }
-
-        @keyframes pulse-from {
-            0%, 100% {
-                transform: scale(1.08);
-                box-shadow: 0 0 20px rgba(255,165,0,0.5);
-            }
-            50% {
-                transform: scale(1.12);
-                box-shadow: 0 0 30px rgba(255,165,0,0.7);
-            }
-        }
-
-        @keyframes pulse-to {
-            0%, 100% {
-                transform: scale(1.08);
-                box-shadow: 0 0 20px rgba(138,43,226,0.5);
-            }
-            50% {
-                transform: scale(1.12);
-                box-shadow: 0 0 30px rgba(138,43,226,0.7);
-            }
-        }
-
-        .arrow-selector {
-            display: none;
-            justify-content: center;
-            gap: 30px;
-            margin: 20px 0;
-            padding: 20px;
-            background: #f0f4f8;
-            border-radius: 15px;
-        }
-
-        .arrow-selector.show {
-            display: flex;
-        }
-
-        .arrow-btn {
-            padding: 20px 40px;
-            border: 3px solid transparent;
-            border-radius: 15px;
-            background: white;
-            font-size: 24px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .arrow-btn:hover {
-            transform: scale(1.1);
-        }
-
-        .arrow-btn.top-arrow {
-            border-color: #ff5722;
-            color: #ff5722;
-        }
-
-        .arrow-btn.top-arrow:hover {
-            background: #ff5722;
-            color: white;
-        }
-
-        .arrow-btn.bottom-arrow {
-            border-color: #4caf50;
-            color: #4caf50;
-        }
-
-        .arrow-btn.bottom-arrow:hover {
-            background: #4caf50;
-            color: white;
-        }
-
-        .selection-instructions {
-            text-align: center;
-            padding: 15px;
-            background: #e3f2fd;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            font-size: 18px;
-            color: #1976d2;
-            font-weight: bold;
+        /* Pannello certificato */
+        #certificatePanel {
+            margin-top: 30px;
         }
     </style>
 </head>
@@ -592,7 +494,6 @@
         <div class="level-selector">
             <button class="level-btn active" onclick="setLevel(1)">Livello 1 - Con Aiuti</button>
             <button class="level-btn" onclick="setLevel(2)">Livello 2 - Senza Aiuti</button>
-            <button class="level-btn" onclick="setLevel(3)">Livello 3 - Selezione Interattiva</button>
         </div>
 
         <div class="schema-completo">
@@ -646,11 +547,6 @@
         </div>
 
         <div class="problem-section">
-            <!-- Istruzioni per livello 3 -->
-            <div class="selection-instructions" id="selectionInstructions" style="display: none;">
-                Clicca prima sull'unità DA convertire, poi sull'unità A cui convertire
-            </div>
-
             <div class="problem-text" id="problemText">
                 Converti 3 ore in minuti
             </div>
@@ -660,16 +556,6 @@
                 <span class="arrow-convert">→</span>
                 <input type="number" class="result-input" id="resultInput" placeholder="?">
                 <div class="value-display" style="min-width: 100px;" id="targetUnit">minuti</div>
-            </div>
-
-            <!-- Selettore frecce per livello 3 -->
-            <div class="arrow-selector" id="arrowSelector">
-                <button class="arrow-btn top-arrow" onclick="selectArrow('top')">
-                    ↑ Usa frecce sopra<br>(dividi)
-                </button>
-                <button class="arrow-btn bottom-arrow" onclick="selectArrow('bottom')">
-                    ↓ Usa frecce sotto<br>(moltiplica)
-                </button>
             </div>
 
             <div class="calculator-helper" id="calcHelper">
@@ -700,6 +586,9 @@
                 </div>
             </div>
         </div>
+
+        <!-- Pannello Certificato -->
+        <div id="certificatePanel"></div>
     </div>
 
     <!-- Calcolatrice Widget -->
@@ -733,7 +622,11 @@
         </div>
     </div>
 
+    <!-- Sistema di Certificazione -->
+    <script src="https://certificationsystem.netlify.app/certification-system.js"></script>
+
     <script>
+        //#region Dati e Configurazione
         const conversionFactors = {
             'giorno-ora': 24,
             'ora-minuto': 60,
@@ -758,13 +651,6 @@
         let currentProblem = {};
         let correctCount = 0;
         let attemptCount = 0;
-        
-        // Variabili per il livello 3
-        let level3Selection = {
-            from: null,
-            to: null,
-            arrowDirection: null
-        };
 
         // Variabili per la calcolatrice
         let calcCurrentValue = 0;
@@ -793,57 +679,82 @@
             {from: 'millesimo', to: 'decimo', values: [100, 200, 300]},
             {from: 'millesimo', to: 'secondo', values: [1000, 2000, 3000]}
         ];
+        //#endregion
 
+        //#region Sistema di Certificazione
+        const certSystem = new CertificationSystem({
+            appName: 'Conversione Tempi',
+            storageKey: 'conversione_tempi_data',
+            certUrl: 'https://certificationsystem.netlify.app/',
+            fields: [
+                { key: 'correct', label: 'Risposte Corrette', showZero: false },
+                { key: 'attempts', label: 'Tentativi Totali', showZero: true },
+                { key: 'accuracy', label: 'Accuratezza', type: 'percentage', showZero: true },
+                { key: 'hints', label: 'Aiuti Usati', showZero: true }
+            ],
+            onFieldUpdate: (key, value) => {
+                // Aggiorna statistiche locali per sincronizzazione
+                if (key === 'correct') {
+                    correctCount = value;
+                    document.getElementById('correctCount').textContent = correctCount;
+                }
+                if (key === 'attempts') {
+                    attemptCount = value;
+                    document.getElementById('attemptCount').textContent = attemptCount;
+                }
+                // Calcola e aggiorna accuratezza
+                updateAccuracy();
+            }
+        });
+
+        // Inizializza il pannello certificato
+        window.addEventListener('DOMContentLoaded', () => {
+            certSystem.renderFullPanel('certificatePanel', {
+                collapsible: true,
+                showStudentControls: true,
+                showClassroomToggle: false,
+                showVerificationToggle: false
+            });
+
+            // Sincronizza contatori locali con quelli salvati
+            correctCount = certSystem.getField('correct') || 0;
+            attemptCount = certSystem.getField('attempts') || 0;
+            updateLocalStats();
+        });
+
+        function updateAccuracy() {
+            if (attemptCount > 0) {
+                const accuracy = Math.round((correctCount / attemptCount) * 100);
+                certSystem.setField('accuracy', accuracy);
+            } else {
+                certSystem.setField('accuracy', 0);
+            }
+        }
+
+        function updateLocalStats() {
+            document.getElementById('correctCount').textContent = correctCount;
+            document.getElementById('attemptCount').textContent = attemptCount;
+            const percentage = attemptCount > 0 ? Math.round((correctCount / attemptCount) * 100) : 0;
+            document.getElementById('percentage').textContent = percentage + '%';
+        }
+        //#endregion
+
+        //#region Gestione Livelli
         function setLevel(level) {
             currentLevel = level;
             document.querySelectorAll('.level-btn').forEach((btn, index) => {
                 btn.classList.toggle('active', index === level - 1);
             });
             
-            // Reset selezioni livello 3
-            level3Selection = { from: null, to: null, arrowDirection: null };
-            
-            // Mostra/nascondi elementi in base al livello
-            const selectionInstructions = document.getElementById('selectionInstructions');
-            const arrowSelector = document.getElementById('arrowSelector');
-            const conversionDisplay = document.getElementById('conversionDisplay');
-            
-            if (level === 3) {
-                // Livello 3: selezione interattiva
-                selectionInstructions.style.display = 'block';
-                arrowSelector.classList.remove('show');
-                conversionDisplay.style.display = 'flex';
-                
-                // Rendi le unità cliccabili
-                document.querySelectorAll('.schema-unita').forEach(unit => {
-                    unit.classList.add('clickable');
-                    unit.onclick = () => selectUnit(unit.dataset.unit);
-                });
-                
-                // Non mostrare automaticamente il percorso
-                clearHighlights();
-            } else {
-                // Livelli 1 e 2
-                selectionInstructions.style.display = 'none';
-                arrowSelector.classList.remove('show');
-                conversionDisplay.style.display = 'flex';
-                
-                // Rimuovi click handler dalle unità
-                document.querySelectorAll('.schema-unita').forEach(unit => {
-                    unit.classList.remove('clickable');
-                    unit.onclick = null;
-                });
-                
-                clearHighlights();
-                if (currentProblem.from && currentProblem.to) {
-                    highlightPath(currentProblem.from, currentProblem.to);
-                }
+            clearHighlights();
+            if (currentProblem.from && currentProblem.to) {
+                highlightPath(currentProblem.from, currentProblem.to);
             }
         }
 
         function clearHighlights() {
             document.querySelectorAll('.schema-unita').forEach(el => {
-                el.classList.remove('selected', 'path-active', 'selected-from', 'selected-to');
+                el.classList.remove('selected', 'path-active');
             });
             document.querySelectorAll('.operation').forEach(el => {
                 el.classList.remove('active');
@@ -880,7 +791,9 @@
                 }
             }
         }
+        //#endregion
 
+        //#region Calcoli Conversione
         function calculateConversion(from, to, value) {
             const fromIndex = units.indexOf(from);
             const toIndex = units.indexOf(to);
@@ -908,7 +821,9 @@
             
             return {result, operations};
         }
+        //#endregion
 
+        //#region Gestione Problemi
         function generateNewProblem() {
             const problemSet = conversionProblems[Math.floor(Math.random() * conversionProblems.length)];
             const value = problemSet.values[Math.floor(Math.random() * problemSet.values.length)];
@@ -934,108 +849,15 @@
             
             document.getElementById('feedback').className = 'feedback';
             document.getElementById('calcHelper').classList.remove('show');
-            document.getElementById('arrowSelector').classList.remove('show');
             
-            // Reset livello 3
-            level3Selection = { from: null, to: null, arrowDirection: null };
-            
-            if (currentLevel === 3) {
-                clearHighlights();
-                document.getElementById('selectionInstructions').textContent = 
-                    'Clicca prima su ' + currentProblem.fromName + ', poi su ' + currentProblem.toName;
-            } else {
-                highlightPath(currentProblem.from, currentProblem.to);
-            }
-        }
-
-        // Funzioni per il livello 3
-        function selectUnit(unit) {
-            if (currentLevel !== 3) return;
-            
-            if (!level3Selection.from) {
-                // Prima selezione: unità DA
-                level3Selection.from = unit;
-                document.querySelector('[data-unit="' + unit + '"]').classList.add('selected-from');
-                document.getElementById('selectionInstructions').textContent = 
-                    'Ora clicca sull\'unità di destinazione';
-            } else if (!level3Selection.to && unit !== level3Selection.from) {
-                // Seconda selezione: unità A
-                level3Selection.to = unit;
-                document.querySelector('[data-unit="' + unit + '"]').classList.add('selected-to');
-                
-                // Controlla se è corretta la selezione
-                if (level3Selection.from === currentProblem.from && level3Selection.to === currentProblem.to) {
-                    document.getElementById('selectionInstructions').textContent = 
-                        '✅ Corretto! Ora scegli se moltiplicare o dividere';
-                    document.getElementById('arrowSelector').classList.add('show');
-                } else {
-                    document.getElementById('selectionInstructions').textContent = 
-                        '❌ Non corretto. Riprova: clicca su ' + currentProblem.fromName + ', poi su ' + currentProblem.toName;
-                    setTimeout(() => {
-                        clearHighlights();
-                        level3Selection = { from: null, to: null, arrowDirection: null };
-                    }, 2000);
-                }
-            }
-        }
-
-        function selectArrow(direction) {
-            if (currentLevel !== 3) return;
-            
-            level3Selection.arrowDirection = direction;
-            const fromIndex = units.indexOf(level3Selection.from);
-            const toIndex = units.indexOf(level3Selection.to);
-            const shouldMultiply = fromIndex < toIndex;
-            const correctDirection = shouldMultiply ? 'bottom' : 'top';
-            
-            if (direction === correctDirection) {
-                document.getElementById('selectionInstructions').textContent = 
-                    '✅ Perfetto! Hai scelto correttamente. Ora calcola il risultato.';
-                highlightPath(level3Selection.from, level3Selection.to);
-                document.getElementById('arrowSelector').classList.remove('show');
-            } else {
-                document.getElementById('selectionInstructions').textContent = 
-                    '❌ Direzione sbagliata. Riprova!';
-                setTimeout(() => {
-                    document.getElementById('selectionInstructions').textContent = 
-                        'Scegli se moltiplicare o dividere';
-                }, 2000);
-            }
-        }
-
-        // Funzioni calcolatrice
-        function calcNumber(num) {
-            if (calcInputMode) {
-                calcCurrentValue = calcCurrentValue * 10 + num;
-            } else {
-                calcCurrentValue = num;
-                calcInputMode = true;
-            }
-            updateCalcDisplay();
-        }
-
-        function calcOperation(op, value) {
-            if (op === '*') {
-                calcCurrentValue = calcCurrentValue * value;
-            } else if (op === '/') {
-                calcCurrentValue = Math.floor(calcCurrentValue / value);
-            }
-            calcInputMode = false;
-            updateCalcDisplay();
-        }
-
-        function calcClear() {
-            calcCurrentValue = 0;
-            calcInputMode = true;
-            updateCalcDisplay();
-        }
-
-        function updateCalcDisplay() {
-            document.getElementById('calcDisplay').textContent = calcCurrentValue;
+            highlightPath(currentProblem.from, currentProblem.to);
         }
 
         function showHelp() {
             if (!currentProblem.operations) return;
+            
+            // Registra uso aiuto
+            certSystem.incrementField('hints');
             
             const calcHelper = document.getElementById('calcHelper');
             const calcSteps = document.getElementById('calcSteps');
@@ -1068,18 +890,22 @@
                 return;
             }
             
+            // Incrementa tentativi
             attemptCount++;
+            certSystem.incrementField('attempts');
+            
             const isCorrect = Math.abs(userAnswer - currentProblem.correctAnswer) < 0.001;
             
             if (isCorrect) {
                 correctCount++;
+                certSystem.incrementField('correct');
                 showFeedback('✅ Corretto! Ottimo lavoro!', true);
                 setTimeout(generateNewProblem, 2000);
             } else {
                 showFeedback('❌ Non corretto. Il risultato è ' + currentProblem.correctAnswer + ' ' + currentProblem.toName, false);
             }
             
-            updateStats();
+            updateLocalStats();
         }
 
         function showFeedback(message, isCorrect) {
@@ -1087,21 +913,50 @@
             feedback.textContent = message;
             feedback.className = 'feedback show ' + (isCorrect ? 'correct' : 'incorrect');
         }
+        //#endregion
 
-        function updateStats() {
-            document.getElementById('correctCount').textContent = correctCount;
-            document.getElementById('attemptCount').textContent = attemptCount;
-            const percentage = attemptCount > 0 ? Math.round((correctCount / attemptCount) * 100) : 0;
-            document.getElementById('percentage').textContent = percentage + '%';
+        //#region Calcolatrice
+        function calcNumber(num) {
+            if (calcInputMode) {
+                calcCurrentValue = calcCurrentValue * 10 + num;
+            } else {
+                calcCurrentValue = num;
+                calcInputMode = true;
+            }
+            updateCalcDisplay();
         }
 
+        function calcOperation(op, value) {
+            if (op === '*') {
+                calcCurrentValue = calcCurrentValue * value;
+            } else if (op === '/') {
+                calcCurrentValue = Math.floor(calcCurrentValue / value);
+            }
+            calcInputMode = false;
+            updateCalcDisplay();
+        }
+
+        function calcClear() {
+            calcCurrentValue = 0;
+            calcInputMode = true;
+            updateCalcDisplay();
+        }
+
+        function updateCalcDisplay() {
+            document.getElementById('calcDisplay').textContent = calcCurrentValue;
+        }
+        //#endregion
+
+        //#region Event Listeners
         document.getElementById('resultInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 checkResult();
             }
         });
 
+        // Genera primo problema all'avvio
         generateNewProblem();
+        //#endregion
     </script>
 </body>
 </html>
