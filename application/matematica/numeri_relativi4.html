@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operazioni con Parentesi - Numeri Relativi</title>
+    <script src="https://certificationsystem.netlify.app/certification-system.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+
+        .instructions {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .instructions h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .phase-indicator {
+            text-align: center;
+            background: #e7e9fc;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .phase-indicator h2 {
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .phase-indicator p {
+            color: #666;
+        }
+
+        .exercise-area {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 40px 20px;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .expression-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .parenthesis-group {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            padding: 15px;
+            border: 4px solid #667eea;
+            border-radius: 15px;
+            background: #e7e9fc;
+        }
+
+        .paren-symbol {
+            font-size: 4em;
+            font-weight: bold;
+            color: #667eea;
+            user-select: none;
+        }
+
+        .number-box {
+            width: 80px;
+            height: 80px;
+            font-size: 2em;
+            font-weight: bold;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+
+        .step-input {
+            width: 80px;
+            height: 60px;
+            font-size: 1.5em;
+            font-weight: bold;
+            text-align: center;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .step-input:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 10px rgba(118, 75, 162, 0.3);
+        }
+
+        .operator-between {
+            font-size: 3em;
+            font-weight: bold;
+            color: #764ba2;
+            margin: 0 10px;
+        }
+
+        .result-display {
+            font-size: 2.5em;
+            font-weight: bold;
+            padding: 20px 40px;
+            background: #e7e9fc;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            color: #667eea;
+            margin: 20px 0;
+        }
+
+        .final-input {
+            width: 150px;
+            height: 100px;
+            font-size: 3em;
+            font-weight: bold;
+            text-align: center;
+            border: 4px solid #667eea;
+            border-radius: 15px;
+            margin: 0 20px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .feedback {
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            min-height: 50px;
+        }
+
+        .feedback.correct {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+
+        .feedback.wrong {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        /* Calcolatrice */
+        .calculator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            padding: 20px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .calculator.show {
+            display: block;
+        }
+
+        .calc-display {
+            width: 100%;
+            height: 60px;
+            font-size: 2em;
+            text-align: right;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+        }
+
+        .calc-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .calc-btn {
+            padding: 20px;
+            font-size: 1.3em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background: #e7e9fc;
+            color: #667eea;
+            transition: all 0.2s;
+        }
+
+        .calc-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .calc-btn.operator {
+            background: #764ba2;
+            color: white;
+        }
+
+        .calc-btn.equals {
+            background: #11998e;
+            color: white;
+            grid-column: span 2;
+        }
+
+        .calc-btn.clear {
+            background: #f5576c;
+            color: white;
+            grid-column: span 2;
+        }
+
+        .calc-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 2em;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 999;
+        }
+
+        .calc-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .number-box {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5em;
+            }
+
+            .step-input {
+                width: 60px;
+                height: 50px;
+                font-size: 1.2em;
+            }
+
+            .calculator {
+                left: 50%;
+                transform: translateX(-50%);
+                right: auto;
+                bottom: 10px;
+                width: 90%;
+                max-width: 320px;
+            }
+
+            .calc-toggle {
+                right: 50%;
+                transform: translateX(50%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔢 Operazioni con Parentesi</h1>
+
+        <div class="instructions">
+            <h3>📖 Come funziona:</h3>
+            <p><strong>Fase 1:</strong> Risolvi le espressioni dentro ogni parentesi (solo + e -).<br>
+            <strong>Fase 2:</strong> Calcola il risultato finale usando l'operazione tra le parentesi (+, -, ×, :).</p>
+        </div>
+
+        <div class="phase-indicator" id="phaseIndicator">
+            <h2>Fase 1: Risolvi le parentesi</h2>
+            <p>Risolvi i calcoli dentro ogni parentesi</p>
+        </div>
+
+        <div class="exercise-area" id="exerciseArea">
+            <!-- Qui verrà inserito l'esercizio -->
+        </div>
+
+        <div class="feedback" id="feedback" style="display: none;"></div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="newExercise()">➡️ Nuovo Esercizio</button>
+            <button class="btn btn-success" id="checkBtn" onclick="checkAnswer()">✓ Verifica</button>
+            <button class="btn btn-warning" id="nextPhaseBtn" style="display: none;" onclick="nextPhase()">⏭️ Prossima Fase</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="statCorrect">0</div>
+                <div class="stat-label">Corretti</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statWrong">0</div>
+                <div class="stat-label">Errori</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statTotal">0</div>
+                <div class="stat-label">Totali</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statPercent">0%</div>
+                <div class="stat-label">Successo</div>
+            </div>
+        </div>
+
+        <!-- Certificazione -->
+        <div id="certificatePanel"></div>
+    </div>
+
+    <!-- Calcolatrice -->
+    <button class="calc-toggle" onclick="toggleCalculator()">🧮</button>
+    <div class="calculator" id="calculator">
+        <input type="text" class="calc-display" id="calcDisplay" readonly>
+        <div class="calc-buttons">
+            <button class="calc-btn" onclick="calcInput('7')">7</button>
+            <button class="calc-btn" onclick="calcInput('8')">8</button>
+            <button class="calc-btn" onclick="calcInput('9')">9</button>
+            <button class="calc-btn operator" onclick="calcInput('/')">÷</button>
+            <button class="calc-btn" onclick="calcInput('4')">4</button>
+            <button class="calc-btn" onclick="calcInput('5')">5</button>
+            <button class="calc-btn" onclick="calcInput('6')">6</button>
+            <button class="calc-btn operator" onclick="calcInput('*')">×</button>
+            <button class="calc-btn" onclick="calcInput('1')">1</button>
+            <button class="calc-btn" onclick="calcInput('2')">2</button>
+            <button class="calc-btn" onclick="calcInput('3')">3</button>
+            <button class="calc-btn operator" onclick="calcInput('-')">-</button>
+            <button class="calc-btn" onclick="calcInput('0')">0</button>
+            <button class="calc-btn" onclick="calcInput('.')">.</button>
+            <button class="calc-btn operator" onclick="calcInput('+')">+</button>
+            <button class="calc-btn clear" onclick="calcClear()">C</button>
+            <button class="calc-btn equals" onclick="calcEquals()">=</button>
+        </div>
+    </div>
+
+    <script>
+        //#region Variabili Globali
+        let currentExercise = null;
+        let currentPhase = 1;
+        let parenthesisResults = [];
+        let stats = {
+            correct: 0,
+            wrong: 0,
+            total: 0
+        };
+        let certSystem = null;
+        //#endregion
+
+        //#region Utility Functions
+        function formatNumber(num) {
+            return num >= 0 ? `+${num}` : num.toString();
+        }
+
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function normalizeZero(value) {
+            return value === 0 || value === -0 ? 0 : value;
+        }
+        //#endregion
+
+        //#region Generazione Esercizio
+        function generateParenthesis() {
+            const numbers = [];
+            for (let i = 0; i < 4; i++) {
+                numbers.push(randomInt(-5, 5));
+            }
+            
+            const steps = [];
+            let currentSum = numbers[0];
+            for (let i = 1; i < numbers.length; i++) {
+                currentSum += numbers[i];
+                steps.push(currentSum);
+            }
+            
+            return {
+                numbers: numbers,
+                result: currentSum,
+                steps: steps
+            };
+        }
+
+        function generateExercise() {
+            const paren1 = generateParenthesis();
+            const paren2 = generateParenthesis();
+            
+            const operators = ['+', '-', '×', ':'];
+            const operator = operators[randomInt(0, 3)];
+            
+            let finalResult;
+            
+            if (operator === '×') {
+                finalResult = paren1.result * paren2.result;
+            } else if (operator === ':') {
+                // Genera divisioni con risultato intero
+                // Moltiplica prima due numeri per avere divisione esatta
+                const divisor = paren2.result !== 0 ? paren2.result : randomInt(1, 5);
+                const multiplier = randomInt(-5, 5);
+                const dividend = divisor * multiplier;
+                
+                // Rigenera paren1 per avere il dividendo giusto
+                const adjustedParen1 = generateParenthesis();
+                const diff = dividend - adjustedParen1.result;
+                adjustedParen1.numbers[adjustedParen1.numbers.length - 1] += diff;
+                adjustedParen1.result = dividend;
+                adjustedParen1.steps[adjustedParen1.steps.length - 1] = dividend;
+                
+                finalResult = multiplier;
+                
+                return {
+                    parentheses: [adjustedParen1, paren2],
+                    operator: operator,
+                    finalResult: finalResult
+                };
+            } else if (operator === '-') {
+                finalResult = paren1.result - paren2.result;
+            } else {
+                finalResult = paren1.result + paren2.result;
+            }
+            
+            return {
+                parentheses: [paren1, paren2],
+                operator: operator,
+                finalResult: finalResult
+            };
+        }
+        //#endregion
+
+        //#region Rendering UI
+        function renderPhase1() {
+            const area = document.getElementById('exerciseArea');
+            const ex = currentExercise;
+            
+            let html = '<div class="expression-row">';
+            
+            ex.parentheses.forEach((paren, pIndex) => {
+                if (pIndex > 0) {
+                    html += `<div class="operator-between">${ex.operator}</div>`;
+                }
+                
+                html += '<div class="parenthesis-group">';
+                html += '<div class="paren-symbol">(</div>';
+                
+                paren.numbers.forEach((num, nIndex) => {
+                    html += '<div style="display: flex; flex-direction: column; align-items: center;">';
+                    
+                    if (nIndex > 0) {
+                        html += `<input type="text" class="step-input" id="p${pIndex}s${nIndex-1}" placeholder="?">`;
+                    }
+                    
+                    html += `<div class="number-box">${formatNumber(num)}</div>`;
+                    html += '</div>';
+                });
+                
+                html += '<div class="paren-symbol">)</div>';
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            area.innerHTML = html;
+        }
+
+        function renderPhase2() {
+            const area = document.getElementById('exerciseArea');
+            const ex = currentExercise;
+            const r1 = parenthesisResults[0];
+            const r2 = parenthesisResults[1];
+            
+            let operatorSymbol = ex.operator;
+            if (ex.operator === '×') operatorSymbol = '×';
+            if (ex.operator === ':') operatorSymbol = '÷';
+            
+            let html = `
+                <div style="text-align: center; margin-bottom: 20px; color: #666; font-size: 1.2em;">
+                    Espressione: (${formatNumber(r1)}) ${operatorSymbol} (${formatNumber(r2)})
+                </div>
+                <div class="expression-row">
+                    <div class="result-display">(${formatNumber(r1)})</div>
+                    <div class="operator-between">${operatorSymbol}</div>
+                    <div class="result-display">(${formatNumber(r2)})</div>
+                    <div class="operator-between">=</div>
+                    <input type="text" class="final-input" id="finalAnswer" placeholder="?">
+                </div>
+            `;
+            
+            area.innerHTML = html;
+            
+            // Focus automatico sull'input
+            setTimeout(() => {
+                document.getElementById('finalAnswer').focus();
+            }, 100);
+        }
+
+        function updatePhaseIndicator() {
+            const indicator = document.getElementById('phaseIndicator');
+            
+            if (currentPhase === 1) {
+                indicator.innerHTML = `
+                    <h2>Fase 1: Risolvi le parentesi</h2>
+                    <p>Risolvi i calcoli dentro ogni parentesi</p>
+                `;
+            } else {
+                indicator.innerHTML = `
+                    <h2>Fase 2: Risultato finale</h2>
+                    <p>Calcola il risultato finale</p>
+                `;
+            }
+        }
+        //#endregion
+
+        //#region Controllo Risposte
+        function checkPhase1() {
+            const ex = currentExercise;
+            const inputs = [];
+            
+            // Leggi gli ultimi passaggi di ogni parentesi
+            for (let p = 0; p < 2; p++) {
+                const lastStepId = `p${p}s2`;
+                const input = document.getElementById(lastStepId);
+                const value = parseInt(input.value);
+                
+                if (isNaN(value)) {
+                    showFeedback('✗ Completa almeno l\'ultimo passaggio per ogni parentesi!', 'wrong');
+                    certSystem.incrementField('errors');
+                    return;
+                }
+                
+                inputs.push(value);
+            }
+            
+            // Verifica correttezza
+            const correct1 = normalizeZero(inputs[0]) === normalizeZero(ex.parentheses[0].result);
+            const correct2 = normalizeZero(inputs[1]) === normalizeZero(ex.parentheses[1].result);
+            
+            if (correct1 && correct2) {
+                showFeedback('✓ Entrambe le parentesi corrette!', 'correct');
+                parenthesisResults = [ex.parentheses[0].result, ex.parentheses[1].result];
+                
+                document.getElementById('checkBtn').style.display = 'none';
+                document.getElementById('nextPhaseBtn').style.display = 'inline-block';
+            } else {
+                showFeedback('✗ Uno o entrambi i risultati sono sbagliati. Riprova!', 'wrong');
+                stats.wrong++;
+                certSystem.incrementField('errors');
+                updateStats();
+            }
+        }
+
+        function checkPhase2() {
+            const ex = currentExercise;
+            const input = document.getElementById('finalAnswer');
+            const userAnswer = parseInt(input.value);
+            
+            if (isNaN(userAnswer)) {
+                showFeedback('⚠️ Inserisci un numero!', 'wrong');
+                return;
+            }
+            
+            const isCorrect = normalizeZero(userAnswer) === normalizeZero(ex.finalResult);
+            
+            if (isCorrect) {
+                showFeedback('✓ Perfetto! Esercizio completato!', 'correct');
+                stats.correct++;
+                stats.total++;
+                certSystem.incrementField('completed');
+            } else {
+                showFeedback(`✗ Sbagliato. La risposta corretta è ${formatNumber(ex.finalResult)}`, 'wrong');
+                stats.wrong++;
+                stats.total++;
+                certSystem.incrementField('errors');
+            }
+            
+            updateStats();
+            
+            document.getElementById('checkBtn').style.display = 'none';
+            
+            // Auto nuovo esercizio dopo 2 secondi
+            setTimeout(() => {
+                newExercise();
+            }, 2000);
+        }
+
+        function checkAnswer() {
+            if (currentPhase === 1) {
+                checkPhase1();
+            } else {
+                checkPhase2();
+            }
+        }
+        //#endregion
+
+        //#region Navigazione
+        function nextPhase() {
+            currentPhase = 2;
+            updatePhaseIndicator();
+            renderPhase2();
+            
+            document.getElementById('nextPhaseBtn').style.display = 'none';
+            document.getElementById('checkBtn').style.display = 'inline-block';
+            document.getElementById('feedback').style.display = 'none';
+        }
+
+        function newExercise() {
+            currentExercise = generateExercise();
+            currentPhase = 1;
+            parenthesisResults = [];
+            
+            updatePhaseIndicator();
+            renderPhase1();
+            
+            document.getElementById('feedback').style.display = 'none';
+            document.getElementById('checkBtn').style.display = 'inline-block';
+            document.getElementById('nextPhaseBtn').style.display = 'none';
+        }
+        //#endregion
+
+        //#region Feedback e Stats
+        function showFeedback(message, type) {
+            const fb = document.getElementById('feedback');
+            fb.textContent = message;
+            fb.className = 'feedback ' + type;
+            fb.style.display = 'block';
+        }
+
+        function updateStats() {
+            document.getElementById('statCorrect').textContent = stats.correct;
+            document.getElementById('statWrong').textContent = stats.wrong;
+            document.getElementById('statTotal').textContent = stats.total;
+            
+            const percent = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
+            document.getElementById('statPercent').textContent = percent + '%';
+        }
+        //#endregion
+
+        //#region Calcolatrice
+        function toggleCalculator() {
+            const calc = document.getElementById('calculator');
+            calc.classList.toggle('show');
+        }
+
+        function calcInput(value) {
+            const display = document.getElementById('calcDisplay');
+            if (display.value === '0' || display.value === 'Errore') {
+                display.value = value;
+            } else {
+                display.value += value;
+            }
+        }
+
+        function calcClear() {
+            document.getElementById('calcDisplay').value = '';
+        }
+
+        function calcEquals() {
+            const display = document.getElementById('calcDisplay');
+            try {
+                const result = eval(display.value);
+                display.value = result;
+            } catch (e) {
+                display.value = 'Errore';
+            }
+        }
+        //#endregion
+
+        //#region Inizializzazione
+        window.addEventListener('DOMContentLoaded', () => {
+            // Inizializza sistema certificazione
+            certSystem = new CertificationSystem({
+                appName: 'Operazioni con Parentesi',
+                appVersion: '1.0.0',
+                storageKey: 'parentheses_ops',
+                certUrl: 'https://certificationsystem.netlify.app/',
+                fields: [
+                    { key: 'completed', label: 'Esercizi Completati', showZero: false },
+                    { key: 'errors', label: 'Errori', showZero: true }
+                ],
+                onTimerUpdate: (seconds) => {
+                    // Timer aggiornato automaticamente dal sistema
+                }
+            });
+            
+            // Render pannello certificazione
+            certSystem.renderFullPanel('certificatePanel', {
+                collapsible: true,
+                showStudentControls: true,
+                showClassroomToggle: false,
+                showVerificationToggle: false
+            });
+            
+            // Genera primo esercizio
+            newExercise();
+        });
+
+        // Gestione Enter per submit
+        document.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+        //#endregion
+    </script>
+</body>
+</html>
