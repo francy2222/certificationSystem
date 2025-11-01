@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artifact Container - Sistema Certificazione</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            background: rgba(0,0,0,0.2);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .top-bar h1 {
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 0.9em;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4caf50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        .artifact-container {
+            flex: 1;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .artifact-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .artifact-header h2 {
+            font-size: 1.1em;
+        }
+
+        .artifact-url {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+            font-family: monospace;
+            font-size: 0.85em;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .artifact-url input {
+            flex: 1;
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+
+        .artifact-url button {
+            padding: 5px 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .artifact-url button:hover {
+            background: #764ba2;
+        }
+
+        iframe {
+            width: 100%;
+            height: calc(100vh - 200px);
+            border: none;
+        }
+
+        .sidebar {
+            width: 350px;
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .info-section {
+            margin-bottom: 20px;
+        }
+
+        .info-section h4 {
+            color: #764ba2;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .info-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 0.85em;
+        }
+
+        .info-item strong {
+            color: #667eea;
+        }
+
+        .library-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .library-item {
+            background: #e8f5e9;
+            padding: 8px 12px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            font-size: 0.8em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .library-item.loading {
+            background: #fff3cd;
+        }
+
+        .library-item.error {
+            background: #ffebee;
+        }
+
+        .message-log {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.75em;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 3px;
+        }
+
+        .log-entry.sent {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .log-entry.received {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        @media (max-width: 1200px) {
+            .main-container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <h1>🎓 Artifact Container + Sistema Certificazione</h1>
+        <div class="status">
+            <span class="status-indicator"></span>
+            <span id="statusText">Sistema Attivo</span>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="artifact-container">
+            <div class="artifact-header">
+                <h2>📱 Artefatto Claude</h2>
+                <span id="artifactStatus">In attesa...</span>
+            </div>
+            <div class="artifact-url">
+                <input type="text" id="artifactUrl" placeholder="URL artefatto Claude (es. https://claude.ai/artifacts/...)">
+                <button onclick="loadArtifact()">Carica</button>
+            </div>
+            <iframe id="artifactFrame" src="about:blank"></iframe>
+        </div>
+
+        <div class="sidebar">
+            <h3>📊 Info Sistema</h3>
+            
+            <div class="info-section">
+                <h4>🔗 Comunicazione</h4>
+                <div class="info-item">
+                    <strong>Stato:</strong> <span id="commStatus">Disconnesso</span>
+                </div>
+                <div class="info-item">
+                    <strong>Messaggi scambiati:</strong> <span id="msgCount">0</span>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h4>📚 Librerie Caricate</h4>
+                <div class="library-list" id="libraryList">
+                    <div class="library-item">
+                        <span>✅ Sistema Certificazione v4.1</span>
+                        <small>Built-in</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h4>💬 Log Messaggi</h4>
+                <div class="message-log" id="messageLog"></div>
+            </div>
+
+            <div class="info-section">
+                <h4>📖 API Disponibili</h4>
+                <div class="info-item" style="font-size: 0.75em;">
+                    <strong>Richiedi libreria:</strong><br>
+                    <code>{ type: 'LOAD_LIBRARY', url: '...' }</code>
+                </div>
+                <div class="info-item" style="font-size: 0.75em;">
+                    <strong>Usa certificazione:</strong><br>
+                    <code>{ type: 'CERT_ACTION', action: 'increment', key: '...', value: 1 }</code>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sistema Certificazione -->
+    <script src="./certification-system.js"></script>
+    
+    <!-- Edge TTS (tuo reversing) - path relativo nella stessa cartella -->
+    <script src="./edge-tts.js"></script>
+
+    <script>
+        //#region Sistema di Comunicazione Artifact <-> Container
+        
+        let artifactFrame = null;
+        let certSystem = null;
+        let edgeTTS = null;
+        let messageCount = 0;
+        let loadedLibraries = new Set(['certification-system', 'edge-tts']);
+
+        // Inizializza sistema
+        function init() {
+            artifactFrame = document.getElementById('artifactFrame');
+            
+            // Setup listener per messaggi da artifact
+            window.addEventListener('message', handleArtifactMessage);
+            
+            // Inizializza sistema certificazione (esempio base)
+            initCertSystem();
+            
+            // Inizializza Edge TTS
+            initEdgeTTS();
+            
+            // Verifica se c'è artifact URL nei parametri
+            const urlParams = new URLSearchParams(window.location.search);
+            const artifactUrl = urlParams.get('artifact');
+            
+            if (artifactUrl) {
+                document.getElementById('artifactUrl').value = artifactUrl;
+                loadArtifact();
+                logMessage(`🔗 Auto-caricamento da URL: ${artifactUrl}`, 'system');
+            }
+            
+            updateStatus('Sistema pronto', 'success');
+            logMessage('Sistema inizializzato', 'system');
+            
+            // Log librerie disponibili
+            if (typeof EdgeTTS !== 'undefined') {
+                logMessage('✅ Edge TTS disponibile', 'system');
+            } else {
+                logMessage('⚠️ Edge TTS non trovato', 'system');
+                loadedLibraries.delete('edge-tts');
+            }
+        }
+
+        // Gestisce messaggi dall'artefatto
+        function handleArtifactMessage(event) {
+            // Security: in produzione, verifica event.origin
+            // if (event.origin !== 'https://claude.ai') return;
+            
+            messageCount++;
+            document.getElementById('msgCount').textContent = messageCount;
+            
+            const message = event.data;
+            logMessage(`◀ Ricevuto: ${message.type}`, 'received');
+            
+            console.log('Messaggio da artifact:', message);
+            
+            switch(message.type) {
+                case 'LOAD_LIBRARY':
+                    handleLoadLibrary(message);
+                    break;
+                    
+                case 'CERT_ACTION':
+                    handleCertAction(message);
+                    break;
+                    
+                case 'GET_CERT_DATA':
+                    handleGetCertData(message);
+                    break;
+                    
+                case 'TTS_SPEAK':
+                    handleTTSSpeak(message);
+                    break;
+                    
+                case 'TTS_STOP':
+                    handleTTSStop(message);
+                    break;
+                    
+                case 'TTS_GET_VOICES':
+                    handleTTSGetVoices(message);
+                    break;
+                    
+                case 'ARTIFACT_READY':
+                    handleArtifactReady(message);
+                    break;
+                    
+                default:
+                    console.log('Tipo messaggio sconosciuto:', message.type);
+            }
+        }
+
+        // Carica libreria richiesta dinamicamente
+        async function handleLoadLibrary(message) {
+            const { url, name, callback } = message;
+            
+            if (loadedLibraries.has(name || url)) {
+                sendToArtifact({
+                    type: 'LIBRARY_LOADED',
+                    name: name || url,
+                    success: true,
+                    message: 'Libreria già caricata'
+                });
+                return;
+            }
+            
+            // Aggiungi a UI
+            addLibraryToList(name || url, 'loading');
+            logMessage(`📦 Caricamento: ${name || url}`, 'system');
+            
+            try {
+                await loadScript(url);
+                loadedLibraries.add(name || url);
+                
+                updateLibraryStatus(name || url, 'success');
+                logMessage(`✅ Caricato: ${name || url}`, 'system');
+                
+                sendToArtifact({
+                    type: 'LIBRARY_LOADED',
+                    name: name || url,
+                    success: true
+                });
+                
+            } catch (error) {
+                updateLibraryStatus(name || url, 'error');
+                logMessage(`❌ Errore: ${name || url}`, 'system');
+                
+                sendToArtifact({
+                    type: 'LIBRARY_LOADED',
+                    name: name || url,
+                    success: false,
+                    error: error.message
+                });
+            }
+        }
+
+        // Gestisce azioni sul sistema certificazione
+        function handleCertAction(message) {
+            const { action, key, value, options } = message;
+            
+            if (!certSystem) {
+                sendToArtifact({
+                    type: 'CERT_ACTION_RESULT',
+                    success: false,
+                    error: 'Sistema certificazione non inizializzato'
+                });
+                return;
+            }
+            
+            try {
+                let result = null;
+                
+                switch(action) {
+                    case 'increment':
+                        certSystem.incrementField(key, value || 1);
+                        break;
+                        
+                    case 'setField':
+                        certSystem.setField(key, value);
+                        break;
+                        
+                    case 'getField':
+                        result = certSystem.getField(key);
+                        break;
+                        
+                    case 'getData':
+                        result = certSystem.getData();
+                        break;
+                        
+                    case 'generateLink':
+                        result = certSystem.generateCertLink();
+                        break;
+                        
+                    case 'reset':
+                        certSystem.resetData();
+                        break;
+                        
+                    default:
+                        throw new Error('Azione non supportata: ' + action);
+                }
+                
+                logMessage(`🎓 Cert action: ${action}`, 'system');
+                
+                sendToArtifact({
+                    type: 'CERT_ACTION_RESULT',
+                    success: true,
+                    action: action,
+                    result: result
+                });
+                
+            } catch (error) {
+                sendToArtifact({
+                    type: 'CERT_ACTION_RESULT',
+                    success: false,
+                    error: error.message
+                });
+            }
+        }
+
+        // Ritorna dati certificazione
+        function handleGetCertData(message) {
+            if (!certSystem) {
+                sendToArtifact({
+                    type: 'CERT_DATA',
+                    success: false,
+                    error: 'Sistema non inizializzato'
+                });
+                return;
+            }
+            
+            sendToArtifact({
+                type: 'CERT_DATA',
+                success: true,
+                data: certSystem.getData()
+            });
+        }
+
+        // Artefatto pronto
+        function handleArtifactReady(message) {
+            document.getElementById('commStatus').textContent = 'Connesso';
+            document.getElementById('artifactStatus').textContent = '✅ Pronto';
+            updateStatus('Artifact connesso', 'success');
+            logMessage('🎉 Artifact pronto per comunicare', 'system');
+            
+            // Invia info disponibili
+            sendToArtifact({
+                type: 'CONTAINER_INFO',
+                certSystemAvailable: !!certSystem,
+                libraries: Array.from(loadedLibraries)
+            });
+        }
+
+        //#endregion
+
+        //#region Utility Functions
+
+        // Invia messaggio all'artifact
+        function sendToArtifact(message) {
+            if (!artifactFrame || !artifactFrame.contentWindow) {
+                console.error('Artifact frame non disponibile');
+                return;
+            }
+            
+            artifactFrame.contentWindow.postMessage(message, '*');
+            logMessage(`▶ Inviato: ${message.type}`, 'sent');
+        }
+
+        // Carica script dinamicamente
+        function loadScript(url) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = url;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+
+        // Inizializza sistema certificazione
+        function initCertSystem() {
+            certSystem = new CertificationSystem({
+                appName: 'Artifact Container Demo',
+                storageKey: 'artifact_demo',
+                certUrl: 'https://certificationsystem.netlify.app/',
+                fields: [
+                    { key: 'actions', label: 'Azioni', showZero: false },
+                    { key: 'score', label: 'Punteggio', showZero: true }
+                ],
+                onFieldUpdate: (key, value) => {
+                    // Notifica artifact di cambio dati
+                    sendToArtifact({
+                        type: 'CERT_DATA_UPDATED',
+                        key: key,
+                        value: value
+                    });
+                }
+            });
+        }
+
+        // Inizializza Edge TTS
+        function initEdgeTTS() {
+            if (typeof EdgeTTS === 'undefined') {
+                logMessage('❌ EdgeTTS non disponibile', 'system');
+                return;
+            }
+            
+            edgeTTS = new EdgeTTS({
+                debug: false // Disabilita log verbose in produzione
+            });
+            
+            logMessage('✅ EdgeTTS inizializzato', 'system');
+        }
+
+        // Gestisce richiesta sintesi vocale
+        async function handleTTSSpeak(message) {
+            const { text, voice, rate, pitch, volume, normalize } = message;
+            
+            if (!edgeTTS) {
+                sendToArtifact({
+                    type: 'TTS_RESULT',
+                    success: false,
+                    error: 'Edge TTS non inizializzato'
+                });
+                return;
+            }
+            
+            if (!text || text.trim() === '') {
+                sendToArtifact({
+                    type: 'TTS_RESULT',
+                    success: false,
+                    error: 'Testo vuoto'
+                });
+                return;
+            }
+            
+            logMessage(`🎤 Sintesi vocale: ${text.substring(0, 50)}...`, 'system');
+            
+            try {
+                const audioBlob = await edgeTTS.speak(text, {
+                    voice: voice || 'it-IT-IsabellaNeural',
+                    rate: rate || '+0%',
+                    pitch: pitch || '+0Hz',
+                    volume: volume || '+0%',
+                    normalize: normalize !== false
+                });
+                
+                // Converti blob in base64 per inviarlo all'artifact
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const base64Audio = reader.result.split(',')[1];
+                    sendToArtifact({
+                        type: 'TTS_RESULT',
+                        success: true,
+                        audioData: base64Audio,
+                        audioType: 'audio/mpeg'
+                    });
+                    logMessage(`✅ Audio generato (${audioBlob.size} bytes)`, 'system');
+                };
+                reader.onerror = () => {
+                    sendToArtifact({
+                        type: 'TTS_RESULT',
+                        success: false,
+                        error: 'Errore conversione audio'
+                    });
+                };
+                reader.readAsDataURL(audioBlob);
+                
+            } catch (error) {
+                logMessage(`❌ Errore TTS: ${error.message}`, 'system');
+                sendToArtifact({
+                    type: 'TTS_RESULT',
+                    success: false,
+                    error: error.message
+                });
+            }
+        }
+
+        // Gestisce richiesta stop TTS
+        function handleTTSStop(message) {
+            if (!edgeTTS) {
+                sendToArtifact({
+                    type: 'TTS_STOP_RESULT',
+                    success: false,
+                    error: 'Edge TTS non inizializzato'
+                });
+                return;
+            }
+            
+            edgeTTS.stop();
+            logMessage('⏹️ TTS fermato', 'system');
+            
+            sendToArtifact({
+                type: 'TTS_STOP_RESULT',
+                success: true
+            });
+        }
+
+        // Gestisce richiesta lista voci
+        function handleTTSGetVoices(message) {
+            if (!edgeTTS) {
+                sendToArtifact({
+                    type: 'TTS_VOICES_RESULT',
+                    success: false,
+                    error: 'Edge TTS non inizializzato'
+                });
+                return;
+            }
+            
+            const voices = edgeTTS.getVoices();
+            sendToArtifact({
+                type: 'TTS_VOICES_RESULT',
+                success: true,
+                voices: voices
+            });
+            
+            logMessage(`📋 Lista voci inviata (${voices.length})`, 'system');
+        }
+
+        // Carica artifact
+        function loadArtifact() {
+            const url = document.getElementById('artifactUrl').value.trim();
+            if (!url) {
+                alert('Inserisci URL artefatto');
+                return;
+            }
+            
+            artifactFrame.src = url;
+            document.getElementById('artifactStatus').textContent = '⏳ Caricamento...';
+            updateStatus('Caricamento artifact...', 'loading');
+            logMessage(`🔗 Caricamento: ${url}`, 'system');
+        }
+
+        // UI Helpers
+        function updateStatus(text, type) {
+            document.getElementById('statusText').textContent = text;
+        }
+
+        function logMessage(text, type) {
+            const log = document.getElementById('messageLog');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function addLibraryToList(name, status) {
+            const list = document.getElementById('libraryList');
+            const item = document.createElement('div');
+            item.className = `library-item ${status}`;
+            item.id = `lib-${name.replace(/[^a-z0-9]/gi, '_')}`;
+            item.innerHTML = `
+                <span>${status === 'loading' ? '⏳' : '❌'} ${name}</span>
+                <small>${status === 'loading' ? 'Caricamento...' : 'Errore'}</small>
+            `;
+            list.appendChild(item);
+        }
+
+        function updateLibraryStatus(name, status) {
+            const id = `lib-${name.replace(/[^a-z0-9]/gi, '_')}`;
+            const item = document.getElementById(id);
+            if (item) {
+                item.className = `library-item ${status === 'success' ? '' : 'error'}`;
+                item.innerHTML = `
+                    <span>${status === 'success' ? '✅' : '❌'} ${name}</span>
+                    <small>${status === 'success' ? 'Caricata' : 'Errore'}</small>
+                `;
+            }
+        }
+
+        //#endregion
+
+        // Init al caricamento
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
