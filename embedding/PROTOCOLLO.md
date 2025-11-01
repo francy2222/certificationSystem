@@ -160,6 +160,129 @@ window.parent.postMessage({
 
 ---
 
+### 5. TTS_SPEAK
+
+Richiede sintesi vocale usando Edge TTS (API reversate).
+
+```javascript
+window.parent.postMessage({
+  type: 'TTS_SPEAK',
+  text: 'Ciao, questo è un test di sintesi vocale',
+  voice: 'it-IT-IsabellaNeural',  // opzionale, default: it-IT-IsabellaNeural
+  rate: '+0%',                      // opzionale, default: +0%
+  pitch: '+0Hz',                    // opzionale, default: +0Hz
+  volume: '+0%',                    // opzionale, default: +0%
+  normalize: true                   // opzionale, normalizza testo, default: true
+}, '*');
+```
+
+**Opzioni voce:**
+- `rate`: Velocità da `-50%` a `+100%`
+- `pitch`: Tono da `-50Hz` a `+50Hz`
+- `volume`: Volume da `-50%` a `+50%`
+
+**Risposta del container:**
+```javascript
+{
+  type: 'TTS_RESULT',
+  success: true,
+  audioData: 'base64_encoded_audio',  // MP3 in base64
+  audioType: 'audio/mpeg'
+}
+```
+
+**Esempio completo di uso:**
+```javascript
+// Richiedi sintesi
+window.parent.postMessage({
+  type: 'TTS_SPEAK',
+  text: 'Benvenuto nell\'applicazione',
+  voice: 'it-IT-IsabellaNeural',
+  rate: '+10%'
+}, '*');
+
+// Ascolta risposta
+window.addEventListener('message', (event) => {
+  if (event.data.type === 'TTS_RESULT' && event.data.success) {
+    // Converti base64 in blob e riproduci
+    const audioBlob = base64ToBlob(event.data.audioData, 'audio/mpeg');
+    const audioUrl = URL.createObjectURL(audioBlob);
+    const audio = new Audio(audioUrl);
+    audio.play();
+  }
+});
+
+// Helper per conversione
+function base64ToBlob(base64, mimeType) {
+  const byteCharacters = atob(base64);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  return new Blob([byteArray], { type: mimeType });
+}
+```
+
+---
+
+### 6. TTS_STOP
+
+Ferma sintesi vocale in corso.
+
+```javascript
+window.parent.postMessage({
+  type: 'TTS_STOP'
+}, '*');
+```
+
+**Risposta del container:**
+```javascript
+{
+  type: 'TTS_STOP_RESULT',
+  success: true
+}
+```
+
+---
+
+### 7. TTS_GET_VOICES
+
+Ottieni lista voci disponibili per Edge TTS.
+
+```javascript
+window.parent.postMessage({
+  type: 'TTS_GET_VOICES'
+}, '*');
+```
+
+**Risposta del container:**
+```javascript
+{
+  type: 'TTS_VOICES_RESULT',
+  success: true,
+  voices: [
+    {
+      name: 'it-IT-IsabellaNeural',
+      lang: 'it-IT',
+      gender: 'F',
+      label: 'Isabella (Italiano)'
+    },
+    // ... altre voci
+  ]
+}
+```
+
+**Voci disponibili:**
+- **Italiano**: Isabella, Elsa (F), Diego (M)
+- **Inglese US**: Jenny, Aria (F), Guy (M)
+- **Inglese UK**: Sonia (F), Ryan (M)
+- **Francese**: Denise (F), Henri (M)
+- **Tedesco**: Katja (F), Conrad (M)
+- **Spagnolo**: Elvira (F), Alvaro (M)
+
+---
+
 ## 🔄 Messaggi Container → Artifact
 
 ### 1. CONTAINER_INFO
