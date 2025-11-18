@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formule del Cerchio - Esercizi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .question-area {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 3px solid #667eea;
+        }
+
+        .question {
+            font-size: 1.3em;
+            color: #333;
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .circle-visual {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .circle-svg {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .formula-display {
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            padding: 20px;
+            font-size: 2em;
+            text-align: center;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+            color: #333;
+        }
+
+        .formula-display.empty {
+            color: #999;
+            font-size: 1.2em;
+        }
+
+        .symbols-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .symbol-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 15px;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .symbol-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        .symbol-btn:active {
+            transform: translateY(0);
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .control-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn-delete {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-clear {
+            background: #ffa502;
+            color: white;
+        }
+
+        .btn-verify {
+            background: #20bf6b;
+            color: white;
+            grid-column: 1 / -1;
+            font-size: 1.3em;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        .feedback {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 1.2em;
+            font-weight: 600;
+            display: none;
+        }
+
+        .feedback.correct {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #28a745;
+            display: block;
+        }
+
+        .feedback.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #dc3545;
+            display: block;
+        }
+
+        .certificate-section {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            border-radius: 15px;
+            color: white;
+        }
+
+        .certificate-section h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .certificate-stats {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+        }
+
+        .btn-restart {
+            background: white;
+            color: #667eea;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-restart:hover {
+            transform: scale(1.05);
+        }
+
+        .keyboard-hint {
+            text-align: center;
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔵 Formule del Cerchio</h1>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-label">Domanda</div>
+                <div class="stat-value" id="currentQuestion">1/8</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Corrette</div>
+                <div class="stat-value" id="correctCount">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Punteggio</div>
+                <div class="stat-value" id="score">0</div>
+            </div>
+        </div>
+
+        <div class="question-area">
+            <div class="question" id="questionText"></div>
+            
+            <div class="circle-visual">
+                <svg class="circle-svg" viewBox="0 0 200 200" id="circleSvg">
+                    <circle cx="100" cy="100" r="70" fill="none" stroke="#667eea" stroke-width="3"/>
+                    <line id="radiusLine" x1="100" y1="100" x2="170" y2="100" stroke="#e74c3c" stroke-width="2" style="display:none"/>
+                    <line id="diameterLine" x1="30" y1="100" x2="170" y2="100" stroke="#e74c3c" stroke-width="2" style="display:none"/>
+                    <text id="measureLabel" x="135" y="95" fill="#e74c3c" font-size="16" font-weight="bold" style="display:none"></text>
+                </svg>
+            </div>
+
+            <div class="formula-display empty" id="formulaDisplay">Clicca i simboli per comporre la formula</div>
+            
+            <div class="symbols-grid" id="symbolsGrid"></div>
+            
+            <div class="controls">
+                <button class="control-btn btn-delete" onclick="deleteLastSymbol()">← Cancella</button>
+                <button class="control-btn btn-clear" onclick="clearFormula()">🗑️ Azzera</button>
+                <button class="control-btn btn-verify" onclick="verifyFormula()">✓ Verifica</button>
+            </div>
+
+            <div class="keyboard-hint">
+                💡 Puoi anche digitare: * o x (×), / (÷), p (π), 2 per al quadrato
+            </div>
+        </div>
+
+        <div class="feedback" id="feedback"></div>
+
+        <div class="certificate-section" id="certificate">
+            <h2>🎉 Complimenti!</h2>
+            <div class="certificate-stats" id="finalStats"></div>
+            <button class="btn-restart" onclick="restartQuiz()">🔄 Ricomincia</button>
+        </div>
+    </div>
+
+    <script>
+        //#region Dati e Configurazione
+        const questions = [
+            {
+                text: "Scrivi la formula per calcolare la CIRCONFERENZA dato il RAGGIO",
+                correctFormulas: ["C=2πr", "C=2×π×r", "C=π×2×r", "C=r×2×π", "C=r×π×2", "C=π×r×2"],
+                visual: "radius",
+                label: "r"
+            },
+            {
+                text: "Scrivi la formula per calcolare la CIRCONFERENZA dato il DIAMETRO",
+                correctFormulas: ["C=πd", "C=π×d", "C=d×π"],
+                visual: "diameter",
+                label: "d"
+            },
+            {
+                text: "Scrivi la formula per calcolare l'AREA dato il RAGGIO",
+                correctFormulas: ["A=πr²", "A=π×r²", "A=r²×π"],
+                visual: "radius",
+                label: "r"
+            },
+            {
+                text: "Scrivi la formula per calcolare l'AREA dato il DIAMETRO (prima versione)",
+                correctFormulas: ["A=π(d÷2)²", "A=π×(d÷2)²", "A=(d÷2)²×π"],
+                visual: "diameter",
+                label: "d"
+            },
+            {
+                text: "Scrivi la formula per calcolare l'AREA dato il DIAMETRO (seconda versione)",
+                correctFormulas: ["A=πd²÷4", "A=π×d²÷4", "A=d²×π÷4"],
+                visual: "diameter",
+                label: "d"
+            },
+            {
+                text: "Scrivi la formula: CIRCONFERENZA = 2 × π × RAGGIO",
+                correctFormulas: ["C=2πr", "C=2×π×r", "C=π×2×r", "C=r×2×π", "C=r×π×2", "C=π×r×2"],
+                visual: "radius",
+                label: "r"
+            },
+            {
+                text: "Scrivi la formula: AREA = π × RAGGIO²",
+                correctFormulas: ["A=πr²", "A=π×r²", "A=r²×π"],
+                visual: "radius",
+                label: "r"
+            },
+            {
+                text: "Scrivi la formula: CIRCONFERENZA = π × DIAMETRO",
+                correctFormulas: ["C=πd", "C=π×d", "C=d×π"],
+                visual: "diameter",
+                label: "d"
+            }
+        ];
+
+        const symbols = ['C', 'A', '=', '2', '4', 'π', 'r', 'd', '×', '÷', '²', '(', ')'];
+        
+        let currentQuestionIndex = 0;
+        let currentFormula = "";
+        let correctAnswers = 0;
+        let score = 0;
+        let learningMode = false; // Modalità apprendimento (mostra formula)
+        let practiceMode = false; // Modalità pratica (dopo aver copiato)
+        let audioEnabled = false; // Audio abilitato dopo prima interazione
+        //#endregion
+
+        //#region Inizializzazione
+        function init() {
+            createSymbolButtons();
+            loadQuestion();
+            setupKeyboardInput();
+        }
+
+        function createSymbolButtons() {
+            const grid = document.getElementById('symbolsGrid');
+            grid.innerHTML = '';
+            
+            // Mescola i simboli
+            const shuffled = [...symbols].sort(() => Math.random() - 0.5);
+            
+            shuffled.forEach(symbol => {
+                const btn = document.createElement('button');
+                btn.className = 'symbol-btn';
+                btn.textContent = symbol;
+                btn.onclick = () => addSymbol(symbol);
+                grid.appendChild(btn);
+            });
+        }
+
+        function setupKeyboardInput() {
+            document.addEventListener('keydown', (e) => {
+                const key = e.key;
+                
+                // Mapping tasti
+                if (key === 'Enter') {
+                    verifyFormula();
+                } else if (key === 'Backspace') {
+                    deleteLastSymbol();
+                } else if (key === 'Escape') {
+                    clearFormula();
+                } else if (key === '*' || key === 'x' || key === 'X') {
+                    addSymbol('×');
+                } else if (key === '/') {
+                    addSymbol('÷');
+                } else if (key === 'p' || key === 'P') {
+                    addSymbol('π');
+                } else if (symbols.includes(key)) {
+                    addSymbol(key);
+                } else if (key.toUpperCase() === 'C' || key.toUpperCase() === 'A' || 
+                           key.toLowerCase() === 'r' || key.toLowerCase() === 'd') {
+                    addSymbol(key.toUpperCase() === 'C' ? 'C' : 
+                              key.toUpperCase() === 'A' ? 'A' : 
+                              key.toLowerCase());
+                }
+            });
+        }
+        //#endregion
+
+        //#region Gestione Domande
+        function loadQuestion() {
+            if (currentQuestionIndex >= questions.length) {
+                showCertificate();
+                return;
+            }
+
+            const question = questions[currentQuestionIndex];
+            let questionText = question.text;
+            
+            // Aggiungi la formula da copiare se in modalità apprendimento
+            if (learningMode) {
+                questionText = `📚 IMPARA LA FORMULA (copiala):<br><strong style="color: #e74c3c; font-size: 1.4em;">${question.correctFormulas[0]}</strong><br><br>${question.text}`;
+            } else if (practiceMode) {
+                questionText = `🎯 ORA PROVA DA SOLO (senza guardarla):<br>${question.text}`;
+            }
+            
+            document.getElementById('questionText').innerHTML = questionText;
+            document.getElementById('currentQuestion').textContent = `${currentQuestionIndex + 1}/${questions.length}`;
+            
+            updateCircleVisual(question.visual, question.label);
+            clearFormula();
+            document.getElementById('feedback').style.display = 'none';
+            createSymbolButtons(); // Rimescola i simboli
+        }
+
+        function updateCircleVisual(type, label) {
+            const radiusLine = document.getElementById('radiusLine');
+            const diameterLine = document.getElementById('diameterLine');
+            const measureLabel = document.getElementById('measureLabel');
+
+            radiusLine.style.display = 'none';
+            diameterLine.style.display = 'none';
+            measureLabel.style.display = 'none';
+
+            if (type === 'radius') {
+                radiusLine.style.display = 'block';
+                measureLabel.style.display = 'block';
+                measureLabel.textContent = label;
+                measureLabel.setAttribute('x', '135');
+                measureLabel.setAttribute('y', '95');
+            } else if (type === 'diameter') {
+                diameterLine.style.display = 'block';
+                measureLabel.style.display = 'block';
+                measureLabel.textContent = label;
+                measureLabel.setAttribute('x', '100');
+                measureLabel.setAttribute('y', '85');
+            }
+        }
+        //#endregion
+
+        //#region Gestione Formula
+        function addSymbol(symbol) {
+            currentFormula += symbol;
+            updateFormulaDisplay();
+            playSound('click');
+        }
+
+        function deleteLastSymbol() {
+            if (currentFormula.length > 0) {
+                currentFormula = currentFormula.slice(0, -1);
+                updateFormulaDisplay();
+                playSound('click');
+            }
+        }
+
+        function clearFormula() {
+            currentFormula = "";
+            updateFormulaDisplay();
+            playSound('click');
+        }
+
+        function updateFormulaDisplay() {
+            const display = document.getElementById('formulaDisplay');
+            if (currentFormula.length === 0) {
+                display.textContent = "Clicca i simboli per comporre la formula";
+                display.classList.add('empty');
+            } else {
+                display.textContent = currentFormula;
+                display.classList.remove('empty');
+            }
+        }
+        //#endregion
+
+        //#region Verifica Risposta
+        function verifyFormula() {
+            if (currentFormula.length === 0) {
+                return;
+            }
+
+            const question = questions[currentQuestionIndex];
+            const normalizedFormula = normalizeFormula(currentFormula);
+            const isCorrect = question.correctFormulas.some(correct => 
+                normalizeFormula(correct) === normalizedFormula
+            );
+
+            const feedback = document.getElementById('feedback');
+            
+            if (isCorrect) {
+                // Se era in modalità pratica (dopo l'errore), passa alla domanda successiva
+                if (practiceMode) {
+                    feedback.className = 'feedback correct';
+                    feedback.textContent = '✓ Perfetto! Hai imparato la formula!';
+                    correctAnswers++;
+                    score += 50; // Meno punti dopo errore
+                    playSound('correct');
+                    
+                    document.getElementById('correctCount').textContent = correctAnswers;
+                    document.getElementById('score').textContent = score;
+
+                    // Reset modalità
+                    learningMode = false;
+                    practiceMode = false;
+
+                    setTimeout(() => {
+                        currentQuestionIndex++;
+                        loadQuestion();
+                    }, 2000);
+                } else if (learningMode) {
+                    // Passa dalla modalità apprendimento alla modalità pratica
+                    feedback.className = 'feedback correct';
+                    feedback.textContent = '✓ Corretto! Ora prova senza guardare la formula...';
+                    playSound('correct');
+                    
+                    learningMode = false;
+                    practiceMode = true;
+
+                    setTimeout(() => {
+                        loadQuestion();
+                    }, 2000);
+                } else {
+                    // Risposta corretta al primo tentativo
+                    feedback.className = 'feedback correct';
+                    feedback.textContent = '✓ Corretto! Ottimo lavoro!';
+                    correctAnswers++;
+                    score += 100;
+                    playSound('correct');
+                    
+                    document.getElementById('correctCount').textContent = correctAnswers;
+                    document.getElementById('score').textContent = score;
+
+                    setTimeout(() => {
+                        currentQuestionIndex++;
+                        loadQuestion();
+                    }, 2000);
+                }
+            } else {
+                // Risposta sbagliata - entra in modalità apprendimento
+                feedback.className = 'feedback incorrect';
+                feedback.innerHTML = `✗ Non corretto.<br>Ora ti mostro la formula corretta da copiare...`;
+                playSound('wrong');
+                
+                learningMode = true;
+                practiceMode = false;
+
+                setTimeout(() => {
+                    loadQuestion();
+                }, 3000);
+            }
+        }
+
+        function normalizeFormula(formula) {
+            // Rimuove spazi e standardizza la formula
+            return formula.replace(/\s/g, '')
+                         .replace(/×/g, '')
+                         .replace(/\*/g, '')
+                         .toLowerCase();
+        }
+        //#endregion
+
+        //#region Certificato e Restart
+        function showCertificate() {
+            document.querySelector('.question-area').style.display = 'none';
+            document.querySelector('.stats').style.display = 'none';
+            
+            const certificate = document.getElementById('certificate');
+            const percentage = Math.round((correctAnswers / questions.length) * 100);
+            
+            document.getElementById('finalStats').innerHTML = `
+                Hai completato tutte le domande!<br>
+                <strong>Risposte corrette: ${correctAnswers}/${questions.length}</strong><br>
+                <strong>Percentuale: ${percentage}%</strong><br>
+                <strong>Punteggio totale: ${score}</strong>
+            `;
+            
+            certificate.style.display = 'block';
+            playSound('complete');
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            correctAnswers = 0;
+            score = 0;
+            
+            document.getElementById('correctCount').textContent = '0';
+            document.getElementById('score').textContent = '0';
+            
+            document.getElementById('certificate').style.display = 'none';
+            document.querySelector('.question-area').style.display = 'block';
+            document.querySelector('.stats').style.display = 'flex';
+            
+            loadQuestion();
+        }
+        //#endregion
+
+        //#region Audio
+        function playSound(type) {
+            // Abilita audio dopo prima interazione utente
+            if (!audioEnabled) {
+                audioEnabled = true;
+            }
+
+            const sounds = {
+                click: 'https://certificationsystem.netlify.app/application/certificationSystem/application/sounds/click1.mp3',
+                correct: 'https://certificationsystem.netlify.app/application/certificationSystem/application/sounds/level-complete-394515.mp3',
+                wrong: 'https://certificationsystem.netlify.app/application/certificationSystem/application/sounds/wrong-47985.mp3',
+                complete: 'https://certificationsystem.netlify.app/application/certificationSystem/application/sounds/Gain%20Points.mp3'
+            };
+
+            if (sounds[type] && audioEnabled) {
+                const audio = new Audio(sounds[type]);
+                audio.volume = 0.5;
+                audio.play().catch(() => {}); // Ignora errori silenziosamente
+            }
+        }
+        //#endregion
+
+        // Avvia l'applicazione
+        init();
+    </script>
+</body>
+</html>
