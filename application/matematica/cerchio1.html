@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Formule del Cerchio - Esercizi</title>
+    <title>Formule del Cerchio - Esercizi Interattivi</title>
     <style>
         * {
             margin: 0;
@@ -25,7 +25,7 @@
             background: white;
             border-radius: 20px;
             padding: 30px;
-            max-width: 800px;
+            max-width: 900px;
             width: 100%;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
@@ -35,6 +35,35 @@
             color: #667eea;
             margin-bottom: 10px;
             font-size: 2em;
+        }
+
+        .level-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .level-btn {
+            padding: 10px 25px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .level-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .level-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
         .stats {
@@ -75,6 +104,7 @@
             text-align: center;
             margin-bottom: 15px;
             font-weight: 600;
+            line-height: 1.5;
         }
 
         .circle-visual {
@@ -83,7 +113,7 @@
         }
 
         .circle-svg {
-            max-width: 200px;
+            max-width: 250px;
             height: auto;
         }
 
@@ -101,11 +131,17 @@
             margin-bottom: 15px;
             font-family: 'Courier New', monospace;
             color: #333;
+            letter-spacing: 2px;
         }
 
         .formula-display.empty {
             color: #999;
             font-size: 1.2em;
+        }
+
+        .formula-display.learning-mode {
+            background: #fff3cd;
+            border-color: #ffa502;
         }
 
         .symbols-grid {
@@ -135,6 +171,12 @@
 
         .symbol-btn:active {
             transform: translateY(0);
+        }
+
+        .symbol-btn.disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .controls {
@@ -170,6 +212,14 @@
             color: white;
             grid-column: 1 / -1;
             font-size: 1.3em;
+        }
+
+        .btn-skip {
+            background: #95a5a6;
+            color: white;
+            grid-column: 1 / -1;
+            font-size: 1em;
+            padding: 10px;
         }
 
         .control-btn:hover {
@@ -218,6 +268,7 @@
         .certificate-stats {
             font-size: 1.3em;
             margin-bottom: 20px;
+            line-height: 1.8;
         }
 
         .btn-restart {
@@ -242,55 +293,137 @@
             color: #666;
             margin-top: 10px;
         }
+
+        .formula-reference {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            color: #2e7d32;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .home-menu {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .home-menu h2 {
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 1.8em;
+        }
+
+        .menu-btn {
+            display: block;
+            width: 100%;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .menu-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        .menu-btn.level2 {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🔵 Formule del Cerchio</h1>
         
-        <div class="stats">
-            <div class="stat-item">
-                <div class="stat-label">Domanda</div>
-                <div class="stat-value" id="currentQuestion">1/8</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Corrette</div>
-                <div class="stat-value" id="correctCount">0</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-label">Punteggio</div>
-                <div class="stat-value" id="score">0</div>
-            </div>
+        <!-- Menu principale -->
+        <div id="homeMenu" class="home-menu">
+            <h2>Scegli il livello di difficoltà</h2>
+            <button class="menu-btn" onclick="startLevel(1)">
+                📐 Livello 1: Formule Base<br>
+                <small style="font-size: 0.7em; font-weight: normal;">Circonferenza e Area del cerchio</small>
+            </button>
+            <button class="menu-btn level2" onclick="startLevel(2)">
+                📏 Livello 2: Archi e Settori<br>
+                <small style="font-size: 0.7em; font-weight: normal;">Lunghezza arco, Area settore, Angoli</small>
+            </button>
         </div>
 
-        <div class="question-area">
-            <div class="question" id="questionText"></div>
+        <!-- Area quiz (nascosta inizialmente) -->
+        <div id="quizArea" style="display: none;">
+            <div class="level-selector">
+                <button class="level-btn" id="level1Btn" onclick="switchLevel(1)">Livello 1</button>
+                <button class="level-btn" id="level2Btn" onclick="switchLevel(2)">Livello 2</button>
+            </div>
             
-            <div class="circle-visual">
-                <svg class="circle-svg" viewBox="0 0 200 200" id="circleSvg">
-                    <circle cx="100" cy="100" r="70" fill="none" stroke="#667eea" stroke-width="3"/>
-                    <line id="radiusLine" x1="100" y1="100" x2="170" y2="100" stroke="#e74c3c" stroke-width="2" style="display:none"/>
-                    <line id="diameterLine" x1="30" y1="100" x2="170" y2="100" stroke="#e74c3c" stroke-width="2" style="display:none"/>
-                    <text id="measureLabel" x="135" y="95" fill="#e74c3c" font-size="16" font-weight="bold" style="display:none"></text>
-                </svg>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-label">Domanda</div>
+                    <div class="stat-value" id="currentQuestion">1/10</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Corrette</div>
+                    <div class="stat-value" id="correctCount">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Punteggio</div>
+                    <div class="stat-value" id="score">0</div>
+                </div>
             </div>
 
-            <div class="formula-display empty" id="formulaDisplay">Clicca i simboli per comporre la formula</div>
-            
-            <div class="symbols-grid" id="symbolsGrid"></div>
-            
-            <div class="controls">
-                <button class="control-btn btn-delete" onclick="deleteLastSymbol()">← Cancella</button>
-                <button class="control-btn btn-clear" onclick="clearFormula()">🗑️ Azzera</button>
-                <button class="control-btn btn-verify" onclick="verifyFormula()">✓ Verifica</button>
+            <div class="question-area">
+                <div class="formula-reference" id="formulaReference" style="display: none;"></div>
+                <div class="question" id="questionText"></div>
+                
+                <div class="circle-visual">
+                    <svg class="circle-svg" viewBox="0 0 250 250" id="circleSvg">
+                        <!-- Cerchio principale -->
+                        <circle cx="125" cy="125" r="80" fill="none" stroke="#667eea" stroke-width="3"/>
+                        <!-- Raggio -->
+                        <line id="radiusLine" x1="125" y1="125" x2="205" y2="125" stroke="#e74c3c" stroke-width="2" style="display:none"/>
+                        <!-- Diametro -->
+                        <line id="diameterLine" x1="45" y1="125" x2="205" y2="125" stroke="#e74c3c" stroke-width="2" style="display:none"/>
+                        <!-- Arco -->
+                        <path id="arcPath" d="" fill="none" stroke="#f39c12" stroke-width="3" style="display:none"/>
+                        <!-- Settore -->
+                        <path id="sectorPath" d="" fill="rgba(243, 156, 18, 0.3)" stroke="#f39c12" stroke-width="2" style="display:none"/>
+                        <!-- Linee per angolo -->
+                        <line id="angleLine1" x1="125" y1="125" x2="205" y2="125" stroke="#9b59b6" stroke-width="2" style="display:none"/>
+                        <line id="angleLine2" x1="125" y1="125" x2="125" y2="45" stroke="#9b59b6" stroke-width="2" style="display:none"/>
+                        <!-- Etichette -->
+                        <text id="measureLabel" x="165" y="120" fill="#e74c3c" font-size="18" font-weight="bold" style="display:none"></text>
+                        <text id="angleLabel" x="145" y="105" fill="#9b59b6" font-size="18" font-weight="bold" style="display:none"></text>
+                    </svg>
+                </div>
+
+                <div class="formula-display empty" id="formulaDisplay">Clicca i simboli per comporre la formula</div>
+                
+                <div class="symbols-grid" id="symbolsGrid"></div>
+                
+                <div class="controls">
+                    <button class="control-btn btn-delete" onclick="deleteLastSymbol()">← Cancella</button>
+                    <button class="control-btn btn-clear" onclick="clearFormula()">🗑️ Azzera</button>
+                    <button class="control-btn btn-verify" onclick="verifyFormula()">✓ Verifica</button>
+                    <button class="control-btn btn-skip" onclick="skipQuestion()" style="display: none;" id="skipBtn">⏭️ Salta domanda</button>
+                </div>
+
+                <div class="keyboard-hint">
+                    💡 Scorciatoie: Invio (verifica), Backspace (cancella), Esc (azzera)
+                </div>
             </div>
 
-            <div class="keyboard-hint">
-                💡 Puoi anche digitare: * o x (×), / (÷), p (π), 2 per al quadrato
-            </div>
+            <div class="feedback" id="feedback"></div>
         </div>
-
-        <div class="feedback" id="feedback"></div>
 
         <div class="certificate-section" id="certificate">
             <h2>🎉 Complimenti!</h2>
@@ -300,118 +433,234 @@
     </div>
 
     <script>
-        //#region Dati e Configurazione
-        const questions = [
+        //#region Configurazione e Variabili Globali
+        const questionsLevel1 = [
+            // FORMULE BASE ESSENZIALI
+            
+            // Circonferenza da raggio - Formula principale
             {
                 text: "Scrivi la formula per calcolare la CIRCONFERENZA dato il RAGGIO",
-                correctFormulas: ["C=2πr", "C=2×π×r", "C=π×2×r", "C=r×2×π", "C=r×π×2", "C=π×r×2"],
+                correctFormulas: ["C=2πr", "C=2·π·r", "C=2×π×r", "C=π·2·r", "C=π×2×r"],
                 visual: "radius",
-                label: "r"
+                label: "r",
+                hint: "Circonferenza = 2 × π × raggio"
             },
+            {
+                text: "Come si calcola la CIRCONFERENZA conoscendo il RAGGIO?",
+                correctFormulas: ["C=2πr", "C=2·π·r", "C=2×π×r", "C=π·2·r", "C=π×2×r"],
+                visual: "radius",
+                label: "r",
+                hint: "Circonferenza = 2 × π × raggio"
+            },
+            
+            // Circonferenza da diametro - Formula principale
             {
                 text: "Scrivi la formula per calcolare la CIRCONFERENZA dato il DIAMETRO",
-                correctFormulas: ["C=πd", "C=π×d", "C=d×π"],
+                correctFormulas: ["C=πd", "C=π·d", "C=π×d", "C=d·π", "C=d×π"],
                 visual: "diameter",
-                label: "d"
+                label: "d",
+                hint: "Circonferenza = π × diametro"
             },
+            {
+                text: "Come si calcola la CIRCONFERENZA conoscendo il DIAMETRO?",
+                correctFormulas: ["C=πd", "C=π·d", "C=π×d", "C=d·π", "C=d×π"],
+                visual: "diameter",
+                label: "d",
+                hint: "Circonferenza = π × diametro"
+            },
+            
+            // Area da raggio - Formula principale
             {
                 text: "Scrivi la formula per calcolare l'AREA dato il RAGGIO",
-                correctFormulas: ["A=πr²", "A=π×r²", "A=r²×π"],
+                correctFormulas: ["A=πr²", "A=π·r²", "A=π×r²", "A=r²·π", "A=r²×π"],
                 visual: "radius",
-                label: "r"
+                label: "r",
+                hint: "Area = π × raggio²"
             },
             {
-                text: "Scrivi la formula per calcolare l'AREA dato il DIAMETRO (prima versione)",
-                correctFormulas: ["A=π(d÷2)²", "A=π×(d÷2)²", "A=(d÷2)²×π"],
-                visual: "diameter",
-                label: "d"
-            },
-            {
-                text: "Scrivi la formula per calcolare l'AREA dato il DIAMETRO (seconda versione)",
-                correctFormulas: ["A=πd²÷4", "A=π×d²÷4", "A=d²×π÷4"],
-                visual: "diameter",
-                label: "d"
-            },
-            {
-                text: "Scrivi la formula: CIRCONFERENZA = 2 × π × RAGGIO",
-                correctFormulas: ["C=2πr", "C=2×π×r", "C=π×2×r", "C=r×2×π", "C=r×π×2", "C=π×r×2"],
+                text: "Come si calcola l'AREA del cerchio conoscendo il RAGGIO?",
+                correctFormulas: ["A=πr²", "A=π·r²", "A=π×r²", "A=r²·π", "A=r²×π"],
                 visual: "radius",
-                label: "r"
+                label: "r",
+                hint: "Area = π × raggio²"
             },
+            
+            // Ripetizioni per pratica - Circonferenza
             {
-                text: "Scrivi la formula: AREA = π × RAGGIO²",
-                correctFormulas: ["A=πr²", "A=π×r²", "A=r²×π"],
+                text: "Formula: CIRCONFERENZA = 2 × π × RAGGIO",
+                correctFormulas: ["C=2πr", "C=2·π·r", "C=2×π×r", "C=π·2·r", "C=π×2×r"],
                 visual: "radius",
-                label: "r"
+                label: "r",
+                hint: "C = 2πr"
             },
             {
-                text: "Scrivi la formula: CIRCONFERENZA = π × DIAMETRO",
-                correctFormulas: ["C=πd", "C=π×d", "C=d×π"],
+                text: "Formula: CIRCONFERENZA = π × DIAMETRO",
+                correctFormulas: ["C=πd", "C=π·d", "C=π×d", "C=d·π", "C=d×π"],
                 visual: "diameter",
-                label: "d"
+                label: "d",
+                hint: "C = πd"
+            },
+            
+            // Ripetizione per pratica - Area
+            {
+                text: "Formula: AREA = π × RAGGIO al quadrato",
+                correctFormulas: ["A=πr²", "A=π·r²", "A=π×r²", "A=r²·π", "A=r²×π"],
+                visual: "radius",
+                label: "r",
+                hint: "A = πr²"
+            },
+            {
+                text: "Qual è la formula dell'AREA del cerchio?",
+                correctFormulas: ["A=πr²", "A=π·r²", "A=π×r²", "A=r²·π", "A=r²×π"],
+                visual: "radius",
+                label: "r",
+                hint: "Area = π × raggio²"
             }
         ];
 
-        const symbols = ['C', 'A', '=', '2', '4', 'π', 'r', 'd', '×', '÷', '²', '(', ')'];
-        
+        const questionsLevel2 = [
+            // Formula base proporzione arco
+            {
+                text: "Scrivi la proporzione per calcolare un ARCO",
+                correctFormulas: ["α:l=360:C", "α:l=360°:C", "l:α=C:360", "l:α=C:360°"],
+                visual: "arc",
+                angleValue: "α",
+                hint: "α : arco = 360° : circonferenza"
+            },
+            // Lunghezza arco da angolo
+            {
+                text: "Calcola la lunghezza dell'ARCO dato l'ANGOLO al centro",
+                correctFormulas: ["l=C·α/360", "l=C×α/360", "l=C·α÷360", "l=C×α÷360", "l=(C·α)/360", "l=(C×α)/360"],
+                visual: "arc",
+                angleValue: "α",
+                hint: "Arco = Circonferenza × angolo / 360°"
+            },
+            // Lunghezza arco con formula diretta
+            {
+                text: "Calcola l'ARCO usando RAGGIO e ANGOLO (in gradi)",
+                correctFormulas: ["l=2πr·α/360", "l=2πr×α/360", "l=2πr·α÷360", "l=2πr×α÷360", "l=(2πr·α)/360", "l=(2πr×α)/360"],
+                visual: "arc",
+                angleValue: "α",
+                hint: "Arco = 2πr × angolo / 360°"
+            },
+            // Angolo da arco
+            {
+                text: "Calcola l'ANGOLO al centro dato l'ARCO",
+                correctFormulas: ["α=l·360/C", "α=l×360/C", "α=l·360÷C", "α=l×360÷C", "α=(l·360)/C", "α=(l×360)/C"],
+                visual: "arc",
+                hint: "Angolo = arco × 360° / circonferenza"
+            },
+            // Area settore circolare
+            {
+                text: "Calcola l'AREA del SETTORE CIRCOLARE",
+                correctFormulas: ["As=πr²·α/360", "As=πr²×α/360", "As=πr²·α÷360", "As=πr²×α÷360", "As=(πr²·α)/360", "As=(πr²×α)/360"],
+                visual: "sector",
+                angleValue: "α",
+                hint: "Area settore = πr² × angolo / 360°"
+            },
+            // Area settore da arco e raggio
+            {
+                text: "Calcola l'AREA del SETTORE usando ARCO e RAGGIO",
+                correctFormulas: ["As=l·r/2", "As=l×r/2", "As=l·r÷2", "As=l×r÷2", "As=(l·r)/2", "As=(l×r)/2"],
+                visual: "sector",
+                hint: "Area settore = arco × raggio / 2"
+            },
+            // Proporzione area settore
+            {
+                text: "Scrivi la proporzione per l'AREA del SETTORE",
+                correctFormulas: ["α:As=360:A", "α:As=360°:A", "As:α=A:360", "As:α=A:360°"],
+                visual: "sector",
+                angleValue: "α",
+                hint: "α : Area settore = 360° : Area totale"
+            },
+            // Angolo da area settore
+            {
+                text: "Calcola l'ANGOLO data l'AREA del SETTORE",
+                correctFormulas: ["α=As·360/A", "α=As×360/A", "α=As·360÷A", "α=As×360÷A", "α=(As·360)/A", "α=(As×360)/A"],
+                visual: "sector",
+                hint: "Angolo = Area settore × 360° / Area totale"
+            },
+            // Lunghezza arco in radianti
+            {
+                text: "Calcola l'ARCO con ANGOLO in RADIANTI",
+                correctFormulas: ["l=r·θ", "l=r×θ", "l=θ·r", "l=θ×r"],
+                visual: "arc",
+                angleValue: "θ",
+                hint: "Arco = raggio × angolo (in radianti)"
+            },
+            // Area settore in radianti
+            {
+                text: "Calcola l'AREA SETTORE con ANGOLO in RADIANTI",
+                correctFormulas: ["As=r²·θ/2", "As=r²×θ/2", "As=r²·θ÷2", "As=r²×θ÷2", "As=(r²·θ)/2", "As=(r²×θ)/2"],
+                visual: "sector",
+                angleValue: "θ",
+                hint: "Area settore = r² × angolo (rad) / 2"
+            }
+        ];
+
+        // Simboli per livello
+        const symbolsLevel1 = ['C', 'A', 'r', 'd', '=', '2', 'π', '×', '²', '·'];
+        const symbolsLevel2 = ['α', 'l', 'As', 'θ', '=', ':', '360', '°', 'C', 'A', 'r', 'd', '2', 'π', '×', '÷', '/', '²', '(', ')', '·'];
+
+        let currentLevel = 1;
+        let questions = [];
+        let symbols = [];
         let currentQuestionIndex = 0;
         let currentFormula = "";
         let correctAnswers = 0;
         let score = 0;
-        let learningMode = false; // Modalità apprendimento (mostra formula)
-        let practiceMode = false; // Modalità pratica (dopo aver copiato)
-        let audioEnabled = false; // Audio abilitato dopo prima interazione
+        let attempts = 0;
+        let learningMode = false;
+        let audioEnabled = false;
         //#endregion
 
-        //#region Inizializzazione
-        function init() {
+        //#region Inizializzazione e Menu
+        function startLevel(level) {
+            currentLevel = level;
+            document.getElementById('homeMenu').style.display = 'none';
+            document.getElementById('quizArea').style.display = 'block';
+            
+            // Imposta il livello corretto
+            if (level === 1) {
+                questions = [...questionsLevel1];
+                symbols = [...symbolsLevel1];
+                document.getElementById('level1Btn').classList.add('active');
+                document.getElementById('level2Btn').classList.remove('active');
+            } else {
+                questions = [...questionsLevel2];
+                symbols = [...symbolsLevel2];
+                document.getElementById('level2Btn').classList.add('active');
+                document.getElementById('level1Btn').classList.remove('active');
+            }
+            
+            // Mescola le domande
+            questions = shuffleArray(questions);
+            
+            // Reset contatori
+            currentQuestionIndex = 0;
+            correctAnswers = 0;
+            score = 0;
+            attempts = 0;
+            
+            // Inizializza
             createSymbolButtons();
             loadQuestion();
             setupKeyboardInput();
+            updateStats();
         }
 
-        function createSymbolButtons() {
-            const grid = document.getElementById('symbolsGrid');
-            grid.innerHTML = '';
-            
-            // Mescola i simboli
-            const shuffled = [...symbols].sort(() => Math.random() - 0.5);
-            
-            shuffled.forEach(symbol => {
-                const btn = document.createElement('button');
-                btn.className = 'symbol-btn';
-                btn.textContent = symbol;
-                btn.onclick = () => addSymbol(symbol);
-                grid.appendChild(btn);
-            });
+        function switchLevel(level) {
+            if (confirm(`Vuoi cambiare al Livello ${level}? Perderai i progressi attuali.`)) {
+                startLevel(level);
+            }
         }
 
-        function setupKeyboardInput() {
-            document.addEventListener('keydown', (e) => {
-                const key = e.key;
-                
-                // Mapping tasti
-                if (key === 'Enter') {
-                    verifyFormula();
-                } else if (key === 'Backspace') {
-                    deleteLastSymbol();
-                } else if (key === 'Escape') {
-                    clearFormula();
-                } else if (key === '*' || key === 'x' || key === 'X') {
-                    addSymbol('×');
-                } else if (key === '/') {
-                    addSymbol('÷');
-                } else if (key === 'p' || key === 'P') {
-                    addSymbol('π');
-                } else if (symbols.includes(key)) {
-                    addSymbol(key);
-                } else if (key.toUpperCase() === 'C' || key.toUpperCase() === 'A' || 
-                           key.toLowerCase() === 'r' || key.toLowerCase() === 'd') {
-                    addSymbol(key.toUpperCase() === 'C' ? 'C' : 
-                              key.toUpperCase() === 'A' ? 'A' : 
-                              key.toLowerCase());
-                }
-            });
+        function backToMenu() {
+            if (confirm('Vuoi tornare al menu principale? Perderai i progressi attuali.')) {
+                document.getElementById('homeMenu').style.display = 'block';
+                document.getElementById('quizArea').style.display = 'none';
+                document.getElementById('certificate').style.display = 'none';
+            }
         }
         //#endregion
 
@@ -423,46 +672,115 @@
             }
 
             const question = questions[currentQuestionIndex];
-            let questionText = question.text;
+            attempts = 0;
+            learningMode = false;
             
-            // Aggiungi la formula da copiare se in modalità apprendimento
-            if (learningMode) {
-                questionText = `📚 IMPARA LA FORMULA (copiala):<br><strong style="color: #e74c3c; font-size: 1.4em;">${question.correctFormulas[0]}</strong><br><br>${question.text}`;
-            } else if (practiceMode) {
-                questionText = `🎯 ORA PROVA DA SOLO (senza guardarla):<br>${question.text}`;
-            }
+            // Mostra la domanda
+            document.getElementById('questionText').innerHTML = question.text;
             
-            document.getElementById('questionText').innerHTML = questionText;
-            document.getElementById('currentQuestion').textContent = `${currentQuestionIndex + 1}/${questions.length}`;
+            // Nascondi formula di riferimento inizialmente
+            document.getElementById('formulaReference').style.display = 'none';
+            document.getElementById('skipBtn').style.display = 'none';
             
-            updateCircleVisual(question.visual, question.label);
+            // Aggiorna visualizzazione
+            updateCircleVisual(question.visual, question.label, question.angleValue);
             clearFormula();
             document.getElementById('feedback').style.display = 'none';
-            createSymbolButtons(); // Rimescola i simboli
+            document.getElementById('formulaDisplay').classList.remove('learning-mode');
+            
+            createSymbolButtons();
+            updateStats();
         }
 
-        function updateCircleVisual(type, label) {
-            const radiusLine = document.getElementById('radiusLine');
-            const diameterLine = document.getElementById('diameterLine');
-            const measureLabel = document.getElementById('measureLabel');
+        function updateCircleVisual(type, label, angleValue) {
+            // Nascondi tutti gli elementi
+            document.getElementById('radiusLine').style.display = 'none';
+            document.getElementById('diameterLine').style.display = 'none';
+            document.getElementById('arcPath').style.display = 'none';
+            document.getElementById('sectorPath').style.display = 'none';
+            document.getElementById('angleLine1').style.display = 'none';
+            document.getElementById('angleLine2').style.display = 'none';
+            document.getElementById('measureLabel').style.display = 'none';
+            document.getElementById('angleLabel').style.display = 'none';
 
-            radiusLine.style.display = 'none';
-            diameterLine.style.display = 'none';
-            measureLabel.style.display = 'none';
+            const cx = 125, cy = 125, r = 80;
 
-            if (type === 'radius') {
-                radiusLine.style.display = 'block';
-                measureLabel.style.display = 'block';
-                measureLabel.textContent = label;
-                measureLabel.setAttribute('x', '135');
-                measureLabel.setAttribute('y', '95');
-            } else if (type === 'diameter') {
-                diameterLine.style.display = 'block';
-                measureLabel.style.display = 'block';
-                measureLabel.textContent = label;
-                measureLabel.setAttribute('x', '100');
-                measureLabel.setAttribute('y', '85');
+            switch(type) {
+                case 'radius':
+                    document.getElementById('radiusLine').style.display = 'block';
+                    document.getElementById('measureLabel').style.display = 'block';
+                    document.getElementById('measureLabel').textContent = label || 'r';
+                    document.getElementById('measureLabel').setAttribute('x', '165');
+                    document.getElementById('measureLabel').setAttribute('y', '120');
+                    break;
+                    
+                case 'diameter':
+                    document.getElementById('diameterLine').style.display = 'block';
+                    document.getElementById('measureLabel').style.display = 'block';
+                    document.getElementById('measureLabel').textContent = label || 'd';
+                    document.getElementById('measureLabel').setAttribute('x', '125');
+                    document.getElementById('measureLabel').setAttribute('y', '110');
+                    break;
+                    
+                case 'both':
+                    document.getElementById('radiusLine').style.display = 'block';
+                    document.getElementById('diameterLine').style.display = 'block';
+                    document.getElementById('measureLabel').style.display = 'block';
+                    document.getElementById('measureLabel').textContent = 'r';
+                    document.getElementById('measureLabel').setAttribute('x', '165');
+                    document.getElementById('measureLabel').setAttribute('y', '120');
+                    break;
+                    
+                case 'arc':
+                    // Mostra arco di 90 gradi
+                    const arcPath = describeArc(cx, cy, r, 0, 90);
+                    document.getElementById('arcPath').setAttribute('d', arcPath);
+                    document.getElementById('arcPath').style.display = 'block';
+                    
+                    // Mostra angolo
+                    document.getElementById('angleLine1').style.display = 'block';
+                    document.getElementById('angleLine2').style.display = 'block';
+                    document.getElementById('angleLabel').style.display = 'block';
+                    document.getElementById('angleLabel').textContent = angleValue || 'α';
+                    break;
+                    
+                case 'sector':
+                    // Mostra settore di 90 gradi
+                    const sectorPath = describeSector(cx, cy, r, 0, 90);
+                    document.getElementById('sectorPath').setAttribute('d', sectorPath);
+                    document.getElementById('sectorPath').style.display = 'block';
+                    
+                    // Mostra angolo
+                    document.getElementById('angleLine1').style.display = 'block';
+                    document.getElementById('angleLine2').style.display = 'block';
+                    document.getElementById('angleLabel').style.display = 'block';
+                    document.getElementById('angleLabel').textContent = angleValue || 'α';
+                    break;
             }
+        }
+
+        function describeArc(x, y, radius, startAngle, endAngle) {
+            const start = polarToCartesian(x, y, radius, endAngle);
+            const end = polarToCartesian(x, y, radius, startAngle);
+            const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+            return [
+                "M", start.x, start.y,
+                "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y
+            ].join(" ");
+        }
+
+        function describeSector(x, y, radius, startAngle, endAngle) {
+            const arc = describeArc(x, y, radius, startAngle, endAngle);
+            const end = polarToCartesian(x, y, radius, startAngle);
+            return `${arc} L ${x} ${y} L ${end.x} ${end.y}`;
+        }
+
+        function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+            const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+            return {
+                x: centerX + (radius * Math.cos(angleInRadians)),
+                y: centerY + (radius * Math.sin(angleInRadians))
+            };
         }
         //#endregion
 
@@ -497,107 +815,131 @@
                 display.classList.remove('empty');
             }
         }
+
+        function createSymbolButtons() {
+            const grid = document.getElementById('symbolsGrid');
+            grid.innerHTML = '';
+            
+            // Mescola i simboli mantenendo alcuni raggruppamenti logici
+            const shuffled = shuffleArray([...symbols]);
+            
+            shuffled.forEach(symbol => {
+                const btn = document.createElement('button');
+                btn.className = 'symbol-btn';
+                btn.textContent = symbol;
+                btn.onclick = () => addSymbol(symbol);
+                grid.appendChild(btn);
+            });
+        }
         //#endregion
 
-        //#region Verifica Risposta
+        //#region Verifica e Feedback
         function verifyFormula() {
             if (currentFormula.length === 0) {
                 return;
             }
 
             const question = questions[currentQuestionIndex];
-            const normalizedFormula = normalizeFormula(currentFormula);
-            const isCorrect = question.correctFormulas.some(correct => 
-                normalizeFormula(correct) === normalizedFormula
-            );
-
+            const isCorrect = checkFormula(currentFormula, question.correctFormulas);
             const feedback = document.getElementById('feedback');
             
+            attempts++;
+
             if (isCorrect) {
-                // Se era in modalità pratica (dopo l'errore), passa alla domanda successiva
-                if (practiceMode) {
-                    feedback.className = 'feedback correct';
-                    feedback.textContent = '✓ Perfetto! Hai imparato la formula!';
-                    correctAnswers++;
-                    score += 50; // Meno punti dopo errore
-                    playSound('correct');
-                    
-                    document.getElementById('correctCount').textContent = correctAnswers;
-                    document.getElementById('score').textContent = score;
-
-                    // Reset modalità
-                    learningMode = false;
-                    practiceMode = false;
-
-                    setTimeout(() => {
-                        currentQuestionIndex++;
-                        loadQuestion();
-                    }, 2000);
-                } else if (learningMode) {
-                    // Passa dalla modalità apprendimento alla modalità pratica
-                    feedback.className = 'feedback correct';
-                    feedback.textContent = '✓ Corretto! Ora prova senza guardare la formula...';
-                    playSound('correct');
-                    
-                    learningMode = false;
-                    practiceMode = true;
-
-                    setTimeout(() => {
-                        loadQuestion();
-                    }, 2000);
-                } else {
-                    // Risposta corretta al primo tentativo
-                    feedback.className = 'feedback correct';
-                    feedback.textContent = '✓ Corretto! Ottimo lavoro!';
-                    correctAnswers++;
-                    score += 100;
-                    playSound('correct');
-                    
-                    document.getElementById('correctCount').textContent = correctAnswers;
-                    document.getElementById('score').textContent = score;
-
-                    setTimeout(() => {
-                        currentQuestionIndex++;
-                        loadQuestion();
-                    }, 2000);
-                }
-            } else {
-                // Risposta sbagliata - entra in modalità apprendimento
-                feedback.className = 'feedback incorrect';
-                feedback.innerHTML = `✗ Non corretto.<br>Ora ti mostro la formula corretta da copiare...`;
-                playSound('wrong');
+                feedback.className = 'feedback correct';
+                feedback.innerHTML = '✅ Corretto! Ottimo lavoro!';
                 
-                learningMode = true;
-                practiceMode = false;
+                if (attempts === 1) {
+                    score += 100;
+                    correctAnswers++;
+                } else if (attempts === 2) {
+                    score += 50;
+                    correctAnswers += 0.5;
+                } else {
+                    score += 25;
+                    correctAnswers += 0.25;
+                }
+                
+                playSound('correct');
+                updateStats();
 
                 setTimeout(() => {
+                    currentQuestionIndex++;
                     loadQuestion();
-                }, 3000);
+                }, 2000);
+                
+            } else {
+                feedback.className = 'feedback incorrect';
+                
+                if (attempts === 1) {
+                    feedback.innerHTML = '❌ Non corretto. Riprova!';
+                    playSound('wrong');
+                } else if (attempts === 2) {
+                    // Mostra suggerimento
+                    feedback.innerHTML = `❌ Non corretto.<br>💡 Suggerimento: ${question.hint}`;
+                    document.getElementById('formulaReference').textContent = `📚 ${question.hint}`;
+                    document.getElementById('formulaReference').style.display = 'block';
+                    playSound('wrong');
+                } else {
+                    // Dopo 3 tentativi, mostra la risposta corretta
+                    feedback.innerHTML = `❌ La formula corretta è: <strong>${question.correctFormulas[0]}</strong>`;
+                    document.getElementById('skipBtn').style.display = 'block';
+                    learningMode = true;
+                    document.getElementById('formulaDisplay').classList.add('learning-mode');
+                    playSound('wrong');
+                }
             }
         }
 
+        function checkFormula(input, correctFormulas) {
+            const normalized = normalizeFormula(input);
+            return correctFormulas.some(formula => 
+                normalizeFormula(formula) === normalized
+            );
+        }
+
         function normalizeFormula(formula) {
-            // Rimuove spazi e standardizza la formula
-            return formula.replace(/\s/g, '')
-                         .replace(/×/g, '')
-                         .replace(/\*/g, '')
-                         .toLowerCase();
+            // Normalizza la formula per il confronto
+            return formula
+                .replace(/\s/g, '') // Rimuovi spazi
+                .replace(/×/g, '*') // Sostituisci simboli moltiplicazione
+                .replace(/·/g, '*')
+                .replace(/÷/g, '/')
+                .replace(/360°/g, '360') // Rimuovi simbolo gradi
+                .toLowerCase();
+        }
+
+        function skipQuestion() {
+            currentQuestionIndex++;
+            loadQuestion();
         }
         //#endregion
 
-        //#region Certificato e Restart
+        //#region Certificato e Statistiche
         function showCertificate() {
-            document.querySelector('.question-area').style.display = 'none';
-            document.querySelector('.stats').style.display = 'none';
+            document.getElementById('quizArea').style.display = 'none';
             
             const certificate = document.getElementById('certificate');
             const percentage = Math.round((correctAnswers / questions.length) * 100);
+            const level = currentLevel;
+            
+            let message = '';
+            if (percentage >= 90) {
+                message = '🏆 Eccellente! Padroneggi perfettamente le formule!';
+            } else if (percentage >= 70) {
+                message = '🥈 Molto bene! Hai una buona conoscenza delle formule.';
+            } else if (percentage >= 50) {
+                message = '🥉 Discreto! Continua a esercitarti per migliorare.';
+            } else {
+                message = '📚 Hai bisogno di più pratica. Non arrenderti!';
+            }
             
             document.getElementById('finalStats').innerHTML = `
-                Hai completato tutte le domande!<br>
-                <strong>Risposte corrette: ${correctAnswers}/${questions.length}</strong><br>
-                <strong>Percentuale: ${percentage}%</strong><br>
-                <strong>Punteggio totale: ${score}</strong>
+                <strong>Livello ${level} completato!</strong><br><br>
+                Risposte corrette: ${Math.floor(correctAnswers)}/${questions.length}<br>
+                Percentuale: ${percentage}%<br>
+                Punteggio totale: ${score}<br><br>
+                ${message}
             `;
             
             certificate.style.display = 'block';
@@ -605,24 +947,45 @@
         }
 
         function restartQuiz() {
-            currentQuestionIndex = 0;
-            correctAnswers = 0;
-            score = 0;
-            
-            document.getElementById('correctCount').textContent = '0';
-            document.getElementById('score').textContent = '0';
-            
             document.getElementById('certificate').style.display = 'none';
-            document.querySelector('.question-area').style.display = 'block';
-            document.querySelector('.stats').style.display = 'flex';
-            
-            loadQuestion();
+            document.getElementById('homeMenu').style.display = 'block';
+        }
+
+        function updateStats() {
+            document.getElementById('currentQuestion').textContent = `${currentQuestionIndex + 1}/${questions.length}`;
+            document.getElementById('correctCount').textContent = Math.floor(correctAnswers);
+            document.getElementById('score').textContent = score;
         }
         //#endregion
 
-        //#region Audio
+        //#region Utility
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        function setupKeyboardInput() {
+            document.addEventListener('keydown', (e) => {
+                if (document.getElementById('quizArea').style.display === 'none') return;
+                
+                const key = e.key;
+                
+                if (key === 'Enter') {
+                    verifyFormula();
+                } else if (key === 'Backspace') {
+                    e.preventDefault();
+                    deleteLastSymbol();
+                } else if (key === 'Escape') {
+                    clearFormula();
+                }
+            });
+        }
+
         function playSound(type) {
-            // Abilita audio dopo prima interazione utente
             if (!audioEnabled) {
                 audioEnabled = true;
             }
@@ -636,14 +999,11 @@
 
             if (sounds[type] && audioEnabled) {
                 const audio = new Audio(sounds[type]);
-                audio.volume = 0.5;
-                audio.play().catch(() => {}); // Ignora errori silenziosamente
+                audio.volume = 0.3;
+                audio.play().catch(() => {});
             }
         }
         //#endregion
-
-        // Avvia l'applicazione
-        init();
     </script>
 </body>
 </html>
