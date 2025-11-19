@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proporzione degli Archi - α : l = 360° : C</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .formula-reference {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .problem-statement {
+            background-color: #f8f9fa;
+            border-left: 5px solid #667eea;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+        }
+
+        .problem-text {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .given-data {
+            font-size: 20px;
+            color: #667eea;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .phase-container {
+            background-color: #fff;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .phase-title {
+            background-color: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin: -25px -25px 20px -25px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .proportion-input-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            font-size: 28px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .proportion-part {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-box {
+            width: 80px;
+            padding: 10px;
+            font-size: 24px;
+            text-align: center;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        .input-box:focus {
+            outline: none;
+            border-color: #f5576c;
+            box-shadow: 0 0 10px rgba(245, 87, 108, 0.3);
+        }
+
+        .input-box.correct {
+            background-color: #d4edda;
+            border-color: #28a745;
+        }
+
+        .input-box.incorrect {
+            background-color: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        .formula-input {
+            width: 300px;
+            padding: 12px;
+            font-size: 20px;
+            text-align: center;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            margin: 15px auto;
+            display: block;
+        }
+
+        .symbol {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .check-btn {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .check-btn:hover {
+            background-color: #5568d3;
+        }
+
+        .solution-btn {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .solution-btn:hover {
+            background-color: #e67e22;
+        }
+
+        .next-btn {
+            background-color: #27ae60;
+            color: white;
+        }
+
+        .next-btn:hover {
+            background-color: #219653;
+        }
+
+        .reset-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .reset-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 18px;
+            display: none;
+        }
+
+        .feedback.correct {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #28a745;
+        }
+
+        .feedback.incorrect {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #dc3545;
+        }
+
+        .feedback.partial {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffc107;
+        }
+
+        .stats {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 25px;
+        }
+
+        .stats-item {
+            display: inline-block;
+            margin: 0 15px;
+            font-size: 16px;
+        }
+
+        .stats-value {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 20px;
+        }
+
+        .hint-box {
+            background-color: #e8f5e9;
+            border: 1px solid #4caf50;
+            border-radius: 5px;
+            padding: 12px;
+            margin: 15px 0;
+            color: #2e7d32;
+            text-align: center;
+            display: none;
+        }
+
+        .circle-visual {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        svg {
+            max-width: 250px;
+        }
+
+        .disabled {
+            opacity: 0.5;
+            cursor: not-allowed !important;
+        }
+
+        @media (max-width: 600px) {
+            .proportion-input-container {
+                font-size: 20px;
+            }
+            
+            .input-box {
+                width: 60px;
+                font-size: 18px;
+            }
+            
+            .formula-reference {
+                font-size: 18px;
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📐 Proporzione degli Archi</h1>
+        
+        <div class="formula-reference">
+            α : l = 360° : C
+        </div>
+
+        <div class="problem-statement">
+            <div class="problem-text" id="problemText"></div>
+            <div class="given-data" id="givenData"></div>
+        </div>
+
+        <div class="circle-visual">
+            <svg viewBox="0 0 250 250">
+                <!-- Cerchio -->
+                <circle cx="125" cy="125" r="80" fill="none" stroke="#667eea" stroke-width="3"/>
+                <!-- Arco -->
+                <path id="arcPath" stroke="#f5576c" stroke-width="4" fill="none"/>
+                <!-- Raggi per l'angolo -->
+                <line id="radius1" stroke="#333" stroke-width="2"/>
+                <line id="radius2" stroke="#333" stroke-width="2"/>
+                <!-- Etichette -->
+                <text id="angleLabel" x="125" y="105" text-anchor="middle" font-size="18" font-weight="bold" fill="#f5576c"></text>
+                <text id="arcLabel" x="125" y="45" text-anchor="middle" font-size="16" font-weight="bold" fill="#f5576c"></text>
+            </svg>
+        </div>
+
+        <!-- FASE 1: Impostazione proporzione -->
+        <div class="phase-container" id="phase1">
+            <div class="phase-title">FASE 1: Imposta la proporzione con i dati</div>
+            
+            <div style="text-align: center; margin-bottom: 15px;">
+                <button onclick="insertSymbol('α')" style="padding: 8px 16px; margin: 0 5px; background-color: #f5576c; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer;">Inserisci α</button>
+                <button onclick="insertSymbol('360')" style="padding: 8px 16px; margin: 0 5px; background-color: #667eea; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer;">Inserisci 360</button>
+                <button onclick="insertSymbol('X')" style="padding: 8px 16px; margin: 0 5px; background-color: #27ae60; color: white; border: none; border-radius: 5px; font-size: 18px; cursor: pointer;">Inserisci X</button>
+            </div>
+            
+            <div class="proportion-input-container">
+                <div class="proportion-part">
+                    <input type="text" class="input-box" id="term1" placeholder="?" onfocus="setCurrentInput('term1')">
+                    <span class="symbol">:</span>
+                    <input type="text" class="input-box" id="term2" placeholder="?" onfocus="setCurrentInput('term2')">
+                </div>
+                <span class="symbol">=</span>
+                <div class="proportion-part">
+                    <input type="text" class="input-box" id="term3" placeholder="?" onfocus="setCurrentInput('term3')">
+                    <span class="symbol">:</span>
+                    <input type="text" class="input-box" id="term4" placeholder="?" onfocus="setCurrentInput('term4')">
+                </div>
+            </div>
+
+            <div class="button-container">
+                <button class="check-btn" onclick="checkPhase1()">Verifica Proporzione</button>
+                <button class="solution-btn" onclick="showPhase1Solution()">Mostra Soluzione</button>
+            </div>
+
+            <div class="feedback" id="phase1Feedback"></div>
+            <div class="hint-box" id="phase1Hint"></div>
+        </div>
+
+        <!-- FASE 2: Calcolo del valore -->
+        <div class="phase-container" id="phase2" style="display: none;">
+            <div class="phase-title">FASE 2: Calcola il valore mancante</div>
+            
+            <p style="text-align: center; font-size: 18px; margin-bottom: 20px;">
+                Scrivi la formula per calcolare <span id="unknownVar" style="color: #f5576c; font-weight: bold;">X</span>
+            </p>
+            
+            <input type="text" class="formula-input" id="formulaInput" 
+                   placeholder="Es: x = 45 × 360 : 180">
+
+            <div class="button-container">
+                <button class="check-btn" onclick="checkPhase2()">Verifica Formula</button>
+                <button class="solution-btn" onclick="showPhase2Solution()">Mostra Soluzione</button>
+            </div>
+
+            <div class="feedback" id="phase2Feedback"></div>
+        </div>
+
+        <!-- Pulsante per esercizio successivo -->
+        <div class="button-container" id="nextContainer" style="display: none;">
+            <button class="next-btn" onclick="nextExercise()">Prossimo Esercizio →</button>
+        </div>
+
+        <!-- Statistiche -->
+        <div class="stats">
+            <span class="stats-item">
+                Esercizi: <span class="stats-value" id="totalExercises">0</span>
+            </span>
+            <span class="stats-item">
+                Corretti: <span class="stats-value" id="correctExercises">0</span>
+            </span>
+            <span class="stats-item">
+                Percentuale: <span class="stats-value" id="percentage">0%</span>
+            </span>
+        </div>
+    </div>
+
+    <script>
+        // Variabili globali
+        let currentProblem = {};
+        let phase1Completed = false;
+        let phase2Completed = false;
+        let currentInputFocus = 'term1'; // Track quale input è attivo
+        let stats = {
+            total: 0,
+            correct: 0,
+            phase1Correct: 0,
+            phase2Correct: 0
+        };
+
+        // Funzione per settare l'input corrente
+        function setCurrentInput(inputId) {
+            currentInputFocus = inputId;
+        }
+
+        // Funzione per inserire simboli
+        function insertSymbol(symbol) {
+            const input = document.getElementById(currentInputFocus);
+            if (input) {
+                input.value = symbol;
+                // Passa automaticamente al prossimo campo vuoto
+                const inputs = ['term1', 'term2', 'term3', 'term4'];
+                const currentIndex = inputs.indexOf(currentInputFocus);
+                if (currentIndex < inputs.length - 1) {
+                    for (let i = currentIndex + 1; i < inputs.length; i++) {
+                        if (document.getElementById(inputs[i]).value === '') {
+                            document.getElementById(inputs[i]).focus();
+                            currentInputFocus = inputs[i];
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Tipi di problemi
+        const problemTypes = [
+            { 
+                given: ['α', 'C'], 
+                find: 'l',
+                description: 'Calcola la lunghezza dell\'arco'
+            },
+            { 
+                given: ['l', 'C'], 
+                find: 'α',
+                description: 'Calcola l\'ampiezza dell\'angolo'
+            },
+            { 
+                given: ['α', 'l'], 
+                find: 'C',
+                description: 'Calcola la circonferenza'
+            }
+        ];
+
+        // Inizializzazione
+        function init() {
+            generateNewProblem();
+            updateStats();
+        }
+
+        // Genera un nuovo problema
+        function generateNewProblem() {
+            // Reset stato
+            phase1Completed = false;
+            phase2Completed = false;
+            
+            // Mostra fase 1, nascondi fase 2
+            document.getElementById('phase1').style.display = 'block';
+            document.getElementById('phase2').style.display = 'none';
+            document.getElementById('nextContainer').style.display = 'none';
+            
+            // Reset feedback
+            document.getElementById('phase1Feedback').style.display = 'none';
+            document.getElementById('phase2Feedback').style.display = 'none';
+            document.getElementById('phase1Hint').style.display = 'none';
+            
+            // Reset inputs
+            document.getElementById('term1').value = '';
+            document.getElementById('term2').value = '';
+            document.getElementById('term3').value = '';
+            document.getElementById('term4').value = '';
+            document.getElementById('formulaInput').value = '';
+            
+            // Reset classi
+            ['term1', 'term2', 'term3', 'term4'].forEach(id => {
+                document.getElementById(id).className = 'input-box';
+            });
+            
+            // Scegli tipo di problema casuale
+            const type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
+            
+            // Genera valori casuali
+            let alpha, arc, circumference;
+            
+            // Generiamo valori che producono risultati interi
+            if (type.find === 'l') {
+                // Dato α e C, trova l
+                alpha = [30, 45, 60, 90, 120, 180][Math.floor(Math.random() * 6)];
+                circumference = [120, 180, 240, 360][Math.floor(Math.random() * 4)];
+                arc = (alpha * circumference) / 360;
+            } else if (type.find === 'α') {
+                // Dato l e C, trova α
+                circumference = [120, 180, 240, 360][Math.floor(Math.random() * 4)];
+                arc = [10, 15, 20, 30, 40, 60, 90][Math.floor(Math.random() * 7)];
+                alpha = (arc * 360) / circumference;
+                // Assicuriamoci che alpha sia intero
+                while (!Number.isInteger(alpha)) {
+                    arc = [10, 15, 20, 30, 40, 60, 90][Math.floor(Math.random() * 7)];
+                    alpha = (arc * 360) / circumference;
+                }
+            } else {
+                // Dato α e l, trova C
+                alpha = [30, 45, 60, 90, 120, 180][Math.floor(Math.random() * 6)];
+                arc = [10, 15, 20, 30, 40, 60][Math.floor(Math.random() * 6)];
+                circumference = (arc * 360) / alpha;
+                // Assicuriamoci che circumference sia intero
+                while (!Number.isInteger(circumference)) {
+                    arc = [10, 15, 20, 30, 40, 60][Math.floor(Math.random() * 6)];
+                    circumference = (arc * 360) / alpha;
+                }
+            }
+            
+            // Salva il problema corrente
+            currentProblem = {
+                type: type,
+                alpha: alpha,
+                arc: arc,
+                circumference: circumference,
+                unknown: type.find
+            };
+            
+            // Visualizza il problema
+            displayProblem();
+            
+            // Aggiorna visualizzazione SVG
+            updateVisualization();
+        }
+
+        // Mostra il problema
+        function displayProblem() {
+            const problem = currentProblem;
+            let problemText = problem.type.description + '<br>';
+            let givenData = 'Dati: ';
+            
+            if (problem.type.given.includes('α')) {
+                givenData += `α = ${problem.alpha}°`;
+            }
+            if (problem.type.given.includes('l')) {
+                givenData += (givenData !== 'Dati: ' ? ', ' : '') + `l = ${problem.arc} cm`;
+            }
+            if (problem.type.given.includes('C')) {
+                givenData += (givenData !== 'Dati: ' ? ', ' : '') + `C = ${problem.circumference} cm`;
+            }
+            
+            givenData += '<br>Trova: ';
+            if (problem.unknown === 'α') {
+                givenData += 'α (ampiezza angolo)';
+                document.getElementById('unknownVar').textContent = 'α';
+            } else if (problem.unknown === 'l') {
+                givenData += 'l (lunghezza arco)';
+                document.getElementById('unknownVar').textContent = 'l';
+            } else {
+                givenData += 'C (circonferenza)';
+                document.getElementById('unknownVar').textContent = 'C';
+            }
+            
+            document.getElementById('problemText').innerHTML = problemText;
+            document.getElementById('givenData').innerHTML = givenData;
+        }
+
+        // Aggiorna visualizzazione SVG
+        function updateVisualization() {
+            const angleRad = (currentProblem.alpha * Math.PI) / 180;
+            const cx = 125, cy = 125, r = 80;
+            
+            // Calcola i punti per l'arco
+            const x1 = cx + r * Math.cos(-Math.PI/2);
+            const y1 = cy + r * Math.sin(-Math.PI/2);
+            const x2 = cx + r * Math.cos(-Math.PI/2 + angleRad);
+            const y2 = cy + r * Math.sin(-Math.PI/2 + angleRad);
+            
+            // Crea il path per l'arco
+            const largeArc = currentProblem.alpha > 180 ? 1 : 0;
+            const arcPath = `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}`;
+            
+            document.getElementById('arcPath').setAttribute('d', arcPath);
+            
+            // Aggiorna i raggi
+            document.getElementById('radius1').setAttribute('x1', cx);
+            document.getElementById('radius1').setAttribute('y1', cy);
+            document.getElementById('radius1').setAttribute('x2', x1);
+            document.getElementById('radius1').setAttribute('y2', y1);
+            
+            document.getElementById('radius2').setAttribute('x1', cx);
+            document.getElementById('radius2').setAttribute('y1', cy);
+            document.getElementById('radius2').setAttribute('x2', x2);
+            document.getElementById('radius2').setAttribute('y2', y2);
+            
+            // Aggiorna etichette
+            if (currentProblem.type.given.includes('α')) {
+                document.getElementById('angleLabel').textContent = `${currentProblem.alpha}°`;
+            } else {
+                document.getElementById('angleLabel').textContent = 'α = ?';
+            }
+            
+            if (currentProblem.type.given.includes('l')) {
+                document.getElementById('arcLabel').textContent = `l = ${currentProblem.arc}`;
+            } else if (currentProblem.unknown === 'l') {
+                document.getElementById('arcLabel').textContent = 'l = ?';
+            } else {
+                document.getElementById('arcLabel').textContent = '';
+            }
+        }
+
+        // Verifica Fase 1
+        function checkPhase1() {
+            const term1 = document.getElementById('term1').value.trim();
+            const term2 = document.getElementById('term2').value.trim();
+            const term3 = document.getElementById('term3').value.trim();
+            const term4 = document.getElementById('term4').value.trim();
+            
+            const feedback = document.getElementById('phase1Feedback');
+            
+            // Valori corretti in base al problema
+            let correct1, correct2, correct3, correct4;
+            
+            if (currentProblem.unknown === 'l') {
+                // α : X = 360 : C
+                correct1 = currentProblem.alpha.toString();
+                correct2 = 'x';
+                correct3 = '360';
+                correct4 = currentProblem.circumference.toString();
+            } else if (currentProblem.unknown === 'α') {
+                // X : l = 360 : C
+                correct1 = 'x';
+                correct2 = currentProblem.arc.toString();
+                correct3 = '360';
+                correct4 = currentProblem.circumference.toString();
+            } else {
+                // α : l = 360 : X (quando cerchiamo C)
+                correct1 = currentProblem.alpha.toString();
+                correct2 = currentProblem.arc.toString();
+                correct3 = '360';
+                correct4 = 'x'; // Qui X rappresenta la circonferenza incognita
+            }
+            
+            // Normalizza input per confronto (più flessibile)
+            const normalize = (str) => str.toLowerCase().replace(/\s/g, '').replace(/α/g, 'alpha');
+            
+            let allCorrect = true;
+            
+            // Funzione helper per verificare se un valore rappresenta l'incognita
+            const isUnknown = (value, expectedValue, unknownVar) => {
+                const normalizedValue = normalize(value);
+                const normalizedExpected = normalize(expectedValue);
+                
+                // Accetta 'x', la variabile stessa, o il valore atteso
+                if (expectedValue.toLowerCase() === 'x') {
+                    return normalizedValue === 'x' || 
+                           normalizedValue === normalize(unknownVar) ||
+                           normalizedValue === normalizedExpected;
+                }
+                return normalizedValue === normalizedExpected;
+            };
+            
+            // Verifica ogni termine
+            if (!isUnknown(term1, correct1, currentProblem.unknown === 'α' ? 'α' : correct1)) {
+                document.getElementById('term1').className = 'input-box incorrect';
+                allCorrect = false;
+            } else {
+                document.getElementById('term1').className = 'input-box correct';
+            }
+            
+            if (!isUnknown(term2, correct2, currentProblem.unknown === 'l' ? 'l' : correct2)) {
+                document.getElementById('term2').className = 'input-box incorrect';
+                allCorrect = false;
+            } else {
+                document.getElementById('term2').className = 'input-box correct';
+            }
+            
+            if (normalize(term3) !== normalize(correct3)) {
+                document.getElementById('term3').className = 'input-box incorrect';
+                allCorrect = false;
+            } else {
+                document.getElementById('term3').className = 'input-box correct';
+            }
+            
+            if (!isUnknown(term4, correct4, currentProblem.unknown === 'C' ? 'C' : correct4)) {
+                document.getElementById('term4').className = 'input-box incorrect';
+                allCorrect = false;
+            } else {
+                document.getElementById('term4').className = 'input-box correct';
+            }
+            
+            if (allCorrect) {
+                feedback.className = 'feedback correct';
+                feedback.textContent = '✅ Perfetto! La proporzione è corretta. Ora passa alla Fase 2.';
+                feedback.style.display = 'block';
+                phase1Completed = true;
+                stats.phase1Correct++;
+                
+                // Mostra Fase 2 dopo un breve ritardo
+                setTimeout(() => {
+                    document.getElementById('phase2').style.display = 'block';
+                    document.getElementById('phase1').querySelector('.button-container').style.display = 'none';
+                }, 1500);
+            } else {
+                feedback.className = 'feedback incorrect';
+                feedback.textContent = '❌ Non corretto. Ricontrolla i valori nella proporzione.';
+                feedback.style.display = 'block';
+                
+                // Mostra suggerimento
+                document.getElementById('phase1Hint').textContent = 
+                    `Ricorda: α : l = 360° : C - Inserisci i valori noti e X per il valore da trovare`;
+                document.getElementById('phase1Hint').style.display = 'block';
+            }
+        }
+
+        // Mostra soluzione Fase 1
+        function showPhase1Solution() {
+            if (currentProblem.unknown === 'l') {
+                document.getElementById('term1').value = currentProblem.alpha;
+                document.getElementById('term2').value = 'X';
+                document.getElementById('term3').value = '360';
+                document.getElementById('term4').value = currentProblem.circumference;
+            } else if (currentProblem.unknown === 'α') {
+                document.getElementById('term1').value = 'X';
+                document.getElementById('term2').value = currentProblem.arc;
+                document.getElementById('term3').value = '360';
+                document.getElementById('term4').value = currentProblem.circumference;
+            } else {
+                document.getElementById('term1').value = currentProblem.alpha;
+                document.getElementById('term2').value = currentProblem.arc;
+                document.getElementById('term3').value = '360';
+                document.getElementById('term4').value = 'X';
+            }
+            
+            ['term1', 'term2', 'term3', 'term4'].forEach(id => {
+                document.getElementById(id).className = 'input-box correct';
+            });
+            
+            phase1Completed = true;
+            document.getElementById('phase2').style.display = 'block';
+            document.getElementById('phase1').querySelector('.button-container').style.display = 'none';
+        }
+
+        // Verifica Fase 2
+        function checkPhase2() {
+            const formulaInput = document.getElementById('formulaInput').value.trim();
+            const feedback = document.getElementById('phase2Feedback');
+            
+            // Formula corretta in base al tipo di problema
+            let correctFormula;
+            
+            if (currentProblem.unknown === 'l') {
+                // x = α × C : 360
+                correctFormula = `x = ${currentProblem.alpha} × ${currentProblem.circumference} : 360`;
+            } else if (currentProblem.unknown === 'α') {
+                // x = l × 360 : C
+                correctFormula = `x = ${currentProblem.arc} × 360 : ${currentProblem.circumference}`;
+            } else {
+                // x = l × 360 : α
+                correctFormula = `x = ${currentProblem.arc} × 360 : ${currentProblem.alpha}`;
+            }
+            
+            // Normalizza per confronto
+            const normalize = (str) => {
+                return str.toLowerCase()
+                    .replace(/\s+/g, '')
+                    .replace(/[*x]/g, '×')
+                    .replace(/[\/÷]/g, ':');
+            };
+            
+            const userFormula = normalize(formulaInput);
+            const correct = normalize(correctFormula);
+            
+            // Verifica anche formule con ordine diverso nella moltiplicazione
+            let alternativeFormula = '';
+            if (currentProblem.unknown === 'l') {
+                alternativeFormula = normalize(`x = ${currentProblem.circumference} × ${currentProblem.alpha} : 360`);
+            } else if (currentProblem.unknown === 'α') {
+                alternativeFormula = normalize(`x = 360 × ${currentProblem.arc} : ${currentProblem.circumference}`);
+            } else {
+                alternativeFormula = normalize(`x = 360 × ${currentProblem.arc} : ${currentProblem.alpha}`);
+            }
+            
+            if (userFormula === correct || userFormula === alternativeFormula) {
+                feedback.className = 'feedback correct';
+                feedback.textContent = '✅ Eccellente! Formula corretta!';
+                feedback.style.display = 'block';
+                phase2Completed = true;
+                stats.phase2Correct++;
+                
+                // Mostra pulsante prossimo esercizio
+                document.getElementById('nextContainer').style.display = 'block';
+                
+                // Aggiorna statistiche se entrambe le fasi sono corrette
+                if (phase1Completed) {
+                    stats.correct++;
+                }
+                stats.total++;
+                updateStats();
+            } else {
+                feedback.className = 'feedback incorrect';
+                feedback.textContent = `❌ Non corretto. Riprova.`;
+                feedback.style.display = 'block';
+            }
+        }
+
+        // Mostra soluzione Fase 2
+        function showPhase2Solution() {
+            let formula;
+            
+            if (currentProblem.unknown === 'l') {
+                formula = `x = ${currentProblem.alpha} × ${currentProblem.circumference} : 360`;
+            } else if (currentProblem.unknown === 'α') {
+                formula = `x = ${currentProblem.arc} × 360 : ${currentProblem.circumference}`;
+            } else {
+                formula = `x = ${currentProblem.arc} × 360 : ${currentProblem.alpha}`;
+            }
+            
+            document.getElementById('formulaInput').value = formula;
+            
+            const feedback = document.getElementById('phase2Feedback');
+            feedback.className = 'feedback partial';
+            feedback.textContent = `📚 Formula corretta: ${formula}`;
+            feedback.style.display = 'block';
+            
+            document.getElementById('nextContainer').style.display = 'block';
+            
+            stats.total++;
+            updateStats();
+        }
+
+        // Prossimo esercizio
+        function nextExercise() {
+            generateNewProblem();
+        }
+
+        // Aggiorna statistiche
+        function updateStats() {
+            document.getElementById('totalExercises').textContent = stats.total;
+            document.getElementById('correctExercises').textContent = stats.correct;
+            
+            const percentage = stats.total > 0 
+                ? Math.round((stats.correct / stats.total) * 100) 
+                : 0;
+            document.getElementById('percentage').textContent = percentage + '%';
+        }
+
+        // Inizializza quando la pagina è pronta
+        document.addEventListener('DOMContentLoaded', init);
+
+        // Gestione tasti Enter
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                if (!phase1Completed) {
+                    checkPhase1();
+                } else if (!phase2Completed && document.getElementById('phase2').style.display !== 'none') {
+                    checkPhase2();
+                } else if (phase2Completed) {
+                    nextExercise();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
