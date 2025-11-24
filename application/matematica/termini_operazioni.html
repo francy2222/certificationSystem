@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I Termini delle 4 Operazioni</title>
+    <!-- Sistema di Certificazione -->
+    <script src="https://certificationsystem.netlify.app/certification-system.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: 1.6em;
+        }
+
+        .level-indicator {
+            text-align: center;
+            color: #ffd700;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .level-description {
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            font-size: 0.95em;
+            margin-bottom: 15px;
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .score-item {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+
+        /* Level selector */
+        .level-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .level-btn {
+            background: rgba(255,255,255,0.3);
+            color: white;
+            border: 2px solid transparent;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .level-btn:hover {
+            background: rgba(255,255,255,0.4);
+        }
+
+        .level-btn.active {
+            background: #ffd700;
+            color: #333;
+            border-color: #ffd700;
+        }
+
+        .level-btn.completed {
+            background: #28a745;
+            border-color: #28a745;
+        }
+
+        /* Zona termini trascinabili */
+        .terms-zone {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        .terms-title {
+            text-align: center;
+            color: #555;
+            margin-bottom: 12px;
+            font-size: 0.9em;
+        }
+
+        .terms-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .term-btn {
+            background: linear-gradient(145deg, #4facfe, #00f2fe);
+            color: white;
+            border: none;
+            padding: 9px 14px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: grab;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+            user-select: none;
+        }
+
+        .term-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.5);
+        }
+
+        .term-btn.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+
+        .term-btn.used {
+            background: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Zona operazioni */
+        .operations-zone {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        .operation-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .operation-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .op-label {
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.8em;
+            min-width: 110px;
+            text-align: center;
+        }
+
+        .op-label-drop {
+            min-width: 130px;
+            height: 38px;
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            color: #888;
+            background: white;
+            transition: all 0.3s;
+        }
+
+        .number-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .number {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+            min-width: 45px;
+            text-align: center;
+        }
+
+        .operator {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .drop-zone {
+            min-width: 100px;
+            height: 36px;
+            border: 3px dashed #aaa;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            color: #888;
+            background: white;
+            transition: all 0.3s;
+        }
+
+        .drop-zone.drag-over,
+        .op-label-drop.drag-over {
+            border-color: #4facfe;
+            background: #e8f4ff;
+        }
+
+        .drop-zone.filled,
+        .op-label-drop.filled {
+            border: 3px solid #4facfe;
+            background: linear-gradient(145deg, #4facfe, #00f2fe);
+            color: white;
+            font-weight: bold;
+        }
+
+        .drop-zone.correct,
+        .op-label-drop.correct {
+            border-color: #28a745;
+            background: linear-gradient(145deg, #28a745, #20c997);
+        }
+
+        .drop-zone.wrong,
+        .op-label-drop.wrong {
+            animation: shake 0.5s;
+            border-color: #dc3545;
+            background: linear-gradient(145deg, #dc3545, #ff6b6b);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+
+        /* Feedback message */
+        .feedback {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 25px 40px;
+            border-radius: 20px;
+            font-size: 1.3em;
+            font-weight: bold;
+            z-index: 1000;
+            display: none;
+            text-align: center;
+        }
+
+        .feedback.error {
+            background: linear-gradient(145deg, #dc3545, #ff6b6b);
+            color: white;
+            box-shadow: 0 10px 40px rgba(220, 53, 69, 0.5);
+        }
+
+        .feedback.success {
+            background: linear-gradient(145deg, #28a745, #20c997);
+            color: white;
+            box-shadow: 0 10px 40px rgba(40, 167, 69, 0.5);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+        }
+
+        /* Bottoni azione */
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            background: linear-gradient(145deg, #ffd700, #ffaa00);
+            color: #333;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 20px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .action-btn.next-level {
+            background: linear-gradient(145deg, #28a745, #20c997);
+            color: white;
+            display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .number { font-size: 1.4em; min-width: 35px; }
+            .operator { font-size: 1.4em; }
+            .drop-zone { min-width: 85px; height: 32px; font-size: 0.75em; }
+            .op-label-drop { min-width: 110px; height: 34px; }
+            .term-btn { padding: 7px 11px; font-size: 0.82em; }
+            .op-label { min-width: 95px; font-size: 0.75em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔢 I Termini delle 4 Operazioni</h1>
+        
+        <div class="level-selector">
+            <button class="level-btn active" onclick="setLevel(1)">Livello 1</button>
+            <button class="level-btn" onclick="setLevel(2)">Livello 2</button>
+            <button class="level-btn" onclick="setLevel(3)">Livello 3</button>
+            <button class="level-btn" onclick="setLevel(4)">Livello 4</button>
+        </div>
+
+        <div class="level-indicator" id="level-title">Livello 1: Nomi delle Operazioni</div>
+        <div class="level-description" id="level-desc">Trascina il nome corretto di ogni operazione</div>
+        
+        <div class="score-board">
+            <div class="score-item">✅ Corrette: <span id="correct-count">0</span></div>
+            <div class="score-item">❌ Errori: <span id="error-count">0</span></div>
+        </div>
+
+        <div class="terms-zone">
+            <div class="terms-title">Trascina i termini nelle caselle corrette:</div>
+            <div class="terms-container" id="terms-container"></div>
+        </div>
+
+        <div class="operations-zone" id="operations-zone"></div>
+
+        <div class="action-buttons">
+            <button class="action-btn" onclick="initGame()">🔄 Ricomincia</button>
+            <button class="action-btn next-level" id="next-level-btn" onclick="nextLevel()">➡️ Livello Successivo</button>
+        </div>
+
+        <!-- Pannello Certificazione -->
+        <div id="certificatePanel" style="margin-top: 20px;"></div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+    <div class="feedback" id="feedback"></div>
+
+    <script>
+        //#region Configurazione Livelli
+        const LEVELS = {
+            1: {
+                title: "Livello 1: Nomi delle Operazioni",
+                description: "Trascina il nome corretto di ogni operazione",
+                terms: ['addizione', 'sottrazione', 'moltiplicazione', 'divisione'],
+                mode: 'operation-names'
+            },
+            2: {
+                title: "Livello 2: I Risultati",
+                description: "Come si chiama il risultato di ogni operazione?",
+                terms: ['somma', 'differenza', 'prodotto', 'quoziente'],
+                mode: 'results'
+            },
+            3: {
+                title: "Livello 3: I Termini",
+                description: "Come si chiamano i numeri in ogni operazione?",
+                terms: ['addendo', 'minuendo', 'sottraendo', 'dividendo', 'divisore', 'fattore'],
+                mode: 'operands'
+            },
+            4: {
+                title: "Livello 4: Tutto Insieme!",
+                description: "Metti alla prova tutto ciò che hai imparato",
+                terms: ['addizione', 'sottrazione', 'moltiplicazione', 'divisione',
+                        'addendo', 'minuendo', 'sottraendo', 'dividendo', 'divisore', 'fattore',
+                        'somma', 'differenza', 'prodotto', 'quoziente'],
+                mode: 'all'
+            }
+        };
+
+        const OPERATIONS_DATA = [
+            {
+                type: 'addizione',
+                symbol: '+',
+                operand1: 'addendo',
+                operand2: 'addendo',
+                result: 'somma',
+                generate: () => {
+                    const a = Math.floor(Math.random() * 20) + 1;
+                    const b = Math.floor(Math.random() * 20) + 1;
+                    return { a, b, r: a + b };
+                }
+            },
+            {
+                type: 'sottrazione',
+                symbol: '−',
+                operand1: 'minuendo',
+                operand2: 'sottraendo',
+                result: 'differenza',
+                generate: () => {
+                    const a = Math.floor(Math.random() * 20) + 10;
+                    const b = Math.floor(Math.random() * a) + 1;
+                    return { a, b, r: a - b };
+                }
+            },
+            {
+                type: 'moltiplicazione',
+                symbol: '×',
+                operand1: 'fattore',
+                operand2: 'fattore',
+                result: 'prodotto',
+                generate: () => {
+                    const a = Math.floor(Math.random() * 10) + 1;
+                    const b = Math.floor(Math.random() * 10) + 1;
+                    return { a, b, r: a * b };
+                }
+            },
+            {
+                type: 'divisione',
+                symbol: ':',
+                operand1: 'dividendo',
+                operand2: 'divisore',
+                result: 'quoziente',
+                generate: () => {
+                    const b = Math.floor(Math.random() * 9) + 2;
+                    const r = Math.floor(Math.random() * 10) + 1;
+                    return { a: b * r, b, r };
+                }
+            }
+        ];
+        //#endregion
+
+        //#region Stato Applicazione
+        let currentLevel = 1;
+        let correctCount = 0;
+        let errorCount = 0;
+        let currentDrag = null;
+        let completedLevels = new Set();
+        let certSystem = null;
+        //#endregion
+
+        //#region Sistema di Certificazione
+        function initCertSystem() {
+            certSystem = new CertificationSystem({
+                appName: 'Termini delle 4 Operazioni',
+                appVersion: '1.0.0',
+                storageKey: 'termini_operazioni_v1',
+                certUrl: 'https://certificationsystem.netlify.app/',
+                fields: [
+                    { key: 'livelli', label: 'Livelli Completati', showZero: false },
+                    { key: 'corrette', label: 'Risposte Corrette', showZero: false },
+                    { key: 'errori', label: 'Errori Totali', showZero: true }
+                ],
+                onReset: () => {
+                    currentLevel = 1;
+                    correctCount = 0;
+                    errorCount = 0;
+                    completedLevels.clear();
+                    updateLevelButtons();
+                    initGame();
+                }
+            });
+
+            certSystem.renderFullPanel('certificatePanel', {
+                collapsible: true,
+                showClassroomToggle: false,
+                showVerificationToggle: false
+            });
+        }
+        //#endregion
+
+        //#region Utility Functions
+        function shuffle(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function showFeedback(message, type, callback) {
+            const overlay = document.getElementById('overlay');
+            const feedback = document.getElementById('feedback');
+            
+            feedback.textContent = message;
+            feedback.className = 'feedback ' + type;
+            overlay.style.display = 'block';
+            feedback.style.display = 'block';
+
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                feedback.style.display = 'none';
+                if (callback) callback();
+            }, 1500);
+        }
+
+        function checkWin() {
+            const allDropZones = document.querySelectorAll('.drop-zone, .op-label-drop');
+            const allCorrect = Array.from(allDropZones).every(zone => zone.classList.contains('correct'));
+            
+            if (allCorrect) {
+                completedLevels.add(currentLevel);
+                updateLevelButtons();
+                
+                // Aggiorna certificazione
+                if (certSystem) {
+                    certSystem.setField('livelli', completedLevels.size);
+                }
+                
+                setTimeout(() => {
+                    if (currentLevel < 4) {
+                        document.getElementById('next-level-btn').style.display = 'inline-block';
+                        showFeedback('🎉 Ottimo! Livello completato!', 'success');
+                    } else {
+                        showFeedback('🏆 Fantastico! Hai completato tutti i livelli!', 'success');
+                    }
+                }, 300);
+            }
+        }
+
+        function updateLevelButtons() {
+            document.querySelectorAll('.level-btn').forEach((btn, index) => {
+                const level = index + 1;
+                btn.classList.remove('active', 'completed');
+                if (level === currentLevel) {
+                    btn.classList.add('active');
+                }
+                if (completedLevels.has(level)) {
+                    btn.classList.add('completed');
+                }
+            });
+        }
+        //#endregion
+
+        //#region Drag & Drop Handlers
+        function handleDragStart(e) {
+            currentDrag = e.target;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', e.target.dataset.term);
+        }
+
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            currentDrag = null;
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const dropZone = e.currentTarget;
+            dropZone.classList.remove('drag-over');
+
+            if (dropZone.classList.contains('correct')) return;
+
+            const droppedTerm = e.dataTransfer.getData('text/plain');
+            const expectedTerm = dropZone.dataset.expected;
+
+            dropZone.textContent = droppedTerm;
+            dropZone.classList.add('filled');
+
+            if (droppedTerm === expectedTerm) {
+                dropZone.classList.add('correct');
+                correctCount++;
+                document.getElementById('correct-count').textContent = correctCount;
+                
+                // Aggiorna certificazione - risposta corretta
+                if (certSystem) {
+                    certSystem.incrementField('corrette');
+                }
+                
+                if (currentDrag) {
+                    currentDrag.classList.add('used');
+                    currentDrag.draggable = false;
+                }
+                
+                checkWin();
+            } else {
+                dropZone.classList.add('wrong');
+                errorCount++;
+                document.getElementById('error-count').textContent = errorCount;
+                
+                // Aggiorna certificazione - errore
+                if (certSystem) {
+                    certSystem.incrementField('errori');
+                }
+                
+                setTimeout(() => {
+                    showFeedback('❌ Sbagliato! Ricominciamo...', 'error', initGame);
+                }, 500);
+            }
+        }
+
+        // Touch support
+        function handleTouchStart(e) {
+            currentDrag = e.target;
+            e.target.classList.add('dragging');
+        }
+
+        function handleTouchEnd(e) {
+            if (!currentDrag) return;
+            
+            const touch = e.changedTouches[0];
+            const dropZone = document.elementFromPoint(touch.clientX, touch.clientY);
+            
+            if (dropZone && (dropZone.classList.contains('drop-zone') || dropZone.classList.contains('op-label-drop')) 
+                && !dropZone.classList.contains('correct')) {
+                
+                const droppedTerm = currentDrag.dataset.term;
+                const expectedTerm = dropZone.dataset.expected;
+
+                dropZone.textContent = droppedTerm;
+                dropZone.classList.add('filled');
+
+                if (droppedTerm === expectedTerm) {
+                    dropZone.classList.add('correct');
+                    correctCount++;
+                    document.getElementById('correct-count').textContent = correctCount;
+                    currentDrag.classList.add('used');
+                    currentDrag.draggable = false;
+                    
+                    // Aggiorna certificazione - risposta corretta
+                    if (certSystem) {
+                        certSystem.incrementField('corrette');
+                    }
+                    
+                    checkWin();
+                } else {
+                    dropZone.classList.add('wrong');
+                    errorCount++;
+                    document.getElementById('error-count').textContent = errorCount;
+                    
+                    // Aggiorna certificazione - errore
+                    if (certSystem) {
+                        certSystem.incrementField('errori');
+                    }
+                    
+                    setTimeout(() => {
+                        showFeedback('❌ Sbagliato! Ricominciamo...', 'error', initGame);
+                    }, 500);
+                }
+            }
+            
+            currentDrag.classList.remove('dragging');
+            currentDrag = null;
+        }
+
+        function addDropListeners(element) {
+            element.addEventListener('dragover', handleDragOver);
+            element.addEventListener('dragleave', handleDragLeave);
+            element.addEventListener('drop', handleDrop);
+        }
+        //#endregion
+
+        //#region Creazione UI
+        function createTermButtons() {
+            const container = document.getElementById('terms-container');
+            container.innerHTML = '';
+            
+            const levelConfig = LEVELS[currentLevel];
+            // IMPORTANTE: mescola i termini in ordine casuale
+            const shuffledTerms = shuffle([...levelConfig.terms]);
+
+            shuffledTerms.forEach(term => {
+                const btn = document.createElement('button');
+                btn.className = 'term-btn';
+                btn.textContent = term;
+                btn.dataset.term = term;
+                btn.draggable = true;
+                
+                btn.addEventListener('dragstart', handleDragStart);
+                btn.addEventListener('dragend', handleDragEnd);
+                btn.addEventListener('touchstart', handleTouchStart, { passive: true });
+                btn.addEventListener('touchend', handleTouchEnd);
+                
+                container.appendChild(btn);
+            });
+        }
+
+        function createOperations() {
+            const container = document.getElementById('operations-zone');
+            container.innerHTML = '';
+            
+            const levelConfig = LEVELS[currentLevel];
+            const mode = levelConfig.mode;
+            const shuffledOps = shuffle(OPERATIONS_DATA);
+
+            shuffledOps.forEach(op => {
+                const values = op.generate();
+                const row = document.createElement('div');
+                row.className = 'operation-row';
+
+                // Per addizione e moltiplicazione (termini uguali), scegliamo casualmente quale mostrare
+                const hasSameTerms = (op.operand1 === op.operand2);
+                const showFirst = hasSameTerms ? Math.random() < 0.5 : true;
+                const showSecond = hasSameTerms ? !showFirst : true;
+
+                // Label operazione (o drop zone per livello 1 e 4)
+                if (mode === 'operation-names' || mode === 'all') {
+                    const labelDrop = document.createElement('div');
+                    labelDrop.className = 'op-label-drop';
+                    labelDrop.dataset.expected = op.type;
+                    labelDrop.textContent = '?';
+                    addDropListeners(labelDrop);
+                    row.appendChild(labelDrop);
+                } else {
+                    const label = document.createElement('span');
+                    label.className = 'op-label';
+                    label.textContent = op.type.toUpperCase();
+                    row.appendChild(label);
+                }
+
+                // Primo operando
+                const wrapper1 = document.createElement('div');
+                wrapper1.className = 'number-wrapper';
+                
+                if ((mode === 'operands' || mode === 'all') && showFirst) {
+                    const drop1 = document.createElement('div');
+                    drop1.className = 'drop-zone';
+                    drop1.dataset.expected = op.operand1;
+                    drop1.textContent = '?';
+                    addDropListeners(drop1);
+                    wrapper1.appendChild(drop1);
+                }
+                
+                const num1 = document.createElement('span');
+                num1.className = 'number';
+                num1.textContent = values.a;
+                wrapper1.appendChild(num1);
+                row.appendChild(wrapper1);
+
+                // Operatore
+                const operator = document.createElement('span');
+                operator.className = 'operator';
+                operator.textContent = op.symbol;
+                row.appendChild(operator);
+
+                // Secondo operando
+                const wrapper2 = document.createElement('div');
+                wrapper2.className = 'number-wrapper';
+                
+                if ((mode === 'operands' || mode === 'all') && showSecond) {
+                    const drop2 = document.createElement('div');
+                    drop2.className = 'drop-zone';
+                    drop2.dataset.expected = op.operand2;
+                    drop2.textContent = '?';
+                    addDropListeners(drop2);
+                    wrapper2.appendChild(drop2);
+                }
+                
+                const num2 = document.createElement('span');
+                num2.className = 'number';
+                num2.textContent = values.b;
+                wrapper2.appendChild(num2);
+                row.appendChild(wrapper2);
+
+                // Uguale
+                const equals = document.createElement('span');
+                equals.className = 'operator';
+                equals.textContent = '=';
+                row.appendChild(equals);
+
+                // Risultato
+                const wrapper3 = document.createElement('div');
+                wrapper3.className = 'number-wrapper';
+                
+                if (mode === 'results' || mode === 'all') {
+                    const drop3 = document.createElement('div');
+                    drop3.className = 'drop-zone';
+                    drop3.dataset.expected = op.result;
+                    drop3.textContent = '?';
+                    addDropListeners(drop3);
+                    wrapper3.appendChild(drop3);
+                }
+                
+                const num3 = document.createElement('span');
+                num3.className = 'number';
+                num3.textContent = values.r;
+                wrapper3.appendChild(num3);
+                row.appendChild(wrapper3);
+
+                container.appendChild(row);
+            });
+        }
+        //#endregion
+
+        //#region Game Control
+        function setLevel(level) {
+            currentLevel = level;
+            document.getElementById('next-level-btn').style.display = 'none';
+            updateLevelButtons();
+            initGame();
+        }
+
+        function nextLevel() {
+            if (currentLevel < 4) {
+                setLevel(currentLevel + 1);
+            }
+        }
+
+        function initGame() {
+            correctCount = 0;
+            errorCount = 0;
+            document.getElementById('correct-count').textContent = '0';
+            document.getElementById('error-count').textContent = '0';
+            document.getElementById('next-level-btn').style.display = 'none';
+            
+            const levelConfig = LEVELS[currentLevel];
+            document.getElementById('level-title').textContent = levelConfig.title;
+            document.getElementById('level-desc').textContent = levelConfig.description;
+            
+            createTermButtons();
+            createOperations();
+            updateLevelButtons();
+        }
+        //#endregion
+
+        // Avvio
+        document.addEventListener('DOMContentLoaded', () => {
+            initCertSystem();
+            initGame();
+        });
+    </script>
+</body>
+</html>
