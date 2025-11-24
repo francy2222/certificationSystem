@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maestro delle Proprietà Matematiche</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&family=Fredoka:wght@300;400;600;700&display=swap');
+        
+        :root {
+            --primary: #ff6b35;
+            --secondary: #004e89;
+            --accent: #ffd23f;
+            --success: #3dd56d;
+            --error: #ff3c38;
+            --bg-light: #f7f4f1;
+            --bg-card: #ffffff;
+            --text: #2d3436;
+            --shadow: 0 8px 32px rgba(0, 78, 137, 0.15);
+            --radius: 20px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Elementi decorativi di sfondo */
+        .bg-decoration {
+            position: fixed;
+            pointer-events: none;
+            opacity: 0.1;
+            font-size: 200px;
+            color: white;
+            animation: float 20s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        .bg-decoration:nth-child(1) {
+            top: 10%;
+            left: 5%;
+            animation-delay: 0s;
+        }
+
+        .bg-decoration:nth-child(2) {
+            top: 60%;
+            right: 10%;
+            animation-delay: 5s;
+        }
+
+        .bg-decoration:nth-child(3) {
+            top: 30%;
+            right: 20%;
+            animation-delay: 10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(10deg); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 3em;
+            color: white;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+            margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.2em;
+            font-weight: 300;
+        }
+
+        /* Control Bar */
+        .control-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .timer-display {
+            font-size: 1.3em;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .student-info-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .student-badge {
+            padding: 8px 15px;
+            background: var(--bg-light);
+            border-radius: 8px;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .student-badge.registered {
+            background: var(--success);
+            color: white;
+        }
+
+        /* Menu operazioni */
+        .operations-menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .operation-btn {
+            background: white;
+            border: none;
+            padding: 25px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .operation-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+
+        .operation-btn:hover::before {
+            transform: translateX(100%);
+        }
+
+        .operation-btn:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .operation-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+        }
+
+        .operation-icon {
+            font-size: 3em;
+            margin-bottom: 5px;
+        }
+
+        .operation-name {
+            font-size: 1.2em;
+            font-weight: 600;
+        }
+
+        /* Area principale */
+        .main-content {
+            background: white;
+            border-radius: var(--radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            min-height: 500px;
+            animation: slideUp 0.6s ease-out 0.4s both;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Sezione proprietà */
+        .property-section {
+            display: none;
+        }
+
+        .property-section.active {
+            display: block;
+            animation: fadeInScale 0.4s ease-out;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .property-tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .property-tab {
+            padding: 12px 24px;
+            background: var(--bg-light);
+            border: 2px solid transparent;
+            border-radius: 15px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .property-tab:hover {
+            background: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .property-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Area esercizio */
+        .exercise-area {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .exercise-title {
+            font-size: 1.5em;
+            color: var(--secondary);
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .exercise-problem {
+            font-size: 2em;
+            color: var(--text);
+            margin-bottom: 25px;
+            font-family: 'Kalam', cursive;
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-area {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .answer-input {
+            padding: 15px 20px;
+            font-size: 1.5em;
+            border: 3px solid #ddd;
+            border-radius: 12px;
+            width: 300px;
+            text-align: center;
+            font-family: 'Kalam', cursive;
+            transition: all 0.3s ease;
+        }
+
+        .answer-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
+        }
+
+        .check-btn, .solution-btn {
+            padding: 15px 35px;
+            font-size: 1.2em;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .solution-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+        }
+
+        .check-btn:hover, .solution-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
+        }
+
+        .check-btn:active, .solution-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Feedback */
+        .feedback {
+            text-align: center;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: 500;
+            opacity: 0;
+            transform: scale(0.9);
+            animation: feedbackPop 0.5s ease-out forwards;
+        }
+
+        @keyframes feedbackPop {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .feedback.success {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            color: #00695c;
+        }
+
+        .feedback.error {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            color: #c62828;
+        }
+
+        .feedback.solution {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #2d3436;
+        }
+
+        /* Calcolatrice */
+        .calculator-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .calculator-toggle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5em;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            }
+        }
+
+        .calculator-toggle:hover {
+            transform: rotate(15deg) scale(1.1);
+        }
+
+        .calculator {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            background: white;
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            display: none;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        .calculator.open {
+            display: block;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .calc-display {
+            background: var(--bg-light);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.8em;
+            text-align: right;
+            margin-bottom: 15px;
+            min-height: 50px;
+            font-family: 'Courier New', monospace;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .calc-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .calc-btn {
+            padding: 20px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 10px;
+            background: var(--bg-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 600;
+        }
+
+        .calc-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .calc-btn:active {
+            transform: scale(0.95);
+        }
+
+        .calc-btn.operator {
+            background: var(--accent);
+            color: var(--secondary);
+        }
+
+        .calc-btn.equals {
+            background: var(--success);
+            color: white;
+            grid-column: span 2;
+        }
+
+        .calc-btn.clear {
+            background: var(--error);
+            color: white;
+        }
+
+        /* Welcome screen */
+        .welcome-screen {
+            text-align: center;
+            padding: 60px 20px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .welcome-title {
+            font-size: 2.5em;
+            color: var(--secondary);
+            margin-bottom: 20px;
+        }
+
+        .welcome-text {
+            font-size: 1.2em;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .emoji-big {
+            font-size: 4em;
+            margin: 20px 0;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            
+            .operations-menu {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .calculator-container {
+                position: fixed;
+                bottom: 10px;
+                right: 10px;
+            }
+            
+            .exercise-problem {
+                font-size: 1.5em;
+            }
+            
+            .answer-input {
+                width: 200px;
+                font-size: 1.2em;
+            }
+            
+            .control-bar {
+                justify-content: center;
+            }
+        }
+
+        /* Animazione stelle per feedback positivo */
+        @keyframes starBurst {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2) rotate(180deg);
+                opacity: 0;
+            }
+        }
+
+        .star-burst {
+            position: absolute;
+            font-size: 2em;
+            animation: starBurst 1s ease-out;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Decorazioni di sfondo -->
+    <div class="bg-decoration">+</div>
+    <div class="bg-decoration">×</div>
+    <div class="bg-decoration">=</div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Maestro delle Proprietà Matematiche</h1>
+            <p class="subtitle">Esplora e padroneggia le proprietà delle operazioni!</p>
+        </div>
+
+        <!-- Control Bar -->
+        <div class="control-bar">
+            <div class="timer-display">⏱️ <span id="timer">00:00</span></div>
+            <div class="student-info-bar">
+                <span class="student-badge" id="studentBadge">👤 Non registrato</span>
+                <button class="btn-small" onclick="promptStudent()" style="padding: 8px 15px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer;">
+                    📝 Registra
+                </button>
+            </div>
+        </div>
+
+        <!-- Menu operazioni -->
+        <div class="operations-menu">
+            <button class="operation-btn" onclick="selectOperation('addition')">
+                <span class="operation-icon">➕</span>
+                <span class="operation-name">Addizione</span>
+            </button>
+            <button class="operation-btn" onclick="selectOperation('subtraction')">
+                <span class="operation-icon">➖</span>
+                <span class="operation-name">Sottrazione</span>
+            </button>
+            <button class="operation-btn" onclick="selectOperation('multiplication')">
+                <span class="operation-icon">✖️</span>
+                <span class="operation-name">Moltiplicazione</span>
+            </button>
+            <button class="operation-btn" onclick="selectOperation('division')">
+                <span class="operation-icon">➗</span>
+                <span class="operation-name">Divisione</span>
+            </button>
+        </div>
+
+        <!-- Area principale -->
+        <div class="main-content">
+            <!-- Schermata di benvenuto -->
+            <div id="welcomeScreen" class="welcome-screen">
+                <div class="emoji-big">🎓</div>
+                <h2 class="welcome-title">Benvenuto!</h2>
+                <p class="welcome-text">
+                    Seleziona un'operazione dal menu sopra per iniziare ad esplorare le proprietà matematiche.<br>
+                    Risolvi gli esercizi per guadagnare punti e ottenere il tuo certificato!<br><br>
+                    <strong>Suggerimento:</strong> Usa la calcolatrice 🧮 in basso a destra se hai bisogno di aiuto nei calcoli!
+                </p>
+            </div>
+
+            <!-- Sezione Addizione -->
+            <div id="addition" class="property-section">
+                <div class="property-tabs">
+                    <button class="property-tab" onclick="selectProperty('addition', 'associativa')">Proprietà Associativa</button>
+                    <button class="property-tab" onclick="selectProperty('addition', 'dissociativa')">Proprietà Dissociativa</button>
+                    <button class="property-tab" onclick="selectProperty('addition', 'commutativa')">Proprietà Commutativa</button>
+                </div>
+                <div id="additionExercise" class="exercise-area" style="display: none;">
+                    <h3 class="exercise-title">Applica la proprietà <span id="additionPropertyName"></span></h3>
+                    <div class="exercise-problem" id="additionProblem"></div>
+                    <div class="input-area">
+                        <input type="text" class="answer-input" id="additionAnswer" placeholder="Scrivi la tua risposta">
+                        <button class="check-btn" onclick="checkAnswer('addition')">Verifica!</button>
+                        <button class="solution-btn" onclick="showSolution('addition')">💡 Soluzione</button>
+                    </div>
+                    <div id="additionFeedback"></div>
+                </div>
+            </div>
+
+            <!-- Sezione Sottrazione -->
+            <div id="subtraction" class="property-section">
+                <div class="property-tabs">
+                    <button class="property-tab" onclick="selectProperty('subtraction', 'invariantiva')">Proprietà Invariantiva</button>
+                </div>
+                <div id="subtractionExercise" class="exercise-area" style="display: none;">
+                    <h3 class="exercise-title">Applica la proprietà invariantiva</h3>
+                    <div class="exercise-problem" id="subtractionProblem"></div>
+                    <div class="input-area">
+                        <input type="text" class="answer-input" id="subtractionAnswer" placeholder="Scrivi la tua risposta">
+                        <button class="check-btn" onclick="checkAnswer('subtraction')">Verifica!</button>
+                        <button class="solution-btn" onclick="showSolution('subtraction')">💡 Soluzione</button>
+                    </div>
+                    <div id="subtractionFeedback"></div>
+                </div>
+            </div>
+
+            <!-- Sezione Moltiplicazione -->
+            <div id="multiplication" class="property-section">
+                <div class="property-tabs">
+                    <button class="property-tab" onclick="selectProperty('multiplication', 'associativa')">Proprietà Associativa</button>
+                    <button class="property-tab" onclick="selectProperty('multiplication', 'dissociativa')">Proprietà Dissociativa</button>
+                    <button class="property-tab" onclick="selectProperty('multiplication', 'commutativa')">Proprietà Commutativa</button>
+                    <button class="property-tab" onclick="selectProperty('multiplication', 'distributiva')">Proprietà Distributiva</button>
+                </div>
+                <div id="multiplicationExercise" class="exercise-area" style="display: none;">
+                    <h3 class="exercise-title">Applica la proprietà <span id="multiplicationPropertyName"></span></h3>
+                    <div class="exercise-problem" id="multiplicationProblem"></div>
+                    <div class="input-area">
+                        <input type="text" class="answer-input" id="multiplicationAnswer" placeholder="Scrivi la tua risposta">
+                        <button class="check-btn" onclick="checkAnswer('multiplication')">Verifica!</button>
+                        <button class="solution-btn" onclick="showSolution('multiplication')">💡 Soluzione</button>
+                    </div>
+                    <div id="multiplicationFeedback"></div>
+                </div>
+            </div>
+
+            <!-- Sezione Divisione -->
+            <div id="division" class="property-section">
+                <div class="property-tabs">
+                    <button class="property-tab" onclick="selectProperty('division', 'invariantiva')">Proprietà Invariantiva</button>
+                    <button class="property-tab" onclick="selectProperty('division', 'distributiva')">Proprietà Distributiva</button>
+                </div>
+                <div id="divisionExercise" class="exercise-area" style="display: none;">
+                    <h3 class="exercise-title">Applica la proprietà <span id="divisionPropertyName"></span></h3>
+                    <div class="exercise-problem" id="divisionProblem"></div>
+                    <div class="input-area">
+                        <input type="text" class="answer-input" id="divisionAnswer" placeholder="Scrivi la tua risposta">
+                        <button class="check-btn" onclick="checkAnswer('division')">Verifica!</button>
+                        <button class="solution-btn" onclick="showSolution('division')">💡 Soluzione</button>
+                    </div>
+                    <div id="divisionFeedback"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pannello Certificato -->
+        <div id="certificatePanel" style="margin-top: 30px;"></div>
+    </div>
+
+    <!-- Calcolatrice -->
+    <div class="calculator-container">
+        <button class="calculator-toggle" onclick="toggleCalculator()">🧮</button>
+        <div class="calculator" id="calculator">
+            <div class="calc-display" id="calcDisplay">0</div>
+            <div class="calc-buttons">
+                <button class="calc-btn clear" onclick="clearCalc()">C</button>
+                <button class="calc-btn operator" onclick="appendToCalc('/')">/</button>
+                <button class="calc-btn operator" onclick="appendToCalc('*')">×</button>
+                <button class="calc-btn operator" onclick="deleteLastCalc()">←</button>
+                
+                <button class="calc-btn" onclick="appendToCalc('7')">7</button>
+                <button class="calc-btn" onclick="appendToCalc('8')">8</button>
+                <button class="calc-btn" onclick="appendToCalc('9')">9</button>
+                <button class="calc-btn operator" onclick="appendToCalc('-')">−</button>
+                
+                <button class="calc-btn" onclick="appendToCalc('4')">4</button>
+                <button class="calc-btn" onclick="appendToCalc('5')">5</button>
+                <button class="calc-btn" onclick="appendToCalc('6')">6</button>
+                <button class="calc-btn operator" onclick="appendToCalc('+')">+</button>
+                
+                <button class="calc-btn" onclick="appendToCalc('1')">1</button>
+                <button class="calc-btn" onclick="appendToCalc('2')">2</button>
+                <button class="calc-btn" onclick="appendToCalc('3')">3</button>
+                <button class="calc-btn" onclick="appendToCalc('0')">0</button>
+                
+                <button class="calc-btn equals" onclick="calculateResult()">=</button>
+                <button class="calc-btn" onclick="appendToCalc('.')">.</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sistema di Certificazione -->
+    <script src="https://certificationsystem.netlify.app/certification-system.js"></script>
+
+    <script>
+        //#region Variabili globali e stato applicazione
+        let currentOperation = null;
+        let currentProperty = null;
+        let currentProblem = null;
+        let calcDisplay = '0';
+        let calcNewNumber = true;
+        let certSystem = null;
+        //#endregion
+
+        //#region Inizializzazione Sistema di Certificazione
+        window.addEventListener('DOMContentLoaded', function() {
+            // Inizializza sistema certificazione
+            certSystem = new CertificationSystem({
+                appName: 'Proprietà delle Operazioni',
+                appVersion: '2.0.0',
+                storageKey: 'proprieta_operazioni_data',
+                certUrl: 'https://certificationsystem.netlify.app/',
+                trackFocus: true,
+                fields: [
+                    { key: 'esercizi', label: 'Esercizi Completati', showZero: false },
+                    { key: 'corretti', label: 'Risposte Corrette', showZero: false },
+                    { key: 'errori', label: 'Errori', showZero: true },
+                    { key: 'soluzioni', label: 'Soluzioni Viste', showZero: true },
+                    { key: 'punteggio', label: 'Punteggio', showZero: true }
+                ],
+                onTimerUpdate: (seconds) => {
+                    const minutes = Math.floor(seconds / 60);
+                    const secs = seconds % 60;
+                    document.getElementById('timer').textContent = 
+                        `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                },
+                onFieldUpdate: () => {
+                    // Aggiorna UI se necessario
+                    updateStudentBadge();
+                },
+                onReset: () => {
+                    updateStudentBadge();
+                }
+            });
+
+            // Render pannello certificato
+            certSystem.renderFullPanel('certificatePanel', {
+                collapsible: true,
+                showStudentControls: true,
+                showClassroomToggle: true,
+                showVerificationToggle: true
+            });
+
+            // Controlla se lo studente è già registrato
+            updateStudentBadge();
+        });
+
+        function updateStudentBadge() {
+            const info = certSystem.getStudentInfo();
+            const badge = document.getElementById('studentBadge');
+            
+            if (info && info.nome) {
+                badge.textContent = `👤 ${info.nome} ${info.cognome}`;
+                badge.classList.add('registered');
+            } else {
+                badge.textContent = '👤 Non registrato';
+                badge.classList.remove('registered');
+            }
+        }
+
+        function promptStudent() {
+            certSystem.promptStudentInfo();
+            updateStudentBadge();
+        }
+        //#endregion
+
+        //#region Gestione operazioni e proprietà
+        function selectOperation(operation) {
+            // Reset schermata di benvenuto
+            document.getElementById('welcomeScreen').style.display = 'none';
+            
+            // Reset tutte le operazioni
+            document.querySelectorAll('.property-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Reset bottoni operazioni
+            document.querySelectorAll('.operation-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Attiva operazione selezionata
+            currentOperation = operation;
+            document.getElementById(operation).classList.add('active');
+            event.target.closest('.operation-btn').classList.add('active');
+            
+            // Reset proprietà
+            document.querySelectorAll('.property-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Nascondi area esercizio
+            document.getElementById(operation + 'Exercise').style.display = 'none';
+        }
+
+        function selectProperty(operation, property) {
+            currentProperty = property;
+            
+            // Reset tabs
+            event.target.parentElement.querySelectorAll('.property-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Mostra area esercizio
+            document.getElementById(operation + 'Exercise').style.display = 'block';
+            
+            // Aggiorna nome proprietà
+            if (document.getElementById(operation + 'PropertyName')) {
+                document.getElementById(operation + 'PropertyName').textContent = property;
+            }
+            
+            // Genera nuovo problema
+            generateProblem(operation, property);
+        }
+        //#endregion
+
+        //#region Generazione problemi
+        function generateProblem(operation, property) {
+            let problem = '';
+            let solutions = [];
+            
+            if (operation === 'addition') {
+                if (property === 'associativa') {
+                    // Genera numeri semplici
+                    let a = Math.floor(Math.random() * 5) + 1;
+                    let b = Math.floor(Math.random() * 5) + 1;
+                    let c = Math.floor(Math.random() * 5) + 1;
+                    let sum = a + b + c;
+                    
+                    problem = `${a} + ${b} + ${c} = ${sum}`;
+                    
+                    // Possibili soluzioni con associativa
+                    solutions.push(`(${a}+${b})+${c}=${sum}`);
+                    solutions.push(`${a}+(${b}+${c})=${sum}`);
+                    solutions.push(`(${a+b})+${c}=${sum}`);
+                    solutions.push(`${a}+(${b+c})=${sum}`);
+                    solutions.push(`${a+b}+${c}=${sum}`);
+                    solutions.push(`${a}+${b+c}=${sum}`);
+                    
+                } else if (property === 'dissociativa') {
+                    let a = Math.floor(Math.random() * 5) + 3;
+                    let b = Math.floor(Math.random() * 10) + 5;
+                    let sum = a + b;
+                    
+                    problem = `${a} + ${b} = ${sum}`;
+                    
+                    // Generiamo scomposizioni possibili
+                    for (let i = 1; i < b; i++) {
+                        solutions.push(`${a}+${i}+${b-i}=${sum}`);
+                        solutions.push(`${a}+(${i}+${b-i})=${sum}`);
+                    }
+                    for (let i = 1; i < a; i++) {
+                        solutions.push(`${i}+${a-i}+${b}=${sum}`);
+                        solutions.push(`(${i}+${a-i})+${b}=${sum}`);
+                    }
+                    
+                } else if (property === 'commutativa') {
+                    let a = Math.floor(Math.random() * 10) + 1;
+                    let b = Math.floor(Math.random() * 10) + 1;
+                    let sum = a + b;
+                    
+                    problem = `${a} + ${b} = ${sum}`;
+                    
+                    solutions.push(`${b}+${a}=${sum}`);
+                    solutions.push(`${b}+${a}=${a+b}`);
+                }
+            } else if (operation === 'subtraction') {
+                if (property === 'invariantiva') {
+                    let a = Math.floor(Math.random() * 10) + 10;
+                    let b = Math.floor(Math.random() * 5) + 1;
+                    let diff = a - b;
+                    
+                    problem = `${a} - ${b} = ${diff}`;
+                    
+                    // Aggiungi o sottrai lo stesso numero
+                    for (let n = 1; n <= 5; n++) {
+                        solutions.push(`${a+n}-${b+n}=${diff}`);
+                        solutions.push(`(${a}+${n})-(${b}+${n})=${diff}`);
+                        if (a-n > b-n && b-n > 0) {
+                            solutions.push(`${a-n}-${b-n}=${diff}`);
+                            solutions.push(`(${a}-${n})-(${b}-${n})=${diff}`);
+                        }
+                    }
+                }
+            } else if (operation === 'multiplication') {
+                if (property === 'associativa') {
+                    let a = Math.floor(Math.random() * 3) + 2;
+                    let b = Math.floor(Math.random() * 3) + 2;
+                    let c = Math.floor(Math.random() * 3) + 2;
+                    let product = a * b * c;
+                    
+                    problem = `${a} × ${b} × ${c} = ${product}`;
+                    
+                    solutions.push(`(${a}×${b})×${c}=${product}`);
+                    solutions.push(`${a}×(${b}×${c})=${product}`);
+                    solutions.push(`${a*b}×${c}=${product}`);
+                    solutions.push(`${a}×${b*c}=${product}`);
+                    solutions.push(`(${a}*${b})*${c}=${product}`);
+                    solutions.push(`${a}*(${b}*${c})=${product}`);
+                    
+                } else if (property === 'dissociativa') {
+                    let a = Math.floor(Math.random() * 3) + 2;
+                    let b = 4; // Numero che possiamo scomporre facilmente
+                    let product = a * b;
+                    
+                    problem = `${a} × ${b} = ${product}`;
+                    
+                    solutions.push(`${a}×2×2=${product}`);
+                    solutions.push(`${a}×(2×2)=${product}`);
+                    solutions.push(`(${a}×2)×2=${product}`);
+                    solutions.push(`${a}*2*2=${product}`);
+                    
+                } else if (property === 'commutativa') {
+                    let a = Math.floor(Math.random() * 5) + 2;
+                    let b = Math.floor(Math.random() * 5) + 2;
+                    let product = a * b;
+                    
+                    problem = `${a} × ${b} = ${product}`;
+                    
+                    solutions.push(`${b}×${a}=${product}`);
+                    solutions.push(`${b}*${a}=${product}`);
+                    
+                } else if (property === 'distributiva') {
+                    let a = Math.floor(Math.random() * 3) + 2;
+                    let b = Math.floor(Math.random() * 3) + 2;
+                    let c = Math.floor(Math.random() * 3) + 1;
+                    let result = a * (b + c);
+                    
+                    problem = `${a} × (${b} + ${c}) = ${result}`;
+                    
+                    solutions.push(`${a}×${b}+${a}×${c}=${result}`);
+                    solutions.push(`(${a}×${b})+(${a}×${c})=${result}`);
+                    solutions.push(`${a*b}+${a*c}=${result}`);
+                    solutions.push(`${a}*${b}+${a}*${c}=${result}`);
+                }
+            } else if (operation === 'division') {
+                if (property === 'invariantiva') {
+                    let a = Math.floor(Math.random() * 5 + 2) * 4; // Divisibile per 2 e 4
+                    let b = Math.floor(Math.random() * 2) + 2;
+                    let quot = a / b;
+                    
+                    problem = `${a} ÷ ${b} = ${quot}`;
+                    
+                    solutions.push(`${a*2}÷${b*2}=${quot}`);
+                    solutions.push(`(${a}×2)÷(${b}×2)=${quot}`);
+                    if (a % 2 === 0 && b % 2 === 0) {
+                        solutions.push(`${a/2}÷${b/2}=${quot}`);
+                        solutions.push(`(${a}÷2)÷(${b}÷2)=${quot}`);
+                    }
+                    
+                } else if (property === 'distributiva') {
+                    let divisor = Math.floor(Math.random() * 2) + 2;
+                    let a = divisor * (Math.floor(Math.random() * 3) + 2);
+                    let b = divisor * (Math.floor(Math.random() * 3) + 1);
+                    let sum = a + b;
+                    let result = sum / divisor;
+                    
+                    problem = `(${a} + ${b}) ÷ ${divisor} = ${result}`;
+                    
+                    solutions.push(`${a}÷${divisor}+${b}÷${divisor}=${result}`);
+                    solutions.push(`(${a}÷${divisor})+(${b}÷${divisor})=${result}`);
+                    solutions.push(`${a/divisor}+${b/divisor}=${result}`);
+                }
+            }
+            
+            currentProblem = {
+                problem: problem,
+                solutions: solutions
+            };
+            
+            // Mostra il problema
+            document.getElementById(operation + 'Problem').innerHTML = 
+                `Applica la proprietà al seguente calcolo:<br><strong>${problem}</strong>`;
+            
+            // Clear previous feedback
+            document.getElementById(operation + 'Feedback').innerHTML = '';
+            document.getElementById(operation + 'Answer').value = '';
+        }
+        //#endregion
+
+        //#region Verifica risposte e mostra soluzione
+        function normalizeExpression(expr) {
+            // Rimuove tutti gli spazi e converte in minuscolo
+            return expr.replace(/\s+/g, '')
+                      .replace(/×/g, '*')
+                      .replace(/x/g, '*')
+                      .replace(/÷/g, '/')
+                      .replace(/:/g, '/')
+                      .toLowerCase();
+        }
+
+        function checkAnswer(operation) {
+            const answerInput = document.getElementById(operation + 'Answer');
+            const userAnswer = normalizeExpression(answerInput.value);
+            const feedbackDiv = document.getElementById(operation + 'Feedback');
+            
+            if (!userAnswer) {
+                feedbackDiv.innerHTML = '<div class="feedback error">Inserisci una risposta!</div>';
+                return;
+            }
+            
+            // Incrementa contatore esercizi
+            certSystem.incrementField('esercizi');
+            
+            // Verifica se la risposta è corretta
+            let isCorrect = false;
+            for (let solution of currentProblem.solutions) {
+                if (normalizeExpression(solution) === userAnswer) {
+                    isCorrect = true;
+                    break;
+                }
+            }
+            
+            // Verifica anche con valutazione (per espressioni equivalenti)
+            if (!isCorrect) {
+                try {
+                    // Estrai il risultato atteso
+                    let expectedResult = currentProblem.problem.split('=')[1].trim();
+                    
+                    // Verifica se l'espressione dell'utente contiene '='
+                    if (userAnswer.includes('=')) {
+                        let userResult = userAnswer.split('=')[1];
+                        let userExpression = userAnswer.split('=')[0];
+                        
+                        // Valuta l'espressione dell'utente
+                        let evaluatedUser = eval(userExpression.replace(/[^0-9+\-*/()]/g, ''));
+                        
+                        if (evaluatedUser == expectedResult && userResult == expectedResult) {
+                            isCorrect = true;
+                        }
+                    }
+                } catch(e) {
+                    // Ignora errori di valutazione
+                }
+            }
+            
+            if (isCorrect) {
+                certSystem.incrementField('corretti');
+                certSystem.incrementField('punteggio', 10);
+                feedbackDiv.innerHTML = '<div class="feedback success">🎉 Perfetto! Hai applicato correttamente la proprietà!</div>';
+                
+                // Aggiungi stelle animate
+                createStarBurst(event.target);
+                
+                // Genera nuovo problema dopo 2 secondi
+                setTimeout(() => {
+                    generateProblem(operation, currentProperty);
+                }, 2000);
+                
+            } else {
+                certSystem.incrementField('errori');
+                feedbackDiv.innerHTML = `<div class="feedback error">
+                    Non esatto. Ricorda di applicare la proprietà ${currentProperty}.<br>
+                    <small>Prova ancora o clicca "Soluzione" per vedere la risposta corretta.</small>
+                </div>`;
+            }
+        }
+
+        function showSolution(operation) {
+            const feedbackDiv = document.getElementById(operation + 'Feedback');
+            const answerInput = document.getElementById(operation + 'Answer');
+            
+            if (currentProblem && currentProblem.solutions.length > 0) {
+                // Incrementa contatore soluzioni viste
+                certSystem.incrementField('soluzioni');
+                
+                // Mostra una soluzione casuale
+                const randomSolution = currentProblem.solutions[Math.floor(Math.random() * Math.min(3, currentProblem.solutions.length))];
+                
+                // Inserisci la soluzione nell'input
+                answerInput.value = randomSolution;
+                
+                feedbackDiv.innerHTML = `<div class="feedback solution">
+                    💡 <strong>Soluzione:</strong><br>
+                    ${randomSolution}<br><br>
+                    <small>Questa è una possibile applicazione della proprietà ${currentProperty}.</small>
+                </div>`;
+                
+                // Genera nuovo problema dopo 3 secondi
+                setTimeout(() => {
+                    generateProblem(operation, currentProperty);
+                }, 3000);
+            }
+        }
+        //#endregion
+
+        //#region Calcolatrice
+        function toggleCalculator() {
+            const calc = document.getElementById('calculator');
+            calc.classList.toggle('open');
+        }
+
+        function clearCalc() {
+            calcDisplay = '0';
+            calcNewNumber = true;
+            updateCalcDisplay();
+        }
+
+        function appendToCalc(value) {
+            if (calcNewNumber && !isNaN(value)) {
+                calcDisplay = value;
+                calcNewNumber = false;
+            } else {
+                if (calcDisplay === '0' && !isNaN(value)) {
+                    calcDisplay = value;
+                } else {
+                    calcDisplay += value;
+                }
+            }
+            updateCalcDisplay();
+        }
+
+        function deleteLastCalc() {
+            if (calcDisplay.length > 1) {
+                calcDisplay = calcDisplay.slice(0, -1);
+            } else {
+                calcDisplay = '0';
+                calcNewNumber = true;
+            }
+            updateCalcDisplay();
+        }
+
+        function calculateResult() {
+            try {
+                let result = eval(calcDisplay.replace(/×/g, '*').replace(/÷/g, '/'));
+                calcDisplay = result.toString();
+                calcNewNumber = true;
+            } catch (e) {
+                calcDisplay = 'Errore';
+                calcNewNumber = true;
+            }
+            updateCalcDisplay();
+        }
+
+        function updateCalcDisplay() {
+            document.getElementById('calcDisplay').textContent = calcDisplay;
+        }
+        //#endregion
+
+        //#region Effetti visivi
+        function createStarBurst(element) {
+            for (let i = 0; i < 5; i++) {
+                const star = document.createElement('div');
+                star.className = 'star-burst';
+                star.textContent = '⭐';
+                star.style.position = 'fixed';
+                star.style.left = (element.getBoundingClientRect().left + Math.random() * 100 - 50) + 'px';
+                star.style.top = (element.getBoundingClientRect().top + Math.random() * 100 - 50) + 'px';
+                star.style.color = ['#FFD700', '#FFA500', '#FF69B4', '#00CED1', '#32CD32'][i];
+                document.body.appendChild(star);
+                
+                setTimeout(() => star.remove(), 1000);
+            }
+        }
+        //#endregion
+
+        //#region Event listeners
+        // Aggiungi supporto per invio con Enter
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.answer-input').forEach(input => {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        const operation = this.id.replace('Answer', '');
+                        checkAnswer(operation);
+                    }
+                });
+            });
+        });
+        //#endregion
+    </script>
+</body>
+</html>
