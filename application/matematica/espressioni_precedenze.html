@@ -525,10 +525,10 @@
                 `;
             } else if (currentLevel === 3) {
                 instructions.innerHTML = `
-                    1️⃣ Se ci sono [], evidenzia <strong>TUTTE</strong> le operazioni dentro le quadre (ma fuori dalle tonde interne)<br>
-                    2️⃣ Se ci sono × o ÷, evidenzia <strong>tutte</strong> quelle. Altrimenti evidenzia tutte<br>
-                    3️⃣ Se non ci sono [], evidenzia le operazioni dentro le tonde ()<br>
-                    💡 Ricorda: prima le quadre, poi le tonde!
+                    1️⃣ Se ci sono parentesi tonde () → seleziona le operazioni DENTRO le tonde<br>
+                    2️⃣ Se ci sono SOLO quadre [] → seleziona le operazioni DENTRO le quadre<br>
+                    3️⃣ Se ci sono × o ÷, seleziona <strong>tutte</strong> quelle. Altrimenti seleziona tutte le operazioni<br>
+                    💡 Le tonde hanno sempre la priorità, anche se sono dentro le quadre!
                 `;
             }
         }
@@ -779,75 +779,93 @@
                     }
                 }
             } else if (currentLevel === 3) {
-                // Livello 3: priorità alle quadre, poi alle tonde
-                let insideSquare = false;
-                let insideRound = false;
+                // Livello 3: 
+                // - Se ci sono tonde () → lavora DENTRO le tonde
+                // - Se ci sono SOLO quadre [] (senza tonde) → lavora DENTRO le quadre
+                // - Altrimenti → come livello 1
+                
+                let hasRound = expr.includes('(');
                 let hasSquare = expr.includes('[');
-                let hasPriorityInSquare = false;
-                let hasPriorityInRound = false;
                 
                 const isOperator = (token) => ['+', '-', '×', '÷'].includes(token);
                 
-                // Prima passa: verifica cosa c'è dentro quadre e tonde
-                for (let i = 0; i < expr.length; i++) {
-                    if (expr[i] === '[') {
-                        insideSquare = true;
-                    } else if (expr[i] === ']') {
-                        insideSquare = false;
-                    } else if (expr[i] === '(') {
-                        insideRound = true;
-                    } else if (expr[i] === ')') {
-                        insideRound = false;
-                    } else if ((expr[i] === '×' || expr[i] === '÷')) {
-                        if (insideSquare && !insideRound) {
-                            hasPriorityInSquare = true;
-                        } else if (insideRound && !hasSquare) {
+                if (hasRound) {
+                    // CI SONO TONDE: lavora dentro le tonde (non importa se dentro/fuori quadre)
+                    let insideRound = false;
+                    let hasPriorityInRound = false;
+                    
+                    // Prima passa: verifica se ci sono × o ÷ dentro le tonde
+                    for (let i = 0; i < expr.length; i++) {
+                        if (expr[i] === '(') {
+                            insideRound = true;
+                        } else if (expr[i] === ')') {
+                            insideRound = false;
+                        } else if (insideRound && (expr[i] === '×' || expr[i] === '÷')) {
                             hasPriorityInRound = true;
                         }
                     }
-                }
-                
-                // Seconda passa: trova le operazioni da evidenziare
-                insideSquare = false;
-                insideRound = false;
-                
-                for (let i = 0; i < expr.length; i++) {
-                    if (expr[i] === '[') {
-                        insideSquare = true;
-                    } else if (expr[i] === ']') {
-                        insideSquare = false;
-                    } else if (expr[i] === '(') {
-                        insideRound = true;
-                    } else if (expr[i] === ')') {
-                        insideRound = false;
-                    } else if (isOperator(expr[i])) {
-                        // È un operatore - verifica il contesto
-                        if (hasSquare) {
-                            // Ci sono parentesi quadre
-                            if (insideSquare && !insideRound) {
-                                if (hasPriorityInSquare) {
-                                    // Se ci sono × o ÷ nelle quadre, evidenzia solo quelle
-                                    if (expr[i] === '×' || expr[i] === '÷') {
-                                        groups.push([i-1, i, i+1]);
-                                    }
-                                } else {
-                                    // Se non ci sono × o ÷ nelle quadre, evidenzia tutte le operazioni
+                    
+                    // Seconda passa: trova le operazioni da evidenziare dentro le tonde
+                    insideRound = false;
+                    for (let i = 0; i < expr.length; i++) {
+                        if (expr[i] === '(') {
+                            insideRound = true;
+                        } else if (expr[i] === ')') {
+                            insideRound = false;
+                        } else if (insideRound && isOperator(expr[i])) {
+                            if (hasPriorityInRound) {
+                                // Se ci sono × o ÷, evidenzia solo quelle
+                                if (expr[i] === '×' || expr[i] === '÷') {
                                     groups.push([i-1, i, i+1]);
                                 }
+                            } else {
+                                // Se non ci sono × o ÷, evidenzia tutte le operazioni
+                                groups.push([i-1, i, i+1]);
                             }
-                        } else {
-                            // Non ci sono quadre, guarda le tonde
-                            if (insideRound) {
-                                if (hasPriorityInRound) {
-                                    // Se ci sono × o ÷ nelle tonde, evidenzia solo quelle
-                                    if (expr[i] === '×' || expr[i] === '÷') {
-                                        groups.push([i-1, i, i+1]);
-                                    }
-                                } else {
-                                    // Se non ci sono × o ÷ nelle tonde, evidenzia tutte le operazioni
+                        }
+                    }
+                    
+                } else if (hasSquare) {
+                    // SOLO QUADRE (senza tonde): lavora dentro le quadre
+                    let insideSquare = false;
+                    let hasPriorityInSquare = false;
+                    
+                    // Prima passa: verifica se ci sono × o ÷ dentro le quadre
+                    for (let i = 0; i < expr.length; i++) {
+                        if (expr[i] === '[') {
+                            insideSquare = true;
+                        } else if (expr[i] === ']') {
+                            insideSquare = false;
+                        } else if (insideSquare && (expr[i] === '×' || expr[i] === '÷')) {
+                            hasPriorityInSquare = true;
+                        }
+                    }
+                    
+                    // Seconda passa: trova le operazioni da evidenziare dentro le quadre
+                    insideSquare = false;
+                    for (let i = 0; i < expr.length; i++) {
+                        if (expr[i] === '[') {
+                            insideSquare = true;
+                        } else if (expr[i] === ']') {
+                            insideSquare = false;
+                        } else if (insideSquare && isOperator(expr[i])) {
+                            if (hasPriorityInSquare) {
+                                // Se ci sono × o ÷, evidenzia solo quelle
+                                if (expr[i] === '×' || expr[i] === '÷') {
                                     groups.push([i-1, i, i+1]);
                                 }
+                            } else {
+                                // Se non ci sono × o ÷, evidenzia tutte le operazioni
+                                groups.push([i-1, i, i+1]);
                             }
+                        }
+                    }
+                    
+                } else {
+                    // Nessuna parentesi: come livello 1
+                    for (let i = 0; i < expr.length; i++) {
+                        if (expr[i] === '×' || expr[i] === '÷') {
+                            groups.push([i-1, i, i+1]);
                         }
                     }
                 }
@@ -889,10 +907,11 @@
                     if (currentLevel === 2 && insideParentheses) {
                         span.className += ' inside-parentheses';
                     } else if (currentLevel === 3) {
-                        if (insideSquareBrackets && !insideParentheses) {
-                            span.className += ' inside-square-brackets';
-                        } else if (insideParentheses && !insideSquareBrackets) {
+                        // Nel livello 3: evidenzia le tonde se presenti, altrimenti le quadre
+                        if (insideParentheses) {
                             span.className += ' inside-parentheses';
+                        } else if (insideSquareBrackets) {
+                            span.className += ' inside-square-brackets';
                         }
                     }
                     // Aggiungi onclick solo ai token non-parentesi
@@ -933,11 +952,11 @@
             } else if (currentLevel === 2) {
                 feedbackText = 'Seleziona TUTTE le operazioni da svolgere dentro le parentesi';
             } else if (currentLevel === 3) {
-                const hasSquare = currentExpression.includes('[');
-                if (hasSquare) {
-                    feedbackText = 'Seleziona TUTTE le operazioni dentro le quadre (fuori dalle tonde interne)';
+                const hasRound = currentExpression.includes('(');
+                if (hasRound) {
+                    feedbackText = 'Seleziona TUTTE le operazioni dentro le tonde ()';
                 } else {
-                    feedbackText = 'Seleziona TUTTE le operazioni dentro le tonde';
+                    feedbackText = 'Seleziona TUTTE le operazioni dentro le quadre []';
                 }
             }
                 
@@ -1073,28 +1092,35 @@
                     feedback.textContent = '❌ Seleziona TUTTE le operazioni dentro le parentesi!';
                 }
             } else if (currentLevel === 3) {
+                const hasRound = currentExpression.includes('(');
                 const hasSquare = currentExpression.includes('[');
                 if (selectedTokens.size === 0 && correctGroups.length > 0) {
-                    if (hasSquare) {
-                        feedback.textContent = '❌ Cerca le operazioni dentro le quadre (ma fuori dalle tonde)!';
+                    if (hasRound) {
+                        feedback.textContent = '❌ Ci sono le tonde! Cerca le operazioni DENTRO le tonde';
+                    } else if (hasSquare) {
+                        feedback.textContent = '❌ Cerca le operazioni dentro le quadre!';
                     } else {
-                        feedback.textContent = '❌ Non ci sono quadre, cerca le operazioni dentro le tonde!';
+                        feedback.textContent = '❌ Cerca le × e ÷!';
                     }
                 } else if (correctGroups.length === 0 && selectedTokens.size > 0) {
                     feedback.textContent = '❌ Non ci sono operazioni prioritarie da evidenziare!';
                 } else if (wronglySelected > 0) {
-                    if (hasSquare) {
-                        feedback.textContent = '❌ Hai selezionato operazioni nel posto sbagliato! Solo dentro le quadre (fuori dalle tonde)';
+                    if (hasRound) {
+                        feedback.textContent = '❌ Ci sono le tonde! Seleziona SOLO operazioni dentro le tonde';
+                    } else if (hasSquare) {
+                        feedback.textContent = '❌ Seleziona SOLO operazioni dentro le quadre!';
                     } else {
-                        feedback.textContent = '❌ Hai selezionato operazioni fuori dalle parentesi!';
+                        feedback.textContent = '❌ Hai selezionato operazioni sbagliate!';
                     }
                 } else if (correctlySelected < requiredTokens.size) {
                     feedback.textContent = `❌ Mancano delle operazioni! Seleziona TUTTE le operazioni prioritarie`;
                 } else {
-                    if (hasSquare) {
-                        feedback.textContent = '❌ Evidenzia TUTTE le operazioni dentro le quadre MA fuori dalle tonde!';
+                    if (hasRound) {
+                        feedback.textContent = '❌ Seleziona TUTTE le operazioni dentro le tonde!';
+                    } else if (hasSquare) {
+                        feedback.textContent = '❌ Seleziona TUTTE le operazioni dentro le quadre!';
                     } else {
-                        feedback.textContent = '❌ Evidenzia TUTTE le operazioni dentro le tonde!';
+                        feedback.textContent = '❌ Seleziona TUTTE le × e ÷!';
                     }
                 }
             }
@@ -1155,11 +1181,11 @@
             } else if (currentLevel === 2) {
                 feedbackText = 'Seleziona TUTTE le operazioni da svolgere dentro le parentesi';
             } else if (currentLevel === 3) {
-                const hasSquare = currentExpression.includes('[');
-                if (hasSquare) {
-                    feedbackText = 'Seleziona TUTTE le operazioni dentro le quadre (fuori dalle tonde interne)';
+                const hasRound = currentExpression.includes('(');
+                if (hasRound) {
+                    feedbackText = 'Seleziona TUTTE le operazioni dentro le tonde ()';
                 } else {
-                    feedbackText = 'Seleziona TUTTE le operazioni dentro le tonde';
+                    feedbackText = 'Seleziona TUTTE le operazioni dentro le quadre []';
                 }
             }
                 
