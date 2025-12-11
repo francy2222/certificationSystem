@@ -92,8 +92,9 @@
             margin: 0 auto 20px;
             border: 3px solid #667eea;
             border-radius: 10px;
-            overflow: hidden;
+            overflow: visible;
             background: #e8f4f8;
+            padding: 40px 70px;
         }
 
         #map {
@@ -107,15 +108,16 @@
             font-weight: bold;
             font-size: 1.2em;
             color: #333;
-            background: rgba(255,255,255,0.8);
+            background: rgba(255,255,255,0.9);
             padding: 5px 10px;
             border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        .cardinal.nord { top: 5px; left: 50%; transform: translateX(-50%); }
-        .cardinal.sud { bottom: 5px; left: 50%; transform: translateX(-50%); }
-        .cardinal.est { right: 5px; top: 50%; transform: translateY(-50%); }
-        .cardinal.ovest { left: 5px; top: 50%; transform: translateY(-50%); }
+        .cardinal.nord { top: -35px; left: 50%; transform: translateX(-50%); }
+        .cardinal.sud { bottom: -35px; left: 50%; transform: translateX(-50%); }
+        .cardinal.est { right: -60px; top: 50%; transform: translateY(-50%); }
+        .cardinal.ovest { left: -60px; top: 50%; transform: translateY(-50%); }
 
         .controls {
             display: flex;
@@ -495,6 +497,10 @@
         function xToLon(x) {
             return (x / canvas.width) * 360 - 180;
         }
+
+        function xToLon(x) {
+            return (x / canvas.width) * 360 - 180;
+        }
         //#endregion
 
         //#region Gestione Click
@@ -505,8 +511,45 @@
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
-            const clickedLat = Math.round(yToLat(y) / 20) * 20;
-            const clickedLon = Math.round(xToLon(x) / 20) * 20;
+            let rawLat = yToLat(y);
+            let rawLon = xToLon(x);
+
+            // Tolleranza per linee fondamentali (±10° di tolleranza)
+            const tolerance = 10;
+            
+            // Controllo Polo Nord
+            if (Math.abs(rawLat - 90) < tolerance) {
+                rawLat = 90;
+            }
+            // Controllo Polo Sud
+            else if (Math.abs(rawLat - (-90)) < tolerance) {
+                rawLat = -90;
+            }
+            // Controllo Equatore
+            else if (Math.abs(rawLat) < tolerance) {
+                rawLat = 0;
+            }
+            
+            // Controllo Greenwich
+            if (Math.abs(rawLon) < tolerance) {
+                rawLon = 0;
+            }
+            // Controllo antimeridiano (180°)
+            else if (Math.abs(Math.abs(rawLon) - 180) < tolerance) {
+                rawLon = rawLon > 0 ? 180 : -180;
+            }
+
+            // Arrotonda a multipli di 20 con snap più intelligente
+            let clickedLat = Math.round(rawLat / 20) * 20;
+            let clickedLon = Math.round(rawLon / 20) * 20;
+
+            // Limita i valori ai range validi
+            if (clickedLat > 90) clickedLat = 90;
+            if (clickedLat < -90) clickedLat = -90;
+            if (clickedLon > 180) clickedLon = 180;
+            if (clickedLon < -180) clickedLon = -180;
+
+            console.log('Click:', {rawLat, rawLon, clickedLat, clickedLon}); // Debug
 
             checkAnswer(clickedLat, clickedLon);
         });
@@ -674,7 +717,8 @@
                 // Mostra il punto corretto
                 drawCorrectPoint(targetLat, targetLon);
 
-                setTimeout(nextQuestion, 2000);
+                // Auto-avanza dopo 4 secondi
+                setTimeout(nextQuestion, 4000);
             } else {
                 feedback.className = 'feedback wrong';
                 
@@ -832,60 +876,72 @@
         function speak(text) {
             if (!document.getElementById('ttsEnabled').checked) return;
             
-            synthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'it-IT';
-            utterance.rate = 0.9;
-            if (italianVoice) {
-                utterance.voice = italianVoice;
+            try {
+                synthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'it-IT';
+                utterance.rate = 0.9;
+                if (italianVoice) {
+                    utterance.voice = italianVoice;
+                }
+                synthesis.speak(utterance);
+            } catch (error) {
+                console.log('TTS non disponibile:', error);
             }
-            synthesis.speak(utterance);
+        }
+
+        function playNote(audioContext, frequency, startTime, duration, type = 'sine') {
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = frequency;
+                oscillator.type = type;
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime + startTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + startTime + duration);
+                
+                oscillator.start(audioContext.currentTime + startTime);
+                oscillator.stop(audioContext.currentTime + startTime + duration);
+            } catch (error) {
+                console.log('Audio non disponibile:', error);
+            }
         }
 
         function playSound(type) {
             if (!document.getElementById('soundEnabled').checked) return;
 
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            
-            if (type === 'correct') {
-                // Suono ascendente positivo (do-mi-sol)
-                playNote(audioContext, 523.25, 0, 0.1);    // Do
-                playNote(audioContext, 659.25, 0.1, 0.1);  // Mi
-                playNote(audioContext, 783.99, 0.2, 0.2);  // Sol
-            } else if (type === 'wrong') {
-                // Suono discendente negativo
-                playNote(audioContext, 400, 0, 0.15, 'square');
-                playNote(audioContext, 300, 0.15, 0.15, 'square');
-            } else if (type === 'level') {
-                // Arpeggio celebrativo
-                playNote(audioContext, 523.25, 0, 0.1);
-                playNote(audioContext, 659.25, 0.1, 0.1);
-                playNote(audioContext, 783.99, 0.2, 0.1);
-                playNote(audioContext, 1046.50, 0.3, 0.3);
-            } else if (type === 'win') {
-                // Fanfara vittoria
-                playNote(audioContext, 523.25, 0, 0.15);
-                playNote(audioContext, 659.25, 0.15, 0.15);
-                playNote(audioContext, 783.99, 0.3, 0.15);
-                playNote(audioContext, 1046.50, 0.45, 0.4);
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                if (type === 'correct') {
+                    // Suono ascendente positivo (do-mi-sol)
+                    playNote(audioContext, 523.25, 0, 0.1);    // Do
+                    playNote(audioContext, 659.25, 0.1, 0.1);  // Mi
+                    playNote(audioContext, 783.99, 0.2, 0.2);  // Sol
+                } else if (type === 'wrong') {
+                    // Suono discendente negativo
+                    playNote(audioContext, 400, 0, 0.15, 'square');
+                    playNote(audioContext, 300, 0.15, 0.15, 'square');
+                } else if (type === 'level') {
+                    // Arpeggio celebrativo
+                    playNote(audioContext, 523.25, 0, 0.1);
+                    playNote(audioContext, 659.25, 0.1, 0.1);
+                    playNote(audioContext, 783.99, 0.2, 0.1);
+                    playNote(audioContext, 1046.50, 0.3, 0.3);
+                } else if (type === 'win') {
+                    // Fanfara vittoria
+                    playNote(audioContext, 523.25, 0, 0.15);
+                    playNote(audioContext, 659.25, 0.15, 0.15);
+                    playNote(audioContext, 783.99, 0.3, 0.15);
+                    playNote(audioContext, 1046.50, 0.45, 0.4);
+                }
+            } catch (error) {
+                console.log('Audio non disponibile:', error);
             }
-        }
-
-        function playNote(audioContext, frequency, startTime, duration, type = 'sine') {
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = frequency;
-            oscillator.type = type;
-            
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime + startTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + startTime + duration);
-            
-            oscillator.start(audioContext.currentTime + startTime);
-            oscillator.stop(audioContext.currentTime + startTime + duration);
         }
         //#endregion
     </script>
