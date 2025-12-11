@@ -236,12 +236,18 @@
 <body>
     <div class="container">
         <h1>🌍 Impara le Coordinate Geografiche</h1>
-        <div class="level-info" id="levelInfo">Livello 1: Trova i Paralleli</div>
+        <div class="level-info" id="levelInfo">Livello 0: Linee Fondamentali (Equatore, Greenwich, Poli)</div>
 
         <div class="score-container">
             <div class="score-item">
                 <div class="label">Livello</div>
-                <div class="value" id="currentLevel">1</div>
+                <div class="value" id="currentLevel">0</div>
+                <div style="margin-top: 5px;">
+                    <button onclick="changeLevel(0)" style="padding: 3px 8px; margin: 2px; font-size: 0.8em; cursor: pointer; border: 1px solid white; background: rgba(255,255,255,0.2); color: white; border-radius: 4px;">0</button>
+                    <button onclick="changeLevel(1)" style="padding: 3px 8px; margin: 2px; font-size: 0.8em; cursor: pointer; border: 1px solid white; background: rgba(255,255,255,0.2); color: white; border-radius: 4px;">1</button>
+                    <button onclick="changeLevel(2)" style="padding: 3px 8px; margin: 2px; font-size: 0.8em; cursor: pointer; border: 1px solid white; background: rgba(255,255,255,0.2); color: white; border-radius: 4px;">2</button>
+                    <button onclick="changeLevel(3)" style="padding: 3px 8px; margin: 2px; font-size: 0.8em; cursor: pointer; border: 1px solid white; background: rgba(255,255,255,0.2); color: white; border-radius: 4px;">3</button>
+                </div>
             </div>
             <div class="score-item">
                 <div class="label">Domanda</div>
@@ -268,6 +274,11 @@
             Clicca su "Nuova Domanda" per iniziare
         </div>
 
+        <div class="controls">
+            <button class="btn-primary" onclick="nextQuestion()">Nuova Domanda</button>
+            <button class="btn-secondary" onclick="resetGame()">Ricomincia</button>
+        </div>
+
         <div class="map-container">
             <canvas id="map"></canvas>
             <div class="cardinal nord">NORD</div>
@@ -278,31 +289,38 @@
 
         <div class="feedback" id="feedback"></div>
 
-        <!-- Pannello Certificato -->
-        <div id="certificatePanel"></div>
-
         <div class="level-complete" id="levelComplete">
             <h2>🎉 Livello Completato!</h2>
             <p id="completionMessage"></p>
         </div>
 
-        <div class="controls">
-            <button class="btn-primary" onclick="nextQuestion()">Nuova Domanda</button>
-            <button class="btn-secondary" onclick="resetGame()">Ricomincia</button>
-        </div>
+        <!-- Pannello Certificato in fondo -->
+        <div id="certificatePanel"></div>
     </div>
 
     <script>
         //#region Variabili Globali
         const canvas = document.getElementById('map');
         const ctx = canvas.getContext('2d');
-        let currentLevel = 1;
+        let currentLevel = 0; // Inizia dal livello 0
         let currentQuestion = 0;
         let score = 0;
         let targetLat = 0;
         let targetLon = 0;
         let questionType = '';
         const questionsPerLevel = 10;
+        
+        // Traccia domande già fatte per evitare ripetizioni
+        let askedQuestions = [];
+        let lastQuestion = null;
+        
+        // Domande speciali per livello 0
+        const level0Questions = [
+            { type: 'equator', label: 'Equatore', lat: 0 },
+            { type: 'greenwich', label: 'Meridiano di Greenwich', lon: 0 },
+            { type: 'north_pole', label: 'Polo Nord', lat: 90 },
+            { type: 'south_pole', label: 'Polo Sud', lat: -90 }
+        ];
         
         const synthesis = window.speechSynthesis;
         let italianVoice = null;
@@ -499,26 +517,90 @@
 
             drawMap();
 
-            if (currentLevel === 1) {
-                // Livello 1: Solo paralleli
-                targetLat = getRandomCoordinate(-80, 80);
+            if (currentLevel === 0) {
+                // Livello 0: Linee fondamentali (Equatore, Greenwich, Poli)
+                // Seleziona una domanda diversa dall'ultima
+                let questionData;
+                let attempts = 0;
+                do {
+                    const index = Math.floor(Math.random() * level0Questions.length);
+                    questionData = level0Questions[index];
+                    attempts++;
+                } while (lastQuestion === questionData.type && attempts < 10);
+                
+                lastQuestion = questionData.type;
+                
+                if (questionData.type === 'equator') {
+                    targetLat = 0;
+                    targetLon = null;
+                    questionType = 'equator';
+                    const question = `Clicca sull'EQUATORE (la linea rossa orizzontale a 0°)`;
+                    document.getElementById('question').textContent = question;
+                    speak(question);
+                } else if (questionData.type === 'greenwich') {
+                    targetLat = null;
+                    targetLon = 0;
+                    questionType = 'greenwich';
+                    const question = `Clicca sul MERIDIANO DI GREENWICH (la linea rossa verticale a 0°)`;
+                    document.getElementById('question').textContent = question;
+                    speak(question);
+                } else if (questionData.type === 'north_pole') {
+                    targetLat = 90;
+                    targetLon = null;
+                    questionType = 'north_pole';
+                    const question = `Clicca sul POLO NORD (parallelo 90° Nord, in alto)`;
+                    document.getElementById('question').textContent = question;
+                    speak(question);
+                } else if (questionData.type === 'south_pole') {
+                    targetLat = -90;
+                    targetLon = null;
+                    questionType = 'south_pole';
+                    const question = `Clicca sul POLO SUD (parallelo 90° Sud, in basso)`;
+                    document.getElementById('question').textContent = question;
+                    speak(question);
+                }
+            } else if (currentLevel === 1) {
+                // Livello 1: Solo paralleli - evita ripetizioni
+                let newLat;
+                let attempts = 0;
+                do {
+                    newLat = getRandomCoordinate(-80, 80);
+                    attempts++;
+                } while (newLat === targetLat && attempts < 10);
+                
+                targetLat = newLat;
                 targetLon = null;
                 questionType = 'parallel';
                 const question = `Clicca sul parallelo ${formatLat(targetLat)}`;
                 document.getElementById('question').textContent = question;
                 speak(question);
             } else if (currentLevel === 2) {
-                // Livello 2: Solo meridiani
+                // Livello 2: Solo meridiani - evita ripetizioni
+                let newLon;
+                let attempts = 0;
+                do {
+                    newLon = getRandomCoordinate(-180, 180);
+                    attempts++;
+                } while (newLon === targetLon && attempts < 10);
+                
                 targetLat = null;
-                targetLon = getRandomCoordinate(-180, 180);
+                targetLon = newLon;
                 questionType = 'meridian';
                 const question = `Clicca sul meridiano ${formatLon(targetLon)}`;
                 document.getElementById('question').textContent = question;
                 speak(question);
             } else {
-                // Livello 3: Coordinate complete
-                targetLat = getRandomCoordinate(-80, 80);
-                targetLon = getRandomCoordinate(-180, 180);
+                // Livello 3: Coordinate complete - evita ripetizioni
+                let newLat, newLon;
+                let attempts = 0;
+                do {
+                    newLat = getRandomCoordinate(-80, 80);
+                    newLon = getRandomCoordinate(-180, 180);
+                    attempts++;
+                } while (newLat === targetLat && newLon === targetLon && attempts < 10);
+                
+                targetLat = newLat;
+                targetLon = newLon;
                 questionType = 'point';
                 const question = `Clicca sul punto ${formatLat(targetLat)}, ${formatLon(targetLon)}`;
                 document.getElementById('question').textContent = question;
@@ -547,7 +629,18 @@
         function checkAnswer(clickedLat, clickedLon) {
             let correct = false;
 
-            if (questionType === 'parallel') {
+            if (currentLevel === 0) {
+                // Livello 0: Verifica linee fondamentali
+                if (questionType === 'equator') {
+                    correct = clickedLat === 0;
+                } else if (questionType === 'greenwich') {
+                    correct = clickedLon === 0;
+                } else if (questionType === 'north_pole') {
+                    correct = clickedLat === 90;
+                } else if (questionType === 'south_pole') {
+                    correct = clickedLat === -90;
+                }
+            } else if (questionType === 'parallel') {
                 correct = clickedLat === targetLat;
             } else if (questionType === 'meridian') {
                 correct = clickedLon === targetLon;
@@ -575,13 +668,26 @@
                 setTimeout(nextQuestion, 2000);
             } else {
                 feedback.className = 'feedback wrong';
-                if (questionType === 'parallel') {
+                
+                // Feedback specifico per livello 0
+                if (currentLevel === 0) {
+                    if (questionType === 'equator') {
+                        feedback.textContent = `✗ Sbagliato! Hai cliccato su ${formatLat(clickedLat)}. L'Equatore è a 0°!`;
+                    } else if (questionType === 'greenwich') {
+                        feedback.textContent = `✗ Sbagliato! Hai cliccato su ${formatLon(clickedLon)}. Greenwich è a 0°!`;
+                    } else if (questionType === 'north_pole') {
+                        feedback.textContent = `✗ Sbagliato! Hai cliccato su ${formatLat(clickedLat)}. Il Polo Nord è a 90° Nord!`;
+                    } else if (questionType === 'south_pole') {
+                        feedback.textContent = `✗ Sbagliato! Hai cliccato su ${formatLat(clickedLat)}. Il Polo Sud è a 90° Sud!`;
+                    }
+                } else if (questionType === 'parallel') {
                     feedback.textContent = `✗ Sbagliato! Hai cliccato su ${formatLat(clickedLat)} invece di ${formatLat(targetLat)}`;
                 } else if (questionType === 'meridian') {
                     feedback.textContent = `✗ Sbagliato! Hai cliccato su ${formatLon(clickedLon)} invece di ${formatLon(targetLon)}`;
                 } else {
                     feedback.textContent = `✗ Sbagliato! Hai cliccato su ${formatLat(clickedLat)}, ${formatLon(clickedLon)}`;
                 }
+                
                 playSound('wrong');
                 speak('Sbagliato, riprova!');
 
@@ -595,7 +701,9 @@
         }
 
         function drawCorrectPoint(lat, lon) {
-            if (questionType === 'parallel') {
+            // Gestione speciale per linee fondamentali livello 0
+            if (questionType === 'equator' || questionType === 'parallel' || 
+                questionType === 'north_pole' || questionType === 'south_pole') {
                 // Disegna linea orizzontale verde
                 const y = latToY(lat);
                 ctx.strokeStyle = '#28a745';
@@ -604,7 +712,7 @@
                 ctx.moveTo(0, y);
                 ctx.lineTo(canvas.width, y);
                 ctx.stroke();
-            } else if (questionType === 'meridian') {
+            } else if (questionType === 'greenwich' || questionType === 'meridian') {
                 // Disegna linea verticale verde
                 const x = lonToX(lon);
                 ctx.strokeStyle = '#28a745';
@@ -643,8 +751,13 @@
                 // Traccia livello completato
                 certSystem.incrementField('livelli_completati');
                 
-                completionMessage.textContent = `Hai completato il livello ${currentLevel}! Punteggio: ${score}. Passa al livello successivo!`;
-                speak(`Livello ${currentLevel} completato! Passa al livello successivo!`);
+                let levelName = '';
+                if (currentLevel === 0) levelName = 'Linee Fondamentali';
+                else if (currentLevel === 1) levelName = 'Paralleli';
+                else if (currentLevel === 2) levelName = 'Meridiani';
+                
+                completionMessage.textContent = `Hai completato il livello ${currentLevel}: ${levelName}! Punteggio: ${score}. Passa al livello successivo!`;
+                speak(`Livello ${levelName} completato! Passa al livello successivo!`);
                 playSound('level');
 
                 setTimeout(() => {
@@ -669,7 +782,7 @@
         function updateLevelInfo() {
             document.getElementById('currentLevel').textContent = currentLevel;
             const levelNames = [
-                '',
+                'Livello 0: Linee Fondamentali (Equatore, Greenwich, Poli)',
                 'Livello 1: Trova i Paralleli',
                 'Livello 2: Trova i Meridiani',
                 'Livello 3: Trova le Coordinate Complete'
@@ -678,10 +791,26 @@
         }
 
         function resetGame() {
-            currentLevel = 1;
+            currentLevel = 0; // Ricomincia dal livello 0
             currentQuestion = 0;
             score = 0;
+            lastQuestion = null;
+            askedQuestions = [];
             document.getElementById('score').textContent = 0;
+            document.getElementById('currentQuestion').textContent = 0;
+            document.getElementById('feedback').style.display = 'none';
+            document.getElementById('levelComplete').style.display = 'none';
+            updateLevelInfo();
+            drawMap();
+        }
+
+        function changeLevel(level) {
+            if (level < 0 || level > 3) return;
+            
+            currentLevel = level;
+            currentQuestion = 0;
+            lastQuestion = null;
+            askedQuestions = [];
             document.getElementById('currentQuestion').textContent = 0;
             document.getElementById('feedback').style.display = 'none';
             document.getElementById('levelComplete').style.display = 'none';
