@@ -19,32 +19,30 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            padding: 15px;
         }
 
         .container {
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            padding: 30px;
-            max-width: 900px;
+            padding: 25px;
             width: 100%;
+            max-width: 1800px;
+            margin: 0 auto;
         }
 
         h1 {
             text-align: center;
             color: #667eea;
             margin-bottom: 10px;
-            font-size: 2em;
+            font-size: 2.2em;
         }
 
         .level-info {
             text-align: center;
-            font-size: 1.2em;
-            margin-bottom: 20px;
+            font-size: 1.3em;
+            margin-bottom: 15px;
             color: #764ba2;
             font-weight: bold;
         }
@@ -52,7 +50,7 @@
         .score-container {
             display: flex;
             justify-content: space-around;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             padding: 15px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 10px;
@@ -64,12 +62,12 @@
         }
 
         .score-item .label {
-            font-size: 0.9em;
+            font-size: 1em;
             opacity: 0.9;
         }
 
         .score-item .value {
-            font-size: 1.8em;
+            font-size: 2em;
             font-weight: bold;
             margin-top: 5px;
         }
@@ -79,8 +77,8 @@
             padding: 20px;
             background: #f0f4ff;
             border-radius: 10px;
-            margin-bottom: 20px;
-            font-size: 1.3em;
+            margin-bottom: 15px;
+            font-size: 1.5em;
             color: #333;
             font-weight: bold;
         }
@@ -88,48 +86,47 @@
         .map-container {
             position: relative;
             width: 100%;
-            max-width: 800px;
-            margin: 0 auto 20px;
+            margin: 0 auto 15px;
             border: 3px solid #667eea;
             border-radius: 10px;
             overflow: visible;
             background: #e8f4f8;
-            padding: 40px 70px;
+            padding: 45px 80px;
         }
 
         #map {
             width: 100%;
-            height: 500px;
+            height: 600px;
             cursor: crosshair;
         }
 
         .cardinal {
             position: absolute;
             font-weight: bold;
-            font-size: 1.2em;
+            font-size: 1.4em;
             color: #333;
             background: rgba(255,255,255,0.9);
-            padding: 5px 10px;
+            padding: 6px 12px;
             border-radius: 5px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        .cardinal.nord { top: -35px; left: 50%; transform: translateX(-50%); }
-        .cardinal.sud { bottom: -35px; left: 50%; transform: translateX(-50%); }
-        .cardinal.est { right: -60px; top: 50%; transform: translateY(-50%); }
-        .cardinal.ovest { left: -60px; top: 50%; transform: translateY(-50%); }
+        .cardinal.nord { top: -40px; left: 50%; transform: translateX(-50%); }
+        .cardinal.sud { bottom: -40px; left: 50%; transform: translateX(-50%); }
+        .cardinal.est { right: -70px; top: 50%; transform: translateY(-50%); }
+        .cardinal.ovest { left: -70px; top: 50%; transform: translateY(-50%); }
 
         .controls {
             display: flex;
-            gap: 10px;
+            gap: 15px;
             justify-content: center;
             flex-wrap: wrap;
-            margin-top: 30px;
+            margin-top: 20px;
         }
 
         button {
-            padding: 12px 24px;
-            font-size: 1em;
+            padding: 14px 28px;
+            font-size: 1.1em;
             border: none;
             border-radius: 8px;
             cursor: pointer;
@@ -158,10 +155,10 @@
 
         .feedback {
             text-align: center;
-            padding: 15px;
-            margin-top: 20px;
+            padding: 18px;
+            margin-top: 15px;
             border-radius: 10px;
-            font-size: 1.2em;
+            font-size: 1.3em;
             font-weight: bold;
             display: none;
         }
@@ -195,11 +192,11 @@
 
         .settings {
             display: flex;
-            gap: 15px;
+            gap: 20px;
             justify-content: center;
             align-items: center;
-            margin-bottom: 20px;
-            padding: 15px;
+            margin-bottom: 15px;
+            padding: 12px;
             background: #f8f9fa;
             border-radius: 10px;
         }
@@ -209,29 +206,56 @@
             align-items: center;
             gap: 8px;
             cursor: pointer;
+            font-size: 1.1em;
         }
 
         input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
+            width: 22px;
+            height: 22px;
             cursor: pointer;
+        }
+
+        .level-btn {
+            padding: 5px 12px;
+            margin: 3px;
+            font-size: 1em;
+            cursor: pointer;
+            border: 2px solid white;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .level-btn:hover {
+            background: rgba(255,255,255,0.4);
+        }
+
+        @media (max-width: 1200px) {
+            #map {
+                height: 500px;
+            }
         }
 
         @media (max-width: 768px) {
             .container {
-                padding: 20px;
+                padding: 15px;
             }
 
             h1 {
-                font-size: 1.5em;
+                font-size: 1.6em;
             }
 
             .question-container {
-                font-size: 1.1em;
+                font-size: 1.2em;
             }
 
             #map {
                 height: 400px;
+            }
+
+            .map-container {
+                padding: 35px 50px;
             }
         }
     </style>
@@ -245,11 +269,11 @@
             <div class="score-item">
                 <div class="label">Livello</div>
                 <div class="value" id="currentLevel">0</div>
-                <div style="margin-top: 5px;">
-                    <button onclick="changeLevel(0)" style="padding: 3px 8px; margin: 2px; font-size: 0.8em; cursor: pointer; border: 1px solid white; background: rgba(255,255,255,0.2); color: white; border-radius: 4px;">0</button>
-                    <button onclick="changeLevel(1)" style="padding: 3px 8px; margin: 2px; font-size: 0.8em; cursor: pointer; border: 1px solid white; background: rgba(255,255,255,0.2); color: white; border-radius: 4px;">1</button>
-                    <button onclick="changeLevel(2)" style="padding: 3px 8px; margin: 2px; font-size: 0.8em; cursor: pointer; border: 1px solid white; background: rgba(255,255,255,0.2); color: white; border-radius: 4px;">2</button>
-                    <button onclick="changeLevel(3)" style="padding: 3px 8px; margin: 2px; font-size: 0.8em; cursor: pointer; border: 1px solid white; background: rgba(255,255,255,0.2); color: white; border-radius: 4px;">3</button>
+                <div style="margin-top: 8px;">
+                    <button class="level-btn" onclick="changeLevel(0)">0</button>
+                    <button class="level-btn" onclick="changeLevel(1)">1</button>
+                    <button class="level-btn" onclick="changeLevel(2)">2</button>
+                    <button class="level-btn" onclick="changeLevel(3)">3</button>
                 </div>
             </div>
             <div class="score-item">
@@ -350,7 +374,7 @@
         function initCertSystem() {
             certSystem = new CertificationSystem({
                 appName: 'Coordinate Geografiche',
-                appVersion: '1.1.0',
+                appVersion: '1.2.0',
                 storageKey: 'geo_coordinates_data',
                 certUrl: 'https://certificationsystem.netlify.app/',
                 
@@ -408,8 +432,10 @@
         //#region Inizializzazione Canvas
         function resizeCanvas() {
             const container = canvas.parentElement;
-            canvas.width = container.clientWidth;
-            canvas.height = 500;
+            const containerWidth = container.clientWidth;
+            canvas.width = containerWidth;
+            // Altezza proporzionale (rapporto 2:1 per proiezione equirettangolare)
+            canvas.height = Math.min(600, containerWidth / 2);
             drawMap();
         }
 
@@ -422,10 +448,13 @@
             const w = canvas.width;
             const h = canvas.height;
 
+            // Calcola dimensione font in base alla larghezza
+            const baseFontSize = Math.max(12, Math.min(16, w / 80));
+            const labelFontSize = Math.max(14, Math.min(18, w / 70));
+
             // Sfondo: immagine o colore
             if (imageLoaded && backgroundImage) {
                 ctx.drawImage(backgroundImage, 0, 0, w, h);
-                // Overlay semi-trasparente per rendere la griglia più visibile
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
                 ctx.fillRect(0, 0, w, h);
             } else {
@@ -447,15 +476,13 @@
 
                 // Etichette
                 if (Math.abs(y - 30) > 15 && Math.abs(y - (h - 30)) > 15) {
-                    ctx.fillStyle = imageLoaded ? '#000' : '#666';
-                    ctx.font = 'bold 12px Arial';
-                    // Sfondo bianco per leggibilità
                     const text = lat + '°';
+                    ctx.font = `bold ${baseFontSize}px Arial`;
                     const textWidth = ctx.measureText(text).width;
-                    ctx.fillStyle = 'rgba(255,255,255,0.8)';
-                    ctx.fillRect(3, y - 14, textWidth + 4, 16);
+                    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                    ctx.fillRect(3, y - baseFontSize - 2, textWidth + 6, baseFontSize + 6);
                     ctx.fillStyle = '#333';
-                    ctx.fillText(text, 5, y - 3);
+                    ctx.fillText(text, 6, y - 3);
                 }
             }
 
@@ -469,13 +496,13 @@
 
                 // Etichette
                 if (lon !== 0) {
-                    ctx.fillStyle = 'rgba(255,255,255,0.8)';
                     const text = lon + '°';
+                    ctx.font = `bold ${baseFontSize}px Arial`;
                     const textWidth = ctx.measureText(text).width;
-                    ctx.fillRect(x, h - 18, textWidth + 4, 16);
+                    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                    ctx.fillRect(x + 2, h - baseFontSize - 8, textWidth + 6, baseFontSize + 6);
                     ctx.fillStyle = '#333';
-                    ctx.font = 'bold 12px Arial';
-                    ctx.fillText(text, x + 2, h - 5);
+                    ctx.fillText(text, x + 5, h - 8);
                 }
             }
 
@@ -489,11 +516,13 @@
             ctx.stroke();
 
             // Etichetta Equatore
+            ctx.font = `bold ${labelFontSize}px Arial`;
+            const eqText = 'EQUATORE (0°)';
+            const eqTextWidth = ctx.measureText(eqText).width;
             ctx.fillStyle = 'rgba(255,255,255,0.9)';
-            ctx.fillRect(w/2 - 65, equatorY - 20, 130, 18);
+            ctx.fillRect(w/2 - eqTextWidth/2 - 5, equatorY - labelFontSize - 5, eqTextWidth + 10, labelFontSize + 8);
             ctx.fillStyle = '#dc3545';
-            ctx.font = 'bold 14px Arial';
-            ctx.fillText('EQUATORE (0°)', w/2 - 60, equatorY - 5);
+            ctx.fillText(eqText, w/2 - eqTextWidth/2, equatorY - 5);
 
             // MERIDIANO DI GREENWICH (rosso, più spesso)
             ctx.strokeStyle = '#dc3545';
@@ -505,12 +534,12 @@
             ctx.stroke();
 
             // Etichetta Greenwich
+            ctx.font = `bold ${labelFontSize}px Arial`;
             ctx.fillStyle = 'rgba(255,255,255,0.9)';
-            ctx.fillRect(greenwichX + 3, 5, 80, 35);
+            ctx.fillRect(greenwichX + 3, 5, 95, labelFontSize * 2 + 12);
             ctx.fillStyle = '#dc3545';
-            ctx.font = 'bold 14px Arial';
-            ctx.fillText('GREENWICH', greenwichX + 5, 20);
-            ctx.fillText('(0°)', greenwichX + 5, 35);
+            ctx.fillText('GREENWICH', greenwichX + 8, 8 + labelFontSize);
+            ctx.fillText('(0°)', greenwichX + 8, 8 + labelFontSize * 2 + 4);
         }
 
         function latToY(lat) {
@@ -534,7 +563,7 @@
         }
         //#endregion
 
-        //#region Gestione Click (FIX BUG MERIDIANI)
+        //#region Gestione Click
         canvas.addEventListener('click', (e) => {
             if (currentQuestion === 0) return;
 
@@ -545,10 +574,8 @@
             let rawLat = yToLat(y);
             let rawLon = xToLon(x);
 
-            // Tolleranza per linee fondamentali (±10° di tolleranza)
             const tolerance = 10;
             
-            // Flag per tracciare se è stato fatto uno snap
             let latSnapped = false;
             let lonSnapped = false;
             
@@ -579,14 +606,12 @@
                 lonSnapped = true;
             }
 
-            // Arrotonda a multipli di 20 SOLO se non è già stato snappato
             let clickedLat, clickedLon;
             
             if (latSnapped) {
                 clickedLat = rawLat;
             } else {
                 clickedLat = Math.round(rawLat / 20) * 20;
-                // Limita ai valori validi
                 if (clickedLat > 80) clickedLat = 80;
                 if (clickedLat < -80) clickedLat = -80;
             }
@@ -595,7 +620,6 @@
                 clickedLon = rawLon;
             } else {
                 clickedLon = Math.round(rawLon / 20) * 20;
-                // Limita ai valori validi
                 if (clickedLon > 180) clickedLon = 180;
                 if (clickedLon < -180) clickedLon = -180;
             }
@@ -621,7 +645,6 @@
             drawMap();
 
             if (currentLevel === 0) {
-                // Livello 0: Linee fondamentali
                 let questionData;
                 let attempts = 0;
                 do {
@@ -662,7 +685,6 @@
                     speak(question);
                 }
             } else if (currentLevel === 1) {
-                // Livello 1: Solo paralleli
                 let newLat;
                 let attempts = 0;
                 do {
@@ -677,7 +699,6 @@
                 document.getElementById('question').textContent = question;
                 speak(question);
             } else if (currentLevel === 2) {
-                // Livello 2: Solo meridiani
                 let newLon;
                 let attempts = 0;
                 do {
@@ -692,7 +713,6 @@
                 document.getElementById('question').textContent = question;
                 speak(question);
             } else {
-                // Livello 3: Coordinate complete
                 let newLat, newLon;
                 let attempts = 0;
                 do {
@@ -801,7 +821,7 @@
                 questionType === 'north_pole' || questionType === 'south_pole') {
                 const y = latToY(lat);
                 ctx.strokeStyle = '#28a745';
-                ctx.lineWidth = 4;
+                ctx.lineWidth = 5;
                 ctx.beginPath();
                 ctx.moveTo(0, y);
                 ctx.lineTo(canvas.width, y);
@@ -809,7 +829,7 @@
             } else if (questionType === 'greenwich' || questionType === 'meridian') {
                 const x = lonToX(lon);
                 ctx.strokeStyle = '#28a745';
-                ctx.lineWidth = 4;
+                ctx.lineWidth = 5;
                 ctx.beginPath();
                 ctx.moveTo(x, 0);
                 ctx.lineTo(x, canvas.height);
@@ -819,7 +839,7 @@
                 const y = latToY(lat);
                 ctx.fillStyle = '#28a745';
                 ctx.beginPath();
-                ctx.arc(x, y, 10, 0, Math.PI * 2);
+                ctx.arc(x, y, 12, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
@@ -829,7 +849,7 @@
             const y = latToY(lat);
             ctx.fillStyle = '#dc3545';
             ctx.beginPath();
-            ctx.arc(x, y, 10, 0, Math.PI * 2);
+            ctx.arc(x, y, 12, 0, Math.PI * 2);
             ctx.fill();
         }
         //#endregion
