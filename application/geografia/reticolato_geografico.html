@@ -305,13 +305,17 @@
         //#region Variabili Globali
         const canvas = document.getElementById('map');
         const ctx = canvas.getContext('2d');
-        let currentLevel = 0; // Inizia dal livello 0
+        let currentLevel = 0;
         let currentQuestion = 0;
         let score = 0;
         let targetLat = 0;
         let targetLon = 0;
         let questionType = '';
         const questionsPerLevel = 10;
+        
+        // Immagine di sfondo
+        let backgroundImage = null;
+        let imageLoaded = false;
         
         // Traccia domande già fatte per evitare ripetizioni
         let askedQuestions = [];
@@ -346,7 +350,7 @@
         function initCertSystem() {
             certSystem = new CertificationSystem({
                 appName: 'Coordinate Geografiche',
-                appVersion: '1.0.0',
+                appVersion: '1.1.0',
                 storageKey: 'geo_coordinates_data',
                 certUrl: 'https://certificationsystem.netlify.app/',
                 
@@ -357,12 +361,9 @@
                     { key: 'accuratezza', label: 'Accuratezza', type: 'percentage', showZero: true }
                 ],
                 
-                onTimerUpdate: (seconds) => {
-                    // Timer aggiornato ogni secondo (opzionale)
-                },
+                onTimerUpdate: (seconds) => {},
                 
                 onFieldUpdate: () => {
-                    // Aggiorna accuratezza quando cambiano risposte
                     const corrette = certSystem.getField('risposte_corrette');
                     const sbagliate = certSystem.getField('risposte_sbagliate');
                     const totali = corrette + sbagliate;
@@ -374,7 +375,6 @@
                 }
             });
             
-            // Renderizza pannello certificato
             certSystem.renderFullPanel('certificatePanel', {
                 collapsible: true,
                 showStudentControls: true,
@@ -383,9 +383,25 @@
             });
         }
 
+        // Carica immagine di sfondo
+        function loadBackgroundImage() {
+            backgroundImage = new Image();
+            backgroundImage.onload = () => {
+                imageLoaded = true;
+                drawMap();
+            };
+            backgroundImage.onerror = () => {
+                console.log('Immagine planisfero.png non trovata, uso sfondo colorato');
+                imageLoaded = false;
+                drawMap();
+            };
+            backgroundImage.src = 'planisfero.png';
+        }
+
         // Inizializza al caricamento
         window.addEventListener('DOMContentLoaded', () => {
             initCertSystem();
+            loadBackgroundImage();
         });
         //#endregion
 
@@ -406,12 +422,19 @@
             const w = canvas.width;
             const h = canvas.height;
 
-            // Sfondo
-            ctx.fillStyle = '#e8f4f8';
-            ctx.fillRect(0, 0, w, h);
+            // Sfondo: immagine o colore
+            if (imageLoaded && backgroundImage) {
+                ctx.drawImage(backgroundImage, 0, 0, w, h);
+                // Overlay semi-trasparente per rendere la griglia più visibile
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+                ctx.fillRect(0, 0, w, h);
+            } else {
+                ctx.fillStyle = '#e8f4f8';
+                ctx.fillRect(0, 0, w, h);
+            }
 
             // Griglia (ogni 20°)
-            ctx.strokeStyle = '#ccc';
+            ctx.strokeStyle = imageLoaded ? 'rgba(100, 100, 100, 0.5)' : '#ccc';
             ctx.lineWidth = 1;
 
             // Paralleli (orizzontali) - ogni 20°
@@ -422,11 +445,17 @@
                 ctx.lineTo(w, y);
                 ctx.stroke();
 
-                // Etichette (solo se non troppo vicine ai bordi)
+                // Etichette
                 if (Math.abs(y - 30) > 15 && Math.abs(y - (h - 30)) > 15) {
-                    ctx.fillStyle = '#666';
-                    ctx.font = '12px Arial';
-                    ctx.fillText(lat + '°', 5, y - 3);
+                    ctx.fillStyle = imageLoaded ? '#000' : '#666';
+                    ctx.font = 'bold 12px Arial';
+                    // Sfondo bianco per leggibilità
+                    const text = lat + '°';
+                    const textWidth = ctx.measureText(text).width;
+                    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                    ctx.fillRect(3, y - 14, textWidth + 4, 16);
+                    ctx.fillStyle = '#333';
+                    ctx.fillText(text, 5, y - 3);
                 }
             }
 
@@ -439,10 +468,14 @@
                 ctx.stroke();
 
                 // Etichette
-                if (lon !== 0) { // Non sovrapporre con Greenwich
-                    ctx.fillStyle = '#666';
-                    ctx.font = '12px Arial';
-                    ctx.fillText(lon + '°', x + 2, h - 5);
+                if (lon !== 0) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                    const text = lon + '°';
+                    const textWidth = ctx.measureText(text).width;
+                    ctx.fillRect(x, h - 18, textWidth + 4, 16);
+                    ctx.fillStyle = '#333';
+                    ctx.font = 'bold 12px Arial';
+                    ctx.fillText(text, x + 2, h - 5);
                 }
             }
 
@@ -456,6 +489,8 @@
             ctx.stroke();
 
             // Etichetta Equatore
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.fillRect(w/2 - 65, equatorY - 20, 130, 18);
             ctx.fillStyle = '#dc3545';
             ctx.font = 'bold 14px Arial';
             ctx.fillText('EQUATORE (0°)', w/2 - 60, equatorY - 5);
@@ -470,6 +505,8 @@
             ctx.stroke();
 
             // Etichetta Greenwich
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.fillRect(greenwichX + 3, 5, 80, 35);
             ctx.fillStyle = '#dc3545';
             ctx.font = 'bold 14px Arial';
             ctx.fillText('GREENWICH', greenwichX + 5, 20);
@@ -477,7 +514,6 @@
         }
 
         function latToY(lat) {
-            // Lascia margine di 30px sopra e sotto per evitare click sui poli
             const margin = 30;
             const usableHeight = canvas.height - (margin * 2);
             return margin + (usableHeight * (90 - lat) / 180);
@@ -488,7 +524,6 @@
         }
 
         function yToLat(y) {
-            // Considera il margine per i poli
             const margin = 30;
             const usableHeight = canvas.height - (margin * 2);
             return 90 - ((y - margin) / usableHeight) * 180;
@@ -497,13 +532,9 @@
         function xToLon(x) {
             return (x / canvas.width) * 360 - 180;
         }
-
-        function xToLon(x) {
-            return (x / canvas.width) * 360 - 180;
-        }
         //#endregion
 
-        //#region Gestione Click
+        //#region Gestione Click (FIX BUG MERIDIANI)
         canvas.addEventListener('click', (e) => {
             if (currentQuestion === 0) return;
 
@@ -517,39 +548,59 @@
             // Tolleranza per linee fondamentali (±10° di tolleranza)
             const tolerance = 10;
             
+            // Flag per tracciare se è stato fatto uno snap
+            let latSnapped = false;
+            let lonSnapped = false;
+            
             // Controllo Polo Nord
             if (Math.abs(rawLat - 90) < tolerance) {
                 rawLat = 90;
+                latSnapped = true;
             }
             // Controllo Polo Sud
             else if (Math.abs(rawLat - (-90)) < tolerance) {
                 rawLat = -90;
+                latSnapped = true;
             }
             // Controllo Equatore
             else if (Math.abs(rawLat) < tolerance) {
                 rawLat = 0;
+                latSnapped = true;
             }
             
             // Controllo Greenwich
             if (Math.abs(rawLon) < tolerance) {
                 rawLon = 0;
+                lonSnapped = true;
             }
             // Controllo antimeridiano (180°)
             else if (Math.abs(Math.abs(rawLon) - 180) < tolerance) {
                 rawLon = rawLon > 0 ? 180 : -180;
+                lonSnapped = true;
             }
 
-            // Arrotonda a multipli di 20 con snap più intelligente
-            let clickedLat = Math.round(rawLat / 20) * 20;
-            let clickedLon = Math.round(rawLon / 20) * 20;
+            // Arrotonda a multipli di 20 SOLO se non è già stato snappato
+            let clickedLat, clickedLon;
+            
+            if (latSnapped) {
+                clickedLat = rawLat;
+            } else {
+                clickedLat = Math.round(rawLat / 20) * 20;
+                // Limita ai valori validi
+                if (clickedLat > 80) clickedLat = 80;
+                if (clickedLat < -80) clickedLat = -80;
+            }
+            
+            if (lonSnapped) {
+                clickedLon = rawLon;
+            } else {
+                clickedLon = Math.round(rawLon / 20) * 20;
+                // Limita ai valori validi
+                if (clickedLon > 180) clickedLon = 180;
+                if (clickedLon < -180) clickedLon = -180;
+            }
 
-            // Limita i valori ai range validi
-            if (clickedLat > 90) clickedLat = 90;
-            if (clickedLat < -90) clickedLat = -90;
-            if (clickedLon > 180) clickedLon = 180;
-            if (clickedLon < -180) clickedLon = -180;
-
-            console.log('Click:', {rawLat, rawLon, clickedLat, clickedLon}); // Debug
+            console.log('Click:', {rawLat: rawLat.toFixed(1), rawLon: rawLon.toFixed(1), clickedLat, clickedLon, latSnapped, lonSnapped});
 
             checkAnswer(clickedLat, clickedLon);
         });
@@ -570,8 +621,7 @@
             drawMap();
 
             if (currentLevel === 0) {
-                // Livello 0: Linee fondamentali (Equatore, Greenwich, Poli)
-                // Seleziona una domanda diversa dall'ultima
+                // Livello 0: Linee fondamentali
                 let questionData;
                 let attempts = 0;
                 do {
@@ -612,7 +662,7 @@
                     speak(question);
                 }
             } else if (currentLevel === 1) {
-                // Livello 1: Solo paralleli - evita ripetizioni
+                // Livello 1: Solo paralleli
                 let newLat;
                 let attempts = 0;
                 do {
@@ -627,7 +677,7 @@
                 document.getElementById('question').textContent = question;
                 speak(question);
             } else if (currentLevel === 2) {
-                // Livello 2: Solo meridiani - evita ripetizioni
+                // Livello 2: Solo meridiani
                 let newLon;
                 let attempts = 0;
                 do {
@@ -642,7 +692,7 @@
                 document.getElementById('question').textContent = question;
                 speak(question);
             } else {
-                // Livello 3: Coordinate complete - evita ripetizioni
+                // Livello 3: Coordinate complete
                 let newLat, newLon;
                 let attempts = 0;
                 do {
@@ -682,7 +732,6 @@
             let correct = false;
 
             if (currentLevel === 0) {
-                // Livello 0: Verifica linee fondamentali
                 if (questionType === 'equator') {
                     correct = clickedLat === 0;
                 } else if (questionType === 'greenwich') {
@@ -711,18 +760,14 @@
                 playSound('correct');
                 speak('Corretto!');
 
-                // Traccia risposta corretta nel certificato
                 certSystem.incrementField('risposte_corrette');
 
-                // Mostra il punto corretto
                 drawCorrectPoint(targetLat, targetLon);
 
-                // Auto-avanza dopo 4 secondi
                 setTimeout(nextQuestion, 4000);
             } else {
                 feedback.className = 'feedback wrong';
                 
-                // Feedback specifico per livello 0
                 if (currentLevel === 0) {
                     if (questionType === 'equator') {
                         feedback.textContent = `✗ Sbagliato! Hai cliccato su ${formatLat(clickedLat)}. L'Equatore è a 0°!`;
@@ -744,20 +789,16 @@
                 playSound('wrong');
                 speak('Sbagliato, riprova!');
 
-                // Traccia risposta sbagliata nel certificato
                 certSystem.incrementField('risposte_sbagliate');
 
-                // Mostra il punto sbagliato e quello corretto
                 drawWrongPoint(clickedLat, clickedLon);
                 setTimeout(() => drawCorrectPoint(targetLat, targetLon), 500);
             }
         }
 
         function drawCorrectPoint(lat, lon) {
-            // Gestione speciale per linee fondamentali livello 0
             if (questionType === 'equator' || questionType === 'parallel' || 
                 questionType === 'north_pole' || questionType === 'south_pole') {
-                // Disegna linea orizzontale verde
                 const y = latToY(lat);
                 ctx.strokeStyle = '#28a745';
                 ctx.lineWidth = 4;
@@ -766,7 +807,6 @@
                 ctx.lineTo(canvas.width, y);
                 ctx.stroke();
             } else if (questionType === 'greenwich' || questionType === 'meridian') {
-                // Disegna linea verticale verde
                 const x = lonToX(lon);
                 ctx.strokeStyle = '#28a745';
                 ctx.lineWidth = 4;
@@ -775,7 +815,6 @@
                 ctx.lineTo(x, canvas.height);
                 ctx.stroke();
             } else {
-                // Disegna punto verde
                 const x = lonToX(lon);
                 const y = latToY(lat);
                 ctx.fillStyle = '#28a745';
@@ -801,7 +840,6 @@
             const completionMessage = document.getElementById('completionMessage');
 
             if (currentLevel < 3) {
-                // Traccia livello completato
                 certSystem.incrementField('livelli_completati');
                 
                 let levelName = '';
@@ -821,7 +859,6 @@
                     nextQuestion();
                 }, 3000);
             } else {
-                // Ultimo livello completato
                 certSystem.incrementField('livelli_completati');
                 
                 completionMessage.textContent = `🏆 Hai completato tutti i livelli! Punteggio finale: ${score}`;
@@ -844,7 +881,7 @@
         }
 
         function resetGame() {
-            currentLevel = 0; // Ricomincia dal livello 0
+            currentLevel = 0;
             currentQuestion = 0;
             score = 0;
             lastQuestion = null;
@@ -918,22 +955,18 @@
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 
                 if (type === 'correct') {
-                    // Suono ascendente positivo (do-mi-sol)
-                    playNote(audioContext, 523.25, 0, 0.1);    // Do
-                    playNote(audioContext, 659.25, 0.1, 0.1);  // Mi
-                    playNote(audioContext, 783.99, 0.2, 0.2);  // Sol
+                    playNote(audioContext, 523.25, 0, 0.1);
+                    playNote(audioContext, 659.25, 0.1, 0.1);
+                    playNote(audioContext, 783.99, 0.2, 0.2);
                 } else if (type === 'wrong') {
-                    // Suono discendente negativo
                     playNote(audioContext, 400, 0, 0.15, 'square');
                     playNote(audioContext, 300, 0.15, 0.15, 'square');
                 } else if (type === 'level') {
-                    // Arpeggio celebrativo
                     playNote(audioContext, 523.25, 0, 0.1);
                     playNote(audioContext, 659.25, 0.1, 0.1);
                     playNote(audioContext, 783.99, 0.2, 0.1);
                     playNote(audioContext, 1046.50, 0.3, 0.3);
                 } else if (type === 'win') {
-                    // Fanfara vittoria
                     playNote(audioContext, 523.25, 0, 0.15);
                     playNote(audioContext, 659.25, 0.15, 0.15);
                     playNote(audioContext, 783.99, 0.3, 0.15);
