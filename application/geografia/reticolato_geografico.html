@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impara le Coordinate Geografiche</title>
+    
+    <!-- Sistema Certificazione -->
+    <script src="https://certificationsystem.netlify.app/certification-system.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .level-info {
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            color: #764ba2;
+            font-weight: bold;
+        }
+
+        .score-container {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            color: white;
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-item .label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .score-item .value {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .question-container {
+            text-align: center;
+            padding: 20px;
+            background: #f0f4ff;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .map-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto 20px;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #e8f4f8;
+        }
+
+        #map {
+            width: 100%;
+            height: 500px;
+            cursor: crosshair;
+        }
+
+        .cardinal {
+            position: absolute;
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #333;
+            background: rgba(255,255,255,0.8);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .cardinal.nord { top: 5px; left: 50%; transform: translateX(-50%); }
+        .cardinal.sud { bottom: 5px; left: 50%; transform: translateX(-50%); }
+        .cardinal.est { right: 5px; top: 50%; transform: translateY(-50%); }
+        .cardinal.ovest { left: 5px; top: 50%; transform: translateY(-50%); }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .feedback {
+            text-align: center;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+            display: none;
+        }
+
+        .feedback.correct {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #28a745;
+        }
+
+        .feedback.wrong {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #dc3545;
+        }
+
+        .level-complete {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border-radius: 15px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .level-complete h2 {
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+
+        .settings {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .settings label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .question-container {
+                font-size: 1.1em;
+            }
+
+            #map {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌍 Impara le Coordinate Geografiche</h1>
+        <div class="level-info" id="levelInfo">Livello 1: Trova i Paralleli</div>
+
+        <div class="score-container">
+            <div class="score-item">
+                <div class="label">Livello</div>
+                <div class="value" id="currentLevel">1</div>
+            </div>
+            <div class="score-item">
+                <div class="label">Domanda</div>
+                <div class="value"><span id="currentQuestion">1</span>/10</div>
+            </div>
+            <div class="score-item">
+                <div class="label">Punteggio</div>
+                <div class="value" id="score">0</div>
+            </div>
+        </div>
+
+        <div class="settings">
+            <label>
+                <input type="checkbox" id="ttsEnabled" checked>
+                Sintesi Vocale
+            </label>
+            <label>
+                <input type="checkbox" id="soundEnabled" checked>
+                Suoni
+            </label>
+        </div>
+
+        <div class="question-container" id="question">
+            Clicca su "Nuova Domanda" per iniziare
+        </div>
+
+        <div class="map-container">
+            <canvas id="map"></canvas>
+            <div class="cardinal nord">NORD</div>
+            <div class="cardinal sud">SUD</div>
+            <div class="cardinal est">EST</div>
+            <div class="cardinal ovest">OVEST</div>
+        </div>
+
+        <div class="feedback" id="feedback"></div>
+
+        <!-- Pannello Certificato -->
+        <div id="certificatePanel"></div>
+
+        <div class="level-complete" id="levelComplete">
+            <h2>🎉 Livello Completato!</h2>
+            <p id="completionMessage"></p>
+        </div>
+
+        <div class="controls">
+            <button class="btn-primary" onclick="nextQuestion()">Nuova Domanda</button>
+            <button class="btn-secondary" onclick="resetGame()">Ricomincia</button>
+        </div>
+    </div>
+
+    <script>
+        //#region Variabili Globali
+        const canvas = document.getElementById('map');
+        const ctx = canvas.getContext('2d');
+        let currentLevel = 1;
+        let currentQuestion = 0;
+        let score = 0;
+        let targetLat = 0;
+        let targetLon = 0;
+        let questionType = '';
+        const questionsPerLevel = 10;
+        
+        const synthesis = window.speechSynthesis;
+        let italianVoice = null;
+
+        // Carica la voce italiana
+        const loadVoices = () => {
+            const voices = synthesis.getVoices();
+            italianVoice = voices.find(v => v.lang.includes('it-IT') && v.name.includes('Google'));
+            if (!italianVoice) {
+                italianVoice = voices.find(v => v.lang.includes('it'));
+            }
+        };
+
+        synthesis.addEventListener('voiceschanged', loadVoices);
+        loadVoices();
+
+        // Sistema di Certificazione
+        let certSystem = null;
+
+        function initCertSystem() {
+            certSystem = new CertificationSystem({
+                appName: 'Coordinate Geografiche',
+                appVersion: '1.0.0',
+                storageKey: 'geo_coordinates_data',
+                certUrl: 'https://certificationsystem.netlify.app/',
+                
+                fields: [
+                    { key: 'livelli_completati', label: 'Livelli Completati', showZero: false },
+                    { key: 'risposte_corrette', label: 'Risposte Corrette', showZero: false },
+                    { key: 'risposte_sbagliate', label: 'Risposte Sbagliate', showZero: true },
+                    { key: 'accuratezza', label: 'Accuratezza', type: 'percentage', showZero: true }
+                ],
+                
+                onTimerUpdate: (seconds) => {
+                    // Timer aggiornato ogni secondo (opzionale)
+                },
+                
+                onFieldUpdate: () => {
+                    // Aggiorna accuratezza quando cambiano risposte
+                    const corrette = certSystem.getField('risposte_corrette');
+                    const sbagliate = certSystem.getField('risposte_sbagliate');
+                    const totali = corrette + sbagliate;
+                    
+                    if (totali > 0) {
+                        const accuratezza = Math.round((corrette / totali) * 100);
+                        certSystem.setField('accuratezza', accuratezza);
+                    }
+                }
+            });
+            
+            // Renderizza pannello certificato
+            certSystem.renderFullPanel('certificatePanel', {
+                collapsible: true,
+                showStudentControls: true,
+                showClassroomToggle: false,
+                showVerificationToggle: false
+            });
+        }
+
+        // Inizializza al caricamento
+        window.addEventListener('DOMContentLoaded', () => {
+            initCertSystem();
+        });
+        //#endregion
+
+        //#region Inizializzazione Canvas
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = 500;
+            drawMap();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        //#endregion
+
+        //#region Disegno Mappa
+        function drawMap() {
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // Sfondo
+            ctx.fillStyle = '#e8f4f8';
+            ctx.fillRect(0, 0, w, h);
+
+            // Griglia (ogni 20°)
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 1;
+
+            // Paralleli (orizzontali) - ogni 20°
+            for (let lat = -80; lat <= 80; lat += 20) {
+                const y = latToY(lat);
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(w, y);
+                ctx.stroke();
+
+                // Etichette
+                ctx.fillStyle = '#666';
+                ctx.font = '12px Arial';
+                ctx.fillText(lat + '°', 5, y - 3);
+            }
+
+            // Meridiani (verticali) - ogni 20°
+            for (let lon = -180; lon <= 180; lon += 20) {
+                const x = lonToX(lon);
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, h);
+                ctx.stroke();
+
+                // Etichette
+                if (lon !== 0) { // Non sovrapporre con Greenwich
+                    ctx.fillStyle = '#666';
+                    ctx.font = '12px Arial';
+                    ctx.fillText(lon + '°', x + 2, h - 5);
+                }
+            }
+
+            // EQUATORE (rosso, più spesso)
+            ctx.strokeStyle = '#dc3545';
+            ctx.lineWidth = 3;
+            const equatorY = latToY(0);
+            ctx.beginPath();
+            ctx.moveTo(0, equatorY);
+            ctx.lineTo(w, equatorY);
+            ctx.stroke();
+
+            // Etichetta Equatore
+            ctx.fillStyle = '#dc3545';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('EQUATORE (0°)', w/2 - 60, equatorY - 5);
+
+            // MERIDIANO DI GREENWICH (rosso, più spesso)
+            ctx.strokeStyle = '#dc3545';
+            ctx.lineWidth = 3;
+            const greenwichX = lonToX(0);
+            ctx.beginPath();
+            ctx.moveTo(greenwichX, 0);
+            ctx.lineTo(greenwichX, h);
+            ctx.stroke();
+
+            // Etichetta Greenwich
+            ctx.fillStyle = '#dc3545';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('GREENWICH', greenwichX + 5, 20);
+            ctx.fillText('(0°)', greenwichX + 5, 35);
+        }
+
+        function latToY(lat) {
+            return canvas.height * (90 - lat) / 180;
+        }
+
+        function lonToX(lon) {
+            return canvas.width * (lon + 180) / 360;
+        }
+
+        function yToLat(y) {
+            return 90 - (y / canvas.height) * 180;
+        }
+
+        function xToLon(x) {
+            return (x / canvas.width) * 360 - 180;
+        }
+        //#endregion
+
+        //#region Gestione Click
+        canvas.addEventListener('click', (e) => {
+            if (currentQuestion === 0) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const clickedLat = Math.round(yToLat(y) / 20) * 20;
+            const clickedLon = Math.round(xToLon(x) / 20) * 20;
+
+            checkAnswer(clickedLat, clickedLon);
+        });
+        //#endregion
+
+        //#region Generazione Domande
+        function nextQuestion() {
+            if (currentQuestion >= questionsPerLevel) {
+                completeLevel();
+                return;
+            }
+
+            currentQuestion++;
+            document.getElementById('currentQuestion').textContent = currentQuestion;
+            document.getElementById('feedback').style.display = 'none';
+            document.getElementById('levelComplete').style.display = 'none';
+
+            drawMap();
+
+            if (currentLevel === 1) {
+                // Livello 1: Solo paralleli
+                targetLat = getRandomCoordinate(-80, 80);
+                targetLon = null;
+                questionType = 'parallel';
+                const question = `Clicca sul parallelo ${formatLat(targetLat)}`;
+                document.getElementById('question').textContent = question;
+                speak(question);
+            } else if (currentLevel === 2) {
+                // Livello 2: Solo meridiani
+                targetLat = null;
+                targetLon = getRandomCoordinate(-180, 180);
+                questionType = 'meridian';
+                const question = `Clicca sul meridiano ${formatLon(targetLon)}`;
+                document.getElementById('question').textContent = question;
+                speak(question);
+            } else {
+                // Livello 3: Coordinate complete
+                targetLat = getRandomCoordinate(-80, 80);
+                targetLon = getRandomCoordinate(-180, 180);
+                questionType = 'point';
+                const question = `Clicca sul punto ${formatLat(targetLat)}, ${formatLon(targetLon)}`;
+                document.getElementById('question').textContent = question;
+                speak(question);
+            }
+        }
+
+        function getRandomCoordinate(min, max) {
+            const step = 20;
+            const range = (max - min) / step;
+            return min + Math.floor(Math.random() * (range + 1)) * step;
+        }
+
+        function formatLat(lat) {
+            if (lat === 0) return 'Equatore';
+            return Math.abs(lat) + '° ' + (lat > 0 ? 'Nord' : 'Sud');
+        }
+
+        function formatLon(lon) {
+            if (lon === 0) return 'Greenwich';
+            return Math.abs(lon) + '° ' + (lon > 0 ? 'Est' : 'Ovest');
+        }
+        //#endregion
+
+        //#region Verifica Risposta
+        function checkAnswer(clickedLat, clickedLon) {
+            let correct = false;
+
+            if (questionType === 'parallel') {
+                correct = clickedLat === targetLat;
+            } else if (questionType === 'meridian') {
+                correct = clickedLon === targetLon;
+            } else {
+                correct = clickedLat === targetLat && clickedLon === targetLon;
+            }
+
+            const feedback = document.getElementById('feedback');
+            feedback.style.display = 'block';
+
+            if (correct) {
+                score += 10;
+                document.getElementById('score').textContent = score;
+                feedback.className = 'feedback correct';
+                feedback.textContent = '✓ Corretto! Ben fatto!';
+                playSound('correct');
+                speak('Corretto!');
+
+                // Traccia risposta corretta nel certificato
+                certSystem.incrementField('risposte_corrette');
+
+                // Mostra il punto corretto
+                drawCorrectPoint(targetLat, targetLon);
+
+                setTimeout(nextQuestion, 2000);
+            } else {
+                feedback.className = 'feedback wrong';
+                if (questionType === 'parallel') {
+                    feedback.textContent = `✗ Sbagliato! Hai cliccato su ${formatLat(clickedLat)} invece di ${formatLat(targetLat)}`;
+                } else if (questionType === 'meridian') {
+                    feedback.textContent = `✗ Sbagliato! Hai cliccato su ${formatLon(clickedLon)} invece di ${formatLon(targetLon)}`;
+                } else {
+                    feedback.textContent = `✗ Sbagliato! Hai cliccato su ${formatLat(clickedLat)}, ${formatLon(clickedLon)}`;
+                }
+                playSound('wrong');
+                speak('Sbagliato, riprova!');
+
+                // Traccia risposta sbagliata nel certificato
+                certSystem.incrementField('risposte_sbagliate');
+
+                // Mostra il punto sbagliato e quello corretto
+                drawWrongPoint(clickedLat, clickedLon);
+                setTimeout(() => drawCorrectPoint(targetLat, targetLon), 500);
+            }
+        }
+
+        function drawCorrectPoint(lat, lon) {
+            if (questionType === 'parallel') {
+                // Disegna linea orizzontale verde
+                const y = latToY(lat);
+                ctx.strokeStyle = '#28a745';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            } else if (questionType === 'meridian') {
+                // Disegna linea verticale verde
+                const x = lonToX(lon);
+                ctx.strokeStyle = '#28a745';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            } else {
+                // Disegna punto verde
+                const x = lonToX(lon);
+                const y = latToY(lat);
+                ctx.fillStyle = '#28a745';
+                ctx.beginPath();
+                ctx.arc(x, y, 10, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawWrongPoint(lat, lon) {
+            const x = lonToX(lon);
+            const y = latToY(lat);
+            ctx.fillStyle = '#dc3545';
+            ctx.beginPath();
+            ctx.arc(x, y, 10, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        //#endregion
+
+        //#region Gestione Livelli
+        function completeLevel() {
+            const levelComplete = document.getElementById('levelComplete');
+            const completionMessage = document.getElementById('completionMessage');
+
+            if (currentLevel < 3) {
+                // Traccia livello completato
+                certSystem.incrementField('livelli_completati');
+                
+                completionMessage.textContent = `Hai completato il livello ${currentLevel}! Punteggio: ${score}. Passa al livello successivo!`;
+                speak(`Livello ${currentLevel} completato! Passa al livello successivo!`);
+                playSound('level');
+
+                setTimeout(() => {
+                    currentLevel++;
+                    currentQuestion = 0;
+                    updateLevelInfo();
+                    levelComplete.style.display = 'none';
+                    nextQuestion();
+                }, 3000);
+            } else {
+                // Ultimo livello completato
+                certSystem.incrementField('livelli_completati');
+                
+                completionMessage.textContent = `🏆 Hai completato tutti i livelli! Punteggio finale: ${score}`;
+                speak('Congratulazioni! Hai completato tutti i livelli!');
+                playSound('win');
+            }
+
+            levelComplete.style.display = 'block';
+        }
+
+        function updateLevelInfo() {
+            document.getElementById('currentLevel').textContent = currentLevel;
+            const levelNames = [
+                '',
+                'Livello 1: Trova i Paralleli',
+                'Livello 2: Trova i Meridiani',
+                'Livello 3: Trova le Coordinate Complete'
+            ];
+            document.getElementById('levelInfo').textContent = levelNames[currentLevel];
+        }
+
+        function resetGame() {
+            currentLevel = 1;
+            currentQuestion = 0;
+            score = 0;
+            document.getElementById('score').textContent = 0;
+            document.getElementById('currentQuestion').textContent = 0;
+            document.getElementById('feedback').style.display = 'none';
+            document.getElementById('levelComplete').style.display = 'none';
+            updateLevelInfo();
+            drawMap();
+        }
+        //#endregion
+
+        //#region Audio
+        function speak(text) {
+            if (!document.getElementById('ttsEnabled').checked) return;
+            
+            synthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'it-IT';
+            utterance.rate = 0.9;
+            if (italianVoice) {
+                utterance.voice = italianVoice;
+            }
+            synthesis.speak(utterance);
+        }
+
+        function playSound(type) {
+            if (!document.getElementById('soundEnabled').checked) return;
+
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            if (type === 'correct') {
+                // Suono ascendente positivo (do-mi-sol)
+                playNote(audioContext, 523.25, 0, 0.1);    // Do
+                playNote(audioContext, 659.25, 0.1, 0.1);  // Mi
+                playNote(audioContext, 783.99, 0.2, 0.2);  // Sol
+            } else if (type === 'wrong') {
+                // Suono discendente negativo
+                playNote(audioContext, 400, 0, 0.15, 'square');
+                playNote(audioContext, 300, 0.15, 0.15, 'square');
+            } else if (type === 'level') {
+                // Arpeggio celebrativo
+                playNote(audioContext, 523.25, 0, 0.1);
+                playNote(audioContext, 659.25, 0.1, 0.1);
+                playNote(audioContext, 783.99, 0.2, 0.1);
+                playNote(audioContext, 1046.50, 0.3, 0.3);
+            } else if (type === 'win') {
+                // Fanfara vittoria
+                playNote(audioContext, 523.25, 0, 0.15);
+                playNote(audioContext, 659.25, 0.15, 0.15);
+                playNote(audioContext, 783.99, 0.3, 0.15);
+                playNote(audioContext, 1046.50, 0.45, 0.4);
+            }
+        }
+
+        function playNote(audioContext, frequency, startTime, duration, type = 'sine') {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime + startTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + startTime + duration);
+            
+            oscillator.start(audioContext.currentTime + startTime);
+            oscillator.stop(audioContext.currentTime + startTime + duration);
+        }
+        //#endregion
+    </script>
+</body>
+</html>
