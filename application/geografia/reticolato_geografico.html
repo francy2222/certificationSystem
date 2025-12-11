@@ -28,7 +28,7 @@
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             padding: 25px;
             width: 100%;
-            max-width: 1800px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
@@ -91,13 +91,14 @@
             border-radius: 10px;
             overflow: visible;
             background: #e8f4f8;
-            padding: 45px 80px;
+            /* RIMOSSO IL PADDING - il margine sarà gestito dentro il canvas */
+            padding: 45px 10px;
         }
 
         #map {
             width: 100%;
-            height: 600px;
             cursor: crosshair;
+            display: block;
         }
 
         .cardinal {
@@ -113,8 +114,8 @@
 
         .cardinal.nord { top: -40px; left: 50%; transform: translateX(-50%); }
         .cardinal.sud { bottom: -40px; left: 50%; transform: translateX(-50%); }
-        .cardinal.est { right: -70px; top: 50%; transform: translateY(-50%); }
-        .cardinal.ovest { left: -70px; top: 50%; transform: translateY(-50%); }
+        .cardinal.est { right: -5px; top: 50%; transform: translateY(-50%); }
+        .cardinal.ovest { left: -5px; top: 50%; transform: translateY(-50%); }
 
         .controls {
             display: flex;
@@ -231,12 +232,6 @@
             background: rgba(255,255,255,0.4);
         }
 
-        @media (max-width: 1200px) {
-            #map {
-                height: 500px;
-            }
-        }
-
         @media (max-width: 768px) {
             .container {
                 padding: 15px;
@@ -250,12 +245,8 @@
                 font-size: 1.2em;
             }
 
-            #map {
-                height: 400px;
-            }
-
             .map-container {
-                padding: 35px 50px;
+                padding: 35px 5px;
             }
         }
     </style>
@@ -326,9 +317,16 @@
     </div>
 
     <script>
-        //#region Variabili Globali
+        //#region Variabili Globali e Costanti
         const canvas = document.getElementById('map');
         const ctx = canvas.getContext('2d');
+        
+        // MARGINI INTERNI AL CANVAS per etichette
+        const MARGIN_TOP = 35;
+        const MARGIN_BOTTOM = 35;
+        const MARGIN_LEFT = 50;   // Spazio per etichette latitudine
+        const MARGIN_RIGHT = 20;
+        
         let currentLevel = 0;
         let currentQuestion = 0;
         let score = 0;
@@ -374,7 +372,7 @@
         function initCertSystem() {
             certSystem = new CertificationSystem({
                 appName: 'Coordinate Geografiche',
-                appVersion: '1.2.0',
+                appVersion: '1.5.0',
                 storageKey: 'geo_coordinates_data',
                 certUrl: 'https://certificationsystem.netlify.app/',
                 
@@ -433,9 +431,22 @@
         function resizeCanvas() {
             const container = canvas.parentElement;
             const containerWidth = container.clientWidth;
+            
+            // Calcola dimensioni interne (area mappa)
+            const mapWidth = containerWidth - MARGIN_LEFT - MARGIN_RIGHT;
+            // Rapporto 2:1 per proiezione equirettangolare
+            const mapHeight = mapWidth / 2;
+            
+            // Altezza totale canvas = mappa + margini
+            const totalHeight = mapHeight + MARGIN_TOP + MARGIN_BOTTOM;
+            
+            // Limiti
+            const minTotalHeight = 400;
+            const maxTotalHeight = 600;
+            
             canvas.width = containerWidth;
-            // Altezza proporzionale (rapporto 2:1 per proiezione equirettangolare)
-            canvas.height = Math.min(600, containerWidth / 2);
+            canvas.height = Math.max(minTotalHeight, Math.min(maxTotalHeight, totalHeight));
+            
             drawMap();
         }
 
@@ -443,24 +454,68 @@
         resizeCanvas();
         //#endregion
 
+        //#region Funzioni di Conversione Coordinate
+        // Area utile per la mappa (escludendo margini)
+        function getMapArea() {
+            return {
+                left: MARGIN_LEFT,
+                top: MARGIN_TOP,
+                width: canvas.width - MARGIN_LEFT - MARGIN_RIGHT,
+                height: canvas.height - MARGIN_TOP - MARGIN_BOTTOM
+            };
+        }
+        
+        function latToY(lat) {
+            const area = getMapArea();
+            // lat va da 90 (top) a -90 (bottom)
+            return area.top + (area.height * (90 - lat) / 180);
+        }
+
+        function lonToX(lon) {
+            const area = getMapArea();
+            // lon va da -180 (left) a 180 (right)
+            return area.left + (area.width * (lon + 180) / 360);
+        }
+
+        function yToLat(y) {
+            const area = getMapArea();
+            return 90 - ((y - area.top) / area.height) * 180;
+        }
+
+        function xToLon(x) {
+            const area = getMapArea();
+            return ((x - area.left) / area.width) * 360 - 180;
+        }
+        //#endregion
+
         //#region Disegno Mappa
         function drawMap() {
             const w = canvas.width;
             const h = canvas.height;
+            const area = getMapArea();
 
             // Calcola dimensione font in base alla larghezza
-            const baseFontSize = Math.max(12, Math.min(16, w / 80));
-            const labelFontSize = Math.max(14, Math.min(18, w / 70));
+            const baseFontSize = Math.max(12, Math.min(15, area.width / 80));
+            const labelFontSize = Math.max(13, Math.min(17, area.width / 70));
 
-            // Sfondo: immagine o colore
+            // Sfondo totale
+            ctx.fillStyle = '#f0f0f0';
+            ctx.fillRect(0, 0, w, h);
+
+            // Sfondo area mappa
             if (imageLoaded && backgroundImage) {
-                ctx.drawImage(backgroundImage, 0, 0, w, h);
+                ctx.drawImage(backgroundImage, area.left, area.top, area.width, area.height);
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-                ctx.fillRect(0, 0, w, h);
+                ctx.fillRect(area.left, area.top, area.width, area.height);
             } else {
                 ctx.fillStyle = '#e8f4f8';
-                ctx.fillRect(0, 0, w, h);
+                ctx.fillRect(area.left, area.top, area.width, area.height);
             }
+            
+            // Bordo area mappa
+            ctx.strokeStyle = '#999';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(area.left, area.top, area.width, area.height);
 
             // Griglia (ogni 20°)
             ctx.strokeStyle = imageLoaded ? 'rgba(100, 100, 100, 0.5)' : '#ccc';
@@ -470,96 +525,77 @@
             for (let lat = -80; lat <= 80; lat += 20) {
                 const y = latToY(lat);
                 ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(w, y);
+                ctx.moveTo(area.left, y);
+                ctx.lineTo(area.left + area.width, y);
                 ctx.stroke();
 
-                // Etichette
-                if (Math.abs(y - 30) > 15 && Math.abs(y - (h - 30)) > 15) {
-                    const text = lat + '°';
-                    ctx.font = `bold ${baseFontSize}px Arial`;
-                    const textWidth = ctx.measureText(text).width;
-                    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-                    ctx.fillRect(3, y - baseFontSize - 2, textWidth + 6, baseFontSize + 6);
-                    ctx.fillStyle = '#333';
-                    ctx.fillText(text, 6, y - 3);
-                }
+                // Etichette a SINISTRA (fuori dalla mappa)
+                const text = lat + '°';
+                ctx.font = `bold ${baseFontSize}px Arial`;
+                ctx.fillStyle = '#333';
+                ctx.textAlign = 'right';
+                ctx.fillText(text, area.left - 5, y + baseFontSize/3);
             }
 
             // Meridiani (verticali) - ogni 20°
             for (let lon = -180; lon <= 180; lon += 20) {
                 const x = lonToX(lon);
                 ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, h);
+                ctx.moveTo(x, area.top);
+                ctx.lineTo(x, area.top + area.height);
                 ctx.stroke();
 
-                // Etichette
-                if (lon !== 0) {
-                    const text = lon + '°';
-                    ctx.font = `bold ${baseFontSize}px Arial`;
-                    const textWidth = ctx.measureText(text).width;
-                    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-                    ctx.fillRect(x + 2, h - baseFontSize - 8, textWidth + 6, baseFontSize + 6);
-                    ctx.fillStyle = '#333';
-                    ctx.fillText(text, x + 5, h - 8);
-                }
+                // Etichette IN BASSO (fuori dalla mappa)
+                const text = lon + '°';
+                ctx.font = `bold ${baseFontSize}px Arial`;
+                ctx.fillStyle = lon === 0 ? '#dc3545' : '#333';
+                ctx.textAlign = 'center';
+                ctx.fillText(text, x, area.top + area.height + baseFontSize + 5);
             }
+
+            // Reset textAlign
+            ctx.textAlign = 'left';
 
             // EQUATORE (rosso, più spesso)
             ctx.strokeStyle = '#dc3545';
             ctx.lineWidth = 3;
             const equatorY = latToY(0);
             ctx.beginPath();
-            ctx.moveTo(0, equatorY);
-            ctx.lineTo(w, equatorY);
+            ctx.moveTo(area.left, equatorY);
+            ctx.lineTo(area.left + area.width, equatorY);
             ctx.stroke();
 
-            // Etichetta Equatore
+            // Etichetta Equatore (centrata sulla linea)
             ctx.font = `bold ${labelFontSize}px Arial`;
-            const eqText = 'EQUATORE (0°)';
+            const eqText = 'EQUATORE';
             const eqTextWidth = ctx.measureText(eqText).width;
+            const eqX = area.left + area.width/2;
             ctx.fillStyle = 'rgba(255,255,255,0.9)';
-            ctx.fillRect(w/2 - eqTextWidth/2 - 5, equatorY - labelFontSize - 5, eqTextWidth + 10, labelFontSize + 8);
+            ctx.fillRect(eqX - eqTextWidth/2 - 5, equatorY - labelFontSize - 5, eqTextWidth + 10, labelFontSize + 6);
             ctx.fillStyle = '#dc3545';
-            ctx.fillText(eqText, w/2 - eqTextWidth/2, equatorY - 5);
+            ctx.textAlign = 'center';
+            ctx.fillText(eqText, eqX, equatorY - 5);
 
             // MERIDIANO DI GREENWICH (rosso, più spesso)
             ctx.strokeStyle = '#dc3545';
             ctx.lineWidth = 3;
             const greenwichX = lonToX(0);
             ctx.beginPath();
-            ctx.moveTo(greenwichX, 0);
-            ctx.lineTo(greenwichX, h);
+            ctx.moveTo(greenwichX, area.top);
+            ctx.lineTo(greenwichX, area.top + area.height);
             ctx.stroke();
 
-            // Etichetta Greenwich
+            // Etichetta Greenwich (in alto)
             ctx.font = `bold ${labelFontSize}px Arial`;
+            const grText = 'GREENWICH';
+            const grTextWidth = ctx.measureText(grText).width;
             ctx.fillStyle = 'rgba(255,255,255,0.9)';
-            ctx.fillRect(greenwichX + 3, 5, 95, labelFontSize * 2 + 12);
+            ctx.fillRect(greenwichX - grTextWidth/2 - 5, area.top + 5, grTextWidth + 10, labelFontSize + 6);
             ctx.fillStyle = '#dc3545';
-            ctx.fillText('GREENWICH', greenwichX + 8, 8 + labelFontSize);
-            ctx.fillText('(0°)', greenwichX + 8, 8 + labelFontSize * 2 + 4);
-        }
-
-        function latToY(lat) {
-            const margin = 30;
-            const usableHeight = canvas.height - (margin * 2);
-            return margin + (usableHeight * (90 - lat) / 180);
-        }
-
-        function lonToX(lon) {
-            return canvas.width * (lon + 180) / 360;
-        }
-
-        function yToLat(y) {
-            const margin = 30;
-            const usableHeight = canvas.height - (margin * 2);
-            return 90 - ((y - margin) / usableHeight) * 180;
-        }
-
-        function xToLon(x) {
-            return (x / canvas.width) * 360 - 180;
+            ctx.fillText(grText, greenwichX, area.top + 5 + labelFontSize);
+            
+            // Reset textAlign
+            ctx.textAlign = 'left';
         }
         //#endregion
 
@@ -571,45 +607,47 @@
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
 
-            let rawLat = yToLat(y);
-            let rawLon = xToLon(x);
+            const rawLat = yToLat(y);
+            const rawLon = xToLon(x);
 
             const tolerance = 10;
             
+            let finalLat = rawLat;
+            let finalLon = rawLon;
             let latSnapped = false;
             let lonSnapped = false;
             
             // Controllo Polo Nord
             if (Math.abs(rawLat - 90) < tolerance) {
-                rawLat = 90;
+                finalLat = 90;
                 latSnapped = true;
             }
             // Controllo Polo Sud
             else if (Math.abs(rawLat - (-90)) < tolerance) {
-                rawLat = -90;
+                finalLat = -90;
                 latSnapped = true;
             }
             // Controllo Equatore
             else if (Math.abs(rawLat) < tolerance) {
-                rawLat = 0;
+                finalLat = 0;
                 latSnapped = true;
             }
             
             // Controllo Greenwich
             if (Math.abs(rawLon) < tolerance) {
-                rawLon = 0;
+                finalLon = 0;
                 lonSnapped = true;
             }
             // Controllo antimeridiano (180°)
             else if (Math.abs(Math.abs(rawLon) - 180) < tolerance) {
-                rawLon = rawLon > 0 ? 180 : -180;
+                finalLon = rawLon > 0 ? 180 : -180;
                 lonSnapped = true;
             }
 
             let clickedLat, clickedLon;
             
             if (latSnapped) {
-                clickedLat = rawLat;
+                clickedLat = finalLat;
             } else {
                 clickedLat = Math.round(rawLat / 20) * 20;
                 if (clickedLat > 80) clickedLat = 80;
@@ -617,14 +655,14 @@
             }
             
             if (lonSnapped) {
-                clickedLon = rawLon;
+                clickedLon = finalLon;
             } else {
                 clickedLon = Math.round(rawLon / 20) * 20;
                 if (clickedLon > 180) clickedLon = 180;
                 if (clickedLon < -180) clickedLon = -180;
             }
 
-            console.log('Click:', {rawLat: rawLat.toFixed(1), rawLon: rawLon.toFixed(1), clickedLat, clickedLon, latSnapped, lonSnapped});
+            console.log('Click:', {x, y, rawLat: rawLat.toFixed(1), rawLon: rawLon.toFixed(1), clickedLat, clickedLon, targetLat, targetLon});
 
             checkAnswer(clickedLat, clickedLon);
         });
@@ -817,22 +855,24 @@
         }
 
         function drawCorrectPoint(lat, lon) {
+            const area = getMapArea();
+            
             if (questionType === 'equator' || questionType === 'parallel' || 
                 questionType === 'north_pole' || questionType === 'south_pole') {
                 const y = latToY(lat);
                 ctx.strokeStyle = '#28a745';
                 ctx.lineWidth = 5;
                 ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
+                ctx.moveTo(area.left, y);
+                ctx.lineTo(area.left + area.width, y);
                 ctx.stroke();
             } else if (questionType === 'greenwich' || questionType === 'meridian') {
                 const x = lonToX(lon);
                 ctx.strokeStyle = '#28a745';
                 ctx.lineWidth = 5;
                 ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
+                ctx.moveTo(x, area.top);
+                ctx.lineTo(x, area.top + area.height);
                 ctx.stroke();
             } else {
                 const x = lonToX(lon);
