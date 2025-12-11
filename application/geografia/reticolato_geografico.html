@@ -122,6 +122,7 @@
             gap: 10px;
             justify-content: center;
             flex-wrap: wrap;
+            margin-top: 30px;
         }
 
         button {
@@ -274,17 +275,17 @@
             Clicca su "Nuova Domanda" per iniziare
         </div>
 
-        <div class="controls">
-            <button class="btn-primary" onclick="nextQuestion()">Nuova Domanda</button>
-            <button class="btn-secondary" onclick="resetGame()">Ricomincia</button>
-        </div>
-
         <div class="map-container">
             <canvas id="map"></canvas>
             <div class="cardinal nord">NORD</div>
             <div class="cardinal sud">SUD</div>
             <div class="cardinal est">EST</div>
             <div class="cardinal ovest">OVEST</div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-primary" onclick="nextQuestion()">Nuova Domanda</button>
+            <button class="btn-secondary" onclick="resetGame()">Ricomincia</button>
         </div>
 
         <div class="feedback" id="feedback"></div>
@@ -419,10 +420,12 @@
                 ctx.lineTo(w, y);
                 ctx.stroke();
 
-                // Etichette
-                ctx.fillStyle = '#666';
-                ctx.font = '12px Arial';
-                ctx.fillText(lat + '°', 5, y - 3);
+                // Etichette (solo se non troppo vicine ai bordi)
+                if (Math.abs(y - 30) > 15 && Math.abs(y - (h - 30)) > 15) {
+                    ctx.fillStyle = '#666';
+                    ctx.font = '12px Arial';
+                    ctx.fillText(lat + '°', 5, y - 3);
+                }
             }
 
             // Meridiani (verticali) - ogni 20°
@@ -472,7 +475,10 @@
         }
 
         function latToY(lat) {
-            return canvas.height * (90 - lat) / 180;
+            // Lascia margine di 30px sopra e sotto per evitare click sui poli
+            const margin = 30;
+            const usableHeight = canvas.height - (margin * 2);
+            return margin + (usableHeight * (90 - lat) / 180);
         }
 
         function lonToX(lon) {
@@ -480,7 +486,10 @@
         }
 
         function yToLat(y) {
-            return 90 - (y / canvas.height) * 180;
+            // Considera il margine per i poli
+            const margin = 30;
+            const usableHeight = canvas.height - (margin * 2);
+            return 90 - ((y - margin) / usableHeight) * 180;
         }
 
         function xToLon(x) {
